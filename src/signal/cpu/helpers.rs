@@ -5,10 +5,10 @@
 //! CPU signal processing backend.
 
 use crate::signal::stft_core::{
-    complex_mul_c128, complex_mul_c64, magnitude_pow_f32, magnitude_pow_f64,
-    reverse_1d_into, reverse_2d_into,
+    complex_mul_c64, complex_mul_c128, magnitude_pow_f32, magnitude_pow_f64, reverse_1d_into,
+    reverse_2d_into,
 };
-use numr::dtype::{Complex128, Complex64, DType};
+use numr::dtype::{Complex64, Complex128, DType};
 use numr::error::{Error, Result};
 use numr::runtime::cpu::CpuRuntime;
 use numr::tensor::Tensor;
@@ -38,9 +38,8 @@ pub(crate) fn reverse_1d(tensor: &Tensor<CpuRuntime>) -> Result<Tensor<CpuRuntim
             let src = unsafe {
                 std::slice::from_raw_parts(tensor_contig.storage().ptr() as *const f32, len)
             };
-            let dst = unsafe {
-                std::slice::from_raw_parts_mut(output.storage().ptr() as *mut f32, len)
-            };
+            let dst =
+                unsafe { std::slice::from_raw_parts_mut(output.storage().ptr() as *mut f32, len) };
             reverse_1d_into(src, dst);
         }
         DType::F64 => {
@@ -48,16 +47,15 @@ pub(crate) fn reverse_1d(tensor: &Tensor<CpuRuntime>) -> Result<Tensor<CpuRuntim
             let src = unsafe {
                 std::slice::from_raw_parts(tensor_contig.storage().ptr() as *const f64, len)
             };
-            let dst = unsafe {
-                std::slice::from_raw_parts_mut(output.storage().ptr() as *mut f64, len)
-            };
+            let dst =
+                unsafe { std::slice::from_raw_parts_mut(output.storage().ptr() as *mut f64, len) };
             reverse_1d_into(src, dst);
         }
         _ => {
             return Err(Error::UnsupportedDType {
                 dtype,
                 op: "reverse_1d",
-            })
+            });
         }
     }
 
@@ -108,7 +106,7 @@ pub(crate) fn reverse_2d(tensor: &Tensor<CpuRuntime>) -> Result<Tensor<CpuRuntim
             return Err(Error::UnsupportedDType {
                 dtype,
                 op: "reverse_2d",
-            })
+            });
         }
     }
 
@@ -178,7 +176,7 @@ pub(crate) fn complex_mul(
             return Err(Error::UnsupportedDType {
                 dtype,
                 op: "complex_mul",
-            })
+            });
         }
     }
 
@@ -197,8 +195,11 @@ pub(crate) fn complex_magnitude_pow(
     let tensor_contig = tensor.contiguous();
     let numel = tensor.numel();
 
-    let output =
-        Tensor::<CpuRuntime>::empty(tensor.shape(), output_dtype, tensor_contig.storage().device());
+    let output = Tensor::<CpuRuntime>::empty(
+        tensor.shape(),
+        output_dtype,
+        tensor_contig.storage().device(),
+    );
 
     match (dtype, output_dtype) {
         (DType::Complex64, DType::F32) => {
@@ -230,7 +231,7 @@ pub(crate) fn complex_magnitude_pow(
             return Err(Error::UnsupportedDType {
                 dtype,
                 op: "complex_magnitude_pow",
-            })
+            });
         }
     }
 

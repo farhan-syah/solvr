@@ -6,8 +6,8 @@
 use crate::signal::stft_core::reflect_pad_1d;
 use numr::dtype::DType;
 use numr::error::{Error, Result};
-use numr::runtime::cpu::CpuRuntime;
 use numr::runtime::Runtime;
+use numr::runtime::cpu::CpuRuntime;
 use numr::tensor::Tensor;
 
 /// Pad 1D tensor to specified length (zero-padding at end).
@@ -167,7 +167,7 @@ pub(crate) fn pad_1d_reflect(
             return Err(Error::UnsupportedDType {
                 dtype,
                 op: "pad_1d_reflect",
-            })
+            });
         }
     }
 

@@ -37,10 +37,7 @@ pub enum InterpolateError {
     NumericalError { message: String },
 
     /// Invalid parameter value.
-    InvalidParameter {
-        parameter: String,
-        message: String,
-    },
+    InvalidParameter { parameter: String, message: String },
 
     /// Error from underlying numr operation.
     NumrError(String),
@@ -84,7 +81,11 @@ impl fmt::Display for InterpolateError {
                 )
             }
             Self::NotMonotonic { context } => {
-                write!(f, "Input x values must be strictly increasing in {}", context)
+                write!(
+                    f,
+                    "Input x values must be strictly increasing in {}",
+                    context
+                )
             }
             Self::NumericalError { message } => {
                 write!(f, "Numerical error: {}", message)

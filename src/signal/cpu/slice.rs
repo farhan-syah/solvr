@@ -100,8 +100,7 @@ pub(crate) fn slice_last_2d(
                 let src_row = start_h + row;
                 let src = (src_ptr as *const u8)
                     .add((b * src_h * src_w + src_row * src_w + start_w) * elem_size);
-                let dst =
-                    (dst_ptr as *mut u8).add((b * len_h * len_w + row * len_w) * elem_size);
+                let dst = (dst_ptr as *mut u8).add((b * len_h * len_w + row * len_w) * elem_size);
                 std::ptr::copy_nonoverlapping(src, dst, len_w * elem_size);
             }
         }

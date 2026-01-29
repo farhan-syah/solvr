@@ -14,7 +14,7 @@
 //! 2. Ensure identical numerical behavior across all backends
 //! 3. Make the algorithm easier to test and maintain
 
-use numr::dtype::{Complex128, Complex64};
+use numr::dtype::{Complex64, Complex128};
 
 /// Extract and window a single frame from a signal.
 ///
@@ -190,19 +190,13 @@ pub fn normalize_and_copy_f64(
 /// Complex multiplication: (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 #[inline]
 pub fn complex_mul_c64(a: Complex64, b: Complex64) -> Complex64 {
-    Complex64::new(
-        a.re * b.re - a.im * b.im,
-        a.re * b.im + a.im * b.re,
-    )
+    Complex64::new(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re)
 }
 
 /// Complex multiplication for Complex128.
 #[inline]
 pub fn complex_mul_c128(a: Complex128, b: Complex128) -> Complex128 {
-    Complex128::new(
-        a.re * b.re - a.im * b.im,
-        a.re * b.im + a.im * b.re,
-    )
+    Complex128::new(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re)
 }
 
 /// Compute complex magnitude raised to a power.
@@ -263,12 +257,7 @@ pub fn reverse_2d_into<T: Copy>(src: &[T], dst: &mut [T], h: usize, w: usize) {
 /// * `dst` - Output buffer of length `current_len + pad_left + pad_right`
 /// * `pad_left` - Number of elements to pad on the left
 /// * `pad_right` - Number of elements to pad on the right
-pub fn reflect_pad_1d<T: Copy>(
-    src: &[T],
-    dst: &mut [T],
-    pad_left: usize,
-    _pad_right: usize,
-) {
+pub fn reflect_pad_1d<T: Copy>(src: &[T], dst: &mut [T], pad_left: usize, _pad_right: usize) {
     let current_len = src.len();
     let target_len = dst.len();
 

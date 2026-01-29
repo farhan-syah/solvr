@@ -221,7 +221,9 @@ impl<R: Runtime> CubicSpline<R> {
                     let hn3 = h[n - 3];
                     diag[n - 1] = hn3 * hn3 * hn2;
                     lower[n - 2] = -(hn2 * hn2 * hn3 + hn3 * hn3 * hn2);
-                    rhs[n - 1] = hn2 * hn2 * hn3
+                    rhs[n - 1] = hn2
+                        * hn2
+                        * hn3
                         * ((y[n - 1] - y[n - 2]) / hn2 - (y[n - 2] - y[n - 3]) / hn3);
                 }
             }
@@ -323,8 +325,7 @@ impl<R: Runtime> CubicSpline<R> {
 
             // Evaluate polynomial
             let dx = xi - self.x_data[idx];
-            let yi =
-                self.a[idx] + dx * (self.b[idx] + dx * (self.c[idx] + dx * self.d[idx]));
+            let yi = self.a[idx] + dx * (self.b[idx] + dx * (self.c[idx] + dx * self.d[idx]));
 
             y_new_data.push(yi);
         }
@@ -522,8 +523,14 @@ mod tests {
         let d2y = spline.second_derivative(&client, &endpoints).unwrap();
         let d2y_result: Vec<f64> = d2y.to_vec();
 
-        assert!(d2y_result[0].abs() < 1e-10, "Left endpoint second derivative should be ~0");
-        assert!(d2y_result[1].abs() < 1e-10, "Right endpoint second derivative should be ~0");
+        assert!(
+            d2y_result[0].abs() < 1e-10,
+            "Left endpoint second derivative should be ~0"
+        );
+        assert!(
+            d2y_result[1].abs() < 1e-10,
+            "Right endpoint second derivative should be ~0"
+        );
     }
 
     #[test]
@@ -682,7 +689,11 @@ mod tests {
 
         // For linear data, derivative should be constant ~2
         for val in dy_result {
-            assert!((val - 2.0).abs() < 0.1, "Derivative should be ~2, got {}", val);
+            assert!(
+                (val - 2.0).abs() < 0.1,
+                "Derivative should be ~2, got {}",
+                val
+            );
         }
     }
 
@@ -703,7 +714,11 @@ mod tests {
 
         // For quadratic, second derivative should be close to 2 in interior
         for val in d2y_result {
-            assert!((val - 2.0).abs() < 0.5, "Second derivative should be ~2, got {}", val);
+            assert!(
+                (val - 2.0).abs() < 0.5,
+                "Second derivative should be ~2, got {}",
+                val
+            );
         }
     }
 
@@ -722,7 +737,11 @@ mod tests {
         let spline = CubicSpline::new(&client, &x, &y, SplineBoundary::Natural).unwrap();
 
         let integral = spline.integrate(0.0, 2.0).unwrap();
-        assert!((integral - 4.0).abs() < 1e-8, "Integral should be 4, got {}", integral);
+        assert!(
+            (integral - 4.0).abs() < 1e-8,
+            "Integral should be 4, got {}",
+            integral
+        );
     }
 
     #[test]
@@ -736,7 +755,11 @@ mod tests {
         let spline = CubicSpline::new(&client, &x, &y, SplineBoundary::Natural).unwrap();
 
         let integral = spline.integrate(0.0, 4.0).unwrap();
-        assert!((integral - 12.0).abs() < 1e-8, "Integral should be 12, got {}", integral);
+        assert!(
+            (integral - 12.0).abs() < 1e-8,
+            "Integral should be 12, got {}",
+            integral
+        );
     }
 
     #[test]
@@ -750,7 +773,11 @@ mod tests {
         let spline = CubicSpline::new(&client, &x, &y, SplineBoundary::Natural).unwrap();
 
         let integral = spline.integrate(1.0, 3.0).unwrap();
-        assert!((integral - 4.0).abs() < 1e-8, "Integral should be 4, got {}", integral);
+        assert!(
+            (integral - 4.0).abs() < 1e-8,
+            "Integral should be 4, got {}",
+            integral
+        );
     }
 
     #[test]
@@ -824,7 +851,10 @@ mod tests {
         let y = Tensor::<CpuRuntime>::from_slice(&[0.0, 1.0], &[2], &device);
 
         let result = CubicSpline::new(&client, &x, &y, SplineBoundary::Natural);
-        assert!(matches!(result, Err(InterpolateError::ShapeMismatch { .. })));
+        assert!(matches!(
+            result,
+            Err(InterpolateError::ShapeMismatch { .. })
+        ));
     }
 
     #[test]
@@ -835,7 +865,10 @@ mod tests {
         let y = Tensor::<CpuRuntime>::from_slice(&[1.0], &[1], &device);
 
         let result = CubicSpline::new(&client, &x, &y, SplineBoundary::Natural);
-        assert!(matches!(result, Err(InterpolateError::InsufficientData { .. })));
+        assert!(matches!(
+            result,
+            Err(InterpolateError::InsufficientData { .. })
+        ));
     }
 
     #[test]

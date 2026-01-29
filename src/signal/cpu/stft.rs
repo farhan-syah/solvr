@@ -9,15 +9,14 @@
 #![allow(clippy::too_many_arguments)]
 
 use crate::signal::stft_core::{
-    extract_windowed_frame_f32, extract_windowed_frame_f64,
-    normalize_and_copy_f32, normalize_and_copy_f64,
-    overlap_add_f32, overlap_add_f64,
+    extract_windowed_frame_f32, extract_windowed_frame_f64, normalize_and_copy_f32,
+    normalize_and_copy_f64, overlap_add_f32, overlap_add_f64,
 };
 use numr::algorithm::fft::{FftAlgorithms, FftNormalization};
-use numr::dtype::{Complex128, Complex64};
+use numr::dtype::{Complex64, Complex128};
 use numr::error::Result;
-use numr::runtime::cpu::{CpuClient, CpuRuntime};
 use numr::runtime::RuntimeClient;
+use numr::runtime::cpu::{CpuClient, CpuRuntime};
 use numr::tensor::Tensor;
 
 /// STFT implementation for F32.
@@ -42,17 +41,15 @@ pub(crate) fn stft_impl_f32(
     // SAFETY: signal is contiguous with signal_len elements per batch.
     // window is contiguous with n_fft elements.
     // Both are valid for the lifetime of this function.
-    let window_slice =
-        unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
+    let window_slice = unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
 
     // Temporary buffer for windowed frame
     let mut frame = vec![0.0f32; n_fft];
 
     for b in 0..batch_size {
         // SAFETY: Each batch has signal_len elements.
-        let signal_slice = unsafe {
-            std::slice::from_raw_parts(signal_ptr.add(b * signal_len), signal_len)
-        };
+        let signal_slice =
+            unsafe { std::slice::from_raw_parts(signal_ptr.add(b * signal_len), signal_len) };
         let out_offset = b * n_frames * freq_bins;
 
         for f in 0..n_frames {
@@ -62,8 +59,7 @@ pub(crate) fn stft_impl_f32(
             extract_windowed_frame_f32(signal_slice, window_slice, frame_start, &mut frame);
 
             // Create tensor for this frame and compute rfft
-            let frame_tensor =
-                Tensor::<CpuRuntime>::from_slice(&frame, &[n_fft], client.device());
+            let frame_tensor = Tensor::<CpuRuntime>::from_slice(&frame, &[n_fft], client.device());
             let spectrum = client.rfft(&frame_tensor, norm)?;
 
             // Copy spectrum to output
@@ -103,23 +99,20 @@ pub(crate) fn stft_impl_f64(
     let freq_bins = n_fft / 2 + 1;
 
     // SAFETY: Same as stft_impl_f32.
-    let window_slice =
-        unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
+    let window_slice = unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
 
     let mut frame = vec![0.0f64; n_fft];
 
     for b in 0..batch_size {
-        let signal_slice = unsafe {
-            std::slice::from_raw_parts(signal_ptr.add(b * signal_len), signal_len)
-        };
+        let signal_slice =
+            unsafe { std::slice::from_raw_parts(signal_ptr.add(b * signal_len), signal_len) };
         let out_offset = b * n_frames * freq_bins;
 
         for f in 0..n_frames {
             let frame_start = f * hop;
             extract_windowed_frame_f64(signal_slice, window_slice, frame_start, &mut frame);
 
-            let frame_tensor =
-                Tensor::<CpuRuntime>::from_slice(&frame, &[n_fft], client.device());
+            let frame_tensor = Tensor::<CpuRuntime>::from_slice(&frame, &[n_fft], client.device());
             let spectrum = client.rfft(&frame_tensor, norm)?;
 
             let spec_ptr = spectrum.storage().ptr() as *const Complex128;
@@ -159,8 +152,7 @@ pub(crate) fn istft_impl_f32(
     let pad_left = if center { n_fft / 2 } else { 0 };
 
     // SAFETY: Window tensor has n_fft elements.
-    let window_slice =
-        unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
+    let window_slice = unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
 
     // Temporary buffers
     let mut reconstruction = vec![0.0f32; full_len];
@@ -205,16 +197,9 @@ pub(crate) fn istft_impl_f32(
 
         // Normalize and copy to output using shared algorithm
         // SAFETY: Output has batch_size * final_len elements.
-        let output_slice = unsafe {
-            std::slice::from_raw_parts_mut(output_ptr.add(out_offset), final_len)
-        };
-        normalize_and_copy_f32(
-            &reconstruction,
-            &window_sum,
-            output_slice,
-            pad_left,
-            1e-8,
-        );
+        let output_slice =
+            unsafe { std::slice::from_raw_parts_mut(output_ptr.add(out_offset), final_len) };
+        normalize_and_copy_f32(&reconstruction, &window_sum, output_slice, pad_left, 1e-8);
     }
 
     Ok(())
@@ -242,8 +227,7 @@ pub(crate) fn istft_impl_f64(
     let full_len = n_fft + (n_frames - 1) * hop;
     let pad_left = if center { n_fft / 2 } else { 0 };
 
-    let window_slice =
-        unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
+    let window_slice = unsafe { std::slice::from_raw_parts(window_ptr, n_fft) };
 
     let mut reconstruction = vec![0.0f64; full_len];
     let mut window_sum = vec![0.0f64; full_len];
@@ -278,16 +262,9 @@ pub(crate) fn istft_impl_f64(
             hop,
         );
 
-        let output_slice = unsafe {
-            std::slice::from_raw_parts_mut(output_ptr.add(out_offset), final_len)
-        };
-        normalize_and_copy_f64(
-            &reconstruction,
-            &window_sum,
-            output_slice,
-            pad_left,
-            1e-8,
-        );
+        let output_slice =
+            unsafe { std::slice::from_raw_parts_mut(output_ptr.add(out_offset), final_len) };
+        normalize_and_copy_f64(&reconstruction, &window_sum, output_slice, pad_left, 1e-8);
     }
 
     Ok(())

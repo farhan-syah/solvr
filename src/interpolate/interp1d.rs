@@ -241,7 +241,11 @@ impl<R: Runtime> Interp1d<R> {
         let i0 = if idx == 0 { 0 } else { idx - 1 };
         let i1 = idx;
         let i2 = idx + 1;
-        let i3 = if idx + 2 >= self.n { self.n - 1 } else { idx + 2 };
+        let i3 = if idx + 2 >= self.n {
+            self.n - 1
+        } else {
+            idx + 2
+        };
 
         let x0 = x_data[i0];
         let x1 = x_data[i1];
@@ -372,8 +376,8 @@ mod tests {
         let y_new = interp.evaluate(&client, &x_new).unwrap();
         let y_result: Vec<f64> = y_new.to_vec();
 
-        assert!((y_result[0] - 0.0).abs() < 1e-10);  // 0.3 -> nearer to 0 -> 0.0
-        assert!((y_result[1] - 0.0).abs() < 1e-10);  // 0.5 -> ties go to left -> 0.0
+        assert!((y_result[0] - 0.0).abs() < 1e-10); // 0.3 -> nearer to 0 -> 0.0
+        assert!((y_result[1] - 0.0).abs() < 1e-10); // 0.5 -> ties go to left -> 0.0
         assert!((y_result[2] - 10.0).abs() < 1e-10); // 0.7 -> nearer to 1 -> 10.0
         assert!((y_result[3] - 20.0).abs() < 1e-10); // 1.9 -> nearer to 2 -> 20.0
     }
@@ -437,7 +441,10 @@ mod tests {
         let y = Tensor::<CpuRuntime>::from_slice(&[0.0, 1.0], &[2], &device);
 
         let result = Interp1d::new(&client, &x, &y, InterpMethod::Linear);
-        assert!(matches!(result, Err(InterpolateError::ShapeMismatch { .. })));
+        assert!(matches!(
+            result,
+            Err(InterpolateError::ShapeMismatch { .. })
+        ));
     }
 
     #[test]

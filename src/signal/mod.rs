@@ -144,12 +144,8 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
     /// # Returns
     ///
     /// Convolved signal with shape [..., output_len] where output_len depends on mode.
-    fn convolve(
-        &self,
-        signal: &Tensor<R>,
-        kernel: &Tensor<R>,
-        mode: ConvMode,
-    ) -> Result<Tensor<R>>;
+    fn convolve(&self, signal: &Tensor<R>, kernel: &Tensor<R>, mode: ConvMode)
+    -> Result<Tensor<R>>;
 
     /// 2D convolution using FFT
     ///

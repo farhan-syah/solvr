@@ -8,16 +8,16 @@
 //! - Only F32 is supported (WGSL doesn't support F64)
 
 use super::{
-    next_power_of_two, stft_num_frames, validate_kernel_1d, validate_kernel_2d,
-    validate_signal_dtype, validate_stft_params, ConvMode, SignalProcessingAlgorithms,
+    ConvMode, SignalProcessingAlgorithms, next_power_of_two, stft_num_frames, validate_kernel_1d,
+    validate_kernel_2d, validate_signal_dtype, validate_stft_params,
 };
 use crate::window::WindowFunctions;
 use numr::algorithm::fft::{FftAlgorithms, FftNormalization};
 use numr::dtype::{Complex64, DType};
 use numr::error::{Error, Result};
 use numr::ops::ScalarOps;
-use numr::runtime::wgpu::{WgpuClient, WgpuDevice, WgpuRuntime};
 use numr::runtime::RuntimeClient;
+use numr::runtime::wgpu::{WgpuClient, WgpuDevice, WgpuRuntime};
 use numr::tensor::Tensor;
 
 // ============================================================================
@@ -154,8 +154,11 @@ impl SignalProcessingAlgorithms<WgpuRuntime> for WgpuClient {
         let product = complex_mul_wgpu(&signal_fft, &kernel_fft, device)?;
 
         // Inverse 2D FFT
-        let result_raw =
-            self.irfft2(&product, Some((padded_h, padded_w)), FftNormalization::Backward)?;
+        let result_raw = self.irfft2(
+            &product,
+            Some((padded_h, padded_w)),
+            FftNormalization::Backward,
+        )?;
 
         // Apply missing normalization for first dimension
         let scale = 1.0 / (padded_h as f64);
@@ -243,9 +246,7 @@ impl SignalProcessingAlgorithms<WgpuRuntime> for WgpuClient {
         if n_frames == 0 {
             return Err(Error::InvalidArgument {
                 arg: "signal",
-                reason: format!(
-                    "signal too short for STFT: length={signal_len}, n_fft={n_fft}"
-                ),
+                reason: format!("signal too short for STFT: length={signal_len}, n_fft={n_fft}"),
             });
         }
 
@@ -429,7 +430,11 @@ fn pad_1d_to_length_wgpu(
             .copy_from_slice(&data[src_start..src_start + current_len]);
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&output_data, &out_shape, device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &output_data,
+        &out_shape,
+        device,
+    ))
 }
 
 fn pad_2d_to_shape_wgpu(
@@ -461,7 +466,11 @@ fn pad_2d_to_shape_wgpu(
         }
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&output_data, &out_shape, device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &output_data,
+        &out_shape,
+        device,
+    ))
 }
 
 fn pad_1d_reflect_wgpu(
@@ -504,7 +513,11 @@ fn pad_1d_reflect_wgpu(
         }
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&output_data, &out_shape, device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &output_data,
+        &out_shape,
+        device,
+    ))
 }
 
 fn slice_last_dim_wgpu(
@@ -528,11 +541,14 @@ fn slice_last_dim_wgpu(
     for b in 0..batch_size {
         let src_start = b * src_stride + start;
         let dst_start = b * len;
-        output_data[dst_start..dst_start + len]
-            .copy_from_slice(&data[src_start..src_start + len]);
+        output_data[dst_start..dst_start + len].copy_from_slice(&data[src_start..src_start + len]);
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&output_data, &out_shape, device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &output_data,
+        &out_shape,
+        device,
+    ))
 }
 
 fn slice_last_2d_wgpu(
@@ -567,7 +583,11 @@ fn slice_last_2d_wgpu(
         }
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&output_data, &out_shape, device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &output_data,
+        &out_shape,
+        device,
+    ))
 }
 
 fn reverse_1d_wgpu(
@@ -609,7 +629,11 @@ fn reverse_2d_wgpu(
         }
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&reversed, &[h, w], device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &reversed,
+        &[h, w],
+        device,
+    ))
 }
 
 fn complex_mul_wgpu(
@@ -638,14 +662,15 @@ fn complex_mul_wgpu(
         .iter()
         .zip(b_data.iter())
         .map(|(av, bv)| {
-            Complex64::new(
-                av.re * bv.re - av.im * bv.im,
-                av.re * bv.im + av.im * bv.re,
-            )
+            Complex64::new(av.re * bv.re - av.im * bv.im, av.re * bv.im + av.im * bv.re)
         })
         .collect();
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&result, a.shape(), device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &result,
+        a.shape(),
+        device,
+    ))
 }
 
 fn complex_magnitude_pow_wgpu(
@@ -675,7 +700,11 @@ fn complex_magnitude_pow_wgpu(
         })
         .collect();
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&result, tensor.shape(), device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &result,
+        tensor.shape(),
+        device,
+    ))
 }
 
 // ============================================================================
@@ -729,7 +758,11 @@ fn stft_impl_wgpu(
         }
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&output_data, out_shape, device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &output_data,
+        out_shape,
+        device,
+    ))
 }
 
 fn istft_impl_wgpu(
@@ -762,9 +795,8 @@ fn istft_impl_wgpu(
         let mut window_sum = vec![0.0f32; full_len];
 
         for f in 0..n_frames {
-            let frame_spectrum: Vec<Complex64> = stft_data
-                [stft_offset + f * freq_bins..stft_offset + (f + 1) * freq_bins]
-                .to_vec();
+            let frame_spectrum: Vec<Complex64> =
+                stft_data[stft_offset + f * freq_bins..stft_offset + (f + 1) * freq_bins].to_vec();
 
             let spectrum_tensor =
                 Tensor::<WgpuRuntime>::from_slice(&frame_spectrum, &[freq_bins], device);
@@ -795,5 +827,9 @@ fn istft_impl_wgpu(
         }
     }
 
-    Ok(Tensor::<WgpuRuntime>::from_slice(&output_data, out_shape, device))
+    Ok(Tensor::<WgpuRuntime>::from_slice(
+        &output_data,
+        out_shape,
+        device,
+    ))
 }

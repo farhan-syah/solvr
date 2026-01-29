@@ -16,16 +16,16 @@ mod slice;
 mod stft;
 
 use super::{
-    next_power_of_two, stft_num_frames, validate_kernel_1d, validate_kernel_2d,
-    validate_signal_dtype, validate_stft_params, ConvMode, SignalProcessingAlgorithms,
+    ConvMode, SignalProcessingAlgorithms, next_power_of_two, stft_num_frames, validate_kernel_1d,
+    validate_kernel_2d, validate_signal_dtype, validate_stft_params,
 };
 use crate::window::WindowFunctions;
 use numr::algorithm::fft::{FftAlgorithms, FftNormalization};
 use numr::dtype::DType;
 use numr::error::{Error, Result};
 use numr::ops::ScalarOps;
-use numr::runtime::cpu::{CpuClient, CpuRuntime};
 use numr::runtime::RuntimeClient;
+use numr::runtime::cpu::{CpuClient, CpuRuntime};
 use numr::tensor::Tensor;
 
 impl SignalProcessingAlgorithms<CpuRuntime> for CpuClient {
@@ -145,8 +145,11 @@ impl SignalProcessingAlgorithms<CpuRuntime> for CpuClient {
         let product = helpers::complex_mul(&signal_fft, &kernel_fft)?;
 
         // Inverse 2D FFT
-        let result_raw =
-            self.irfft2(&product, Some((padded_h, padded_w)), FftNormalization::Backward)?;
+        let result_raw = self.irfft2(
+            &product,
+            Some((padded_h, padded_w)),
+            FftNormalization::Backward,
+        )?;
 
         // Apply missing normalization for first dimension
         let scale = 1.0 / (padded_h as f64);

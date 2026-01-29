@@ -4,12 +4,12 @@
 //! using numr's FFT primitives.
 
 use super::{
-    next_power_of_two, stft_num_frames, validate_kernel_1d, validate_kernel_2d,
-    validate_signal_dtype, validate_stft_params, ConvMode, SignalProcessingAlgorithms,
+    ConvMode, SignalProcessingAlgorithms, next_power_of_two, stft_num_frames, validate_kernel_1d,
+    validate_kernel_2d, validate_signal_dtype, validate_stft_params,
 };
 use crate::window::WindowFunctions;
 use numr::algorithm::fft::{FftAlgorithms, FftNormalization};
-use numr::dtype::{Complex128, Complex64, DType};
+use numr::dtype::{Complex64, Complex128, DType};
 use numr::error::{Error, Result};
 use numr::ops::ScalarOps;
 use numr::runtime::cuda::{CudaClient, CudaDevice, CudaRuntime};
@@ -126,10 +126,8 @@ impl SignalProcessingAlgorithms<CudaRuntime> for CudaClient {
         let padded_w = next_power_of_two(full_w);
 
         // Pad signal and kernel
-        let signal_padded =
-            pad_2d_to_shape_cuda(&signal_contig, padded_h, padded_w, device, self)?;
-        let kernel_padded =
-            pad_2d_to_shape_cuda(&kernel_contig, padded_h, padded_w, device, self)?;
+        let signal_padded = pad_2d_to_shape_cuda(&signal_contig, padded_h, padded_w, device, self)?;
+        let kernel_padded = pad_2d_to_shape_cuda(&kernel_contig, padded_h, padded_w, device, self)?;
 
         // 2D FFT both
         let signal_fft = self.rfft2(&signal_padded, FftNormalization::None)?;
@@ -139,8 +137,11 @@ impl SignalProcessingAlgorithms<CudaRuntime> for CudaClient {
         let product = complex_mul_cuda(&signal_fft, &kernel_fft, device, self)?;
 
         // Inverse 2D FFT
-        let result_raw =
-            self.irfft2(&product, Some((padded_h, padded_w)), FftNormalization::Backward)?;
+        let result_raw = self.irfft2(
+            &product,
+            Some((padded_h, padded_w)),
+            FftNormalization::Backward,
+        )?;
 
         // Apply missing normalization for first dimension
         let scale = 1.0 / (padded_h as f64);
@@ -222,9 +223,7 @@ impl SignalProcessingAlgorithms<CudaRuntime> for CudaClient {
         if n_frames == 0 {
             return Err(Error::InvalidArgument {
                 arg: "signal",
-                reason: format!(
-                    "signal too short for STFT: length={signal_len}, n_fft={n_fft}"
-                ),
+                reason: format!("signal too short for STFT: length={signal_len}, n_fft={n_fft}"),
             });
         }
 
@@ -664,7 +663,11 @@ fn reverse_2d_cuda(
                     reversed[i * w + j] = data[(h - 1 - i) * w + (w - 1 - j)];
                 }
             }
-            Ok(Tensor::<CudaRuntime>::from_slice(&reversed, &[h, w], device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &reversed,
+                &[h, w],
+                device,
+            ))
         }
         DType::F64 => {
             let data: Vec<f64> = tensor_contig.to_vec();
@@ -674,7 +677,11 @@ fn reverse_2d_cuda(
                     reversed[i * w + j] = data[(h - 1 - i) * w + (w - 1 - j)];
                 }
             }
-            Ok(Tensor::<CudaRuntime>::from_slice(&reversed, &[h, w], device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &reversed,
+                &[h, w],
+                device,
+            ))
         }
         _ => Err(Error::UnsupportedDType {
             dtype,
@@ -714,13 +721,14 @@ fn complex_mul_cuda(
                 .iter()
                 .zip(b_data.iter())
                 .map(|(av, bv)| {
-                    Complex64::new(
-                        av.re * bv.re - av.im * bv.im,
-                        av.re * bv.im + av.im * bv.re,
-                    )
+                    Complex64::new(av.re * bv.re - av.im * bv.im, av.re * bv.im + av.im * bv.re)
                 })
                 .collect();
-            Ok(Tensor::<CudaRuntime>::from_slice(&result, a.shape(), device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &result,
+                a.shape(),
+                device,
+            ))
         }
         DType::Complex128 => {
             let a_data: Vec<Complex128> = a.to_vec();
@@ -729,13 +737,14 @@ fn complex_mul_cuda(
                 .iter()
                 .zip(b_data.iter())
                 .map(|(av, bv)| {
-                    Complex128::new(
-                        av.re * bv.re - av.im * bv.im,
-                        av.re * bv.im + av.im * bv.re,
-                    )
+                    Complex128::new(av.re * bv.re - av.im * bv.im, av.re * bv.im + av.im * bv.re)
                 })
                 .collect();
-            Ok(Tensor::<CudaRuntime>::from_slice(&result, a.shape(), device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &result,
+                a.shape(),
+                device,
+            ))
         }
         _ => Err(Error::UnsupportedDType {
             dtype,
@@ -769,7 +778,11 @@ fn complex_magnitude_pow_cuda(
                     }
                 })
                 .collect();
-            Ok(Tensor::<CudaRuntime>::from_slice(&result, tensor.shape(), device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &result,
+                tensor.shape(),
+                device,
+            ))
         }
         (DType::Complex128, DType::F64) => {
             let data: Vec<Complex128> = tensor.to_vec();
@@ -786,7 +799,11 @@ fn complex_magnitude_pow_cuda(
                     }
                 })
                 .collect();
-            Ok(Tensor::<CudaRuntime>::from_slice(&result, tensor.shape(), device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &result,
+                tensor.shape(),
+                device,
+            ))
         }
         _ => Err(Error::UnsupportedDType {
             dtype,
@@ -842,8 +859,7 @@ fn stft_impl_cuda(
                     }
 
                     // Create tensor and compute rfft
-                    let frame_tensor =
-                        Tensor::<CudaRuntime>::from_slice(&frame, &[n_fft], device);
+                    let frame_tensor = Tensor::<CudaRuntime>::from_slice(&frame, &[n_fft], device);
                     let spectrum = client.rfft(&frame_tensor, norm)?;
                     let spec_data: Vec<Complex64> = spectrum.to_vec();
 
@@ -854,7 +870,11 @@ fn stft_impl_cuda(
                 }
             }
 
-            Ok(Tensor::<CudaRuntime>::from_slice(&output_data, out_shape, device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &output_data,
+                out_shape,
+                device,
+            ))
         }
         DType::F64 => {
             let signal_data: Vec<f64> = signal.to_vec();
@@ -879,8 +899,7 @@ fn stft_impl_cuda(
                         frame[i] = sig_val * window_data[i];
                     }
 
-                    let frame_tensor =
-                        Tensor::<CudaRuntime>::from_slice(&frame, &[n_fft], device);
+                    let frame_tensor = Tensor::<CudaRuntime>::from_slice(&frame, &[n_fft], device);
                     let spectrum = client.rfft(&frame_tensor, norm)?;
                     let spec_data: Vec<Complex128> = spectrum.to_vec();
 
@@ -890,7 +909,11 @@ fn stft_impl_cuda(
                 }
             }
 
-            Ok(Tensor::<CudaRuntime>::from_slice(&output_data, out_shape, device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &output_data,
+                out_shape,
+                device,
+            ))
         }
         _ => Err(Error::UnsupportedDType { dtype, op: "stft" }),
     }
@@ -962,7 +985,11 @@ fn istft_impl_cuda(
                 }
             }
 
-            Ok(Tensor::<CudaRuntime>::from_slice(&output_data, out_shape, device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &output_data,
+                out_shape,
+                device,
+            ))
         }
         DType::F64 => {
             let stft_data: Vec<Complex128> = stft_matrix.to_vec();
@@ -1010,7 +1037,11 @@ fn istft_impl_cuda(
                 }
             }
 
-            Ok(Tensor::<CudaRuntime>::from_slice(&output_data, out_shape, device))
+            Ok(Tensor::<CudaRuntime>::from_slice(
+                &output_data,
+                out_shape,
+                device,
+            ))
         }
         _ => Err(Error::UnsupportedDType {
             dtype: real_dtype,
