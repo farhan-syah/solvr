@@ -22,11 +22,27 @@ pub enum InterpolateError {
         context: String,
     },
 
-    /// Query point is outside the interpolation domain.
+    /// Query point is outside the interpolation domain (1D).
     OutOfDomain {
         point: f64,
         min: f64,
         max: f64,
+        context: String,
+    },
+
+    /// Query point is outside the interpolation domain (N-D).
+    OutOfDomainNd {
+        dimension: usize,
+        point: f64,
+        min: f64,
+        max: f64,
+        context: String,
+    },
+
+    /// Dimension mismatch in N-D operations.
+    DimensionMismatch {
+        expected: usize,
+        actual: usize,
         context: String,
     },
 
@@ -78,6 +94,30 @@ impl fmt::Display for InterpolateError {
                     f,
                     "Point {} is outside interpolation domain [{}, {}] in {}",
                     point, min, max, context
+                )
+            }
+            Self::OutOfDomainNd {
+                dimension,
+                point,
+                min,
+                max,
+                context,
+            } => {
+                write!(
+                    f,
+                    "Point {} in dimension {} is outside domain [{}, {}] in {}",
+                    point, dimension, min, max, context
+                )
+            }
+            Self::DimensionMismatch {
+                expected,
+                actual,
+                context,
+            } => {
+                write!(
+                    f,
+                    "Dimension mismatch in {}: expected {}, got {}",
+                    context, expected, actual
                 )
             }
             Self::NotMonotonic { context } => {

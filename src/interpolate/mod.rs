@@ -6,12 +6,20 @@
 //!
 //! # Module Organization
 //!
+//! ## 1D Interpolation
+//!
 //! - [`Interp1d`] - 1D interpolation (linear, nearest, cubic)
 //! - [`CubicSpline`] - Cubic spline interpolation with various boundary conditions
 //! - [`PchipInterpolator`] - Monotonicity-preserving PCHIP interpolation
 //! - [`Akima1DInterpolator`] - Outlier-robust Akima spline interpolation
 //!
+//! ## N-D Interpolation
+//!
+//! - [`RegularGridInterpolator`] - N-dimensional interpolation on rectilinear grids
+//!
 //! # Choosing an Interpolator
+//!
+//! ## 1D Interpolators
 //!
 //! | Interpolator         | Continuity | Monotonicity | Outlier Robust | Best For                  |
 //! |----------------------|------------|--------------|----------------|---------------------------|
@@ -20,6 +28,13 @@
 //! | `CubicSpline`        | C2         | No           | No             | Very smooth curves        |
 //! | `PchipInterpolator`  | C1         | Preserved    | Moderate       | Monotonic data            |
 //! | `Akima1DInterpolator`| C1         | No           | Yes            | Data with outliers        |
+//!
+//! ## N-D Interpolators
+//!
+//! | Interpolator              | Method    | Grid Type    | Best For                      |
+//! |---------------------------|-----------|--------------|-------------------------------|
+//! | `RegularGridInterpolator` | Nearest   | Rectilinear  | Fast lookup, categorical data |
+//! | `RegularGridInterpolator` | Linear    | Rectilinear  | Smooth N-D surfaces           |
 //!
 //! # Example
 //!
@@ -47,10 +62,12 @@ mod cubic_spline;
 mod error;
 mod hermite_core;
 mod interp1d;
+mod interpnd;
 mod pchip;
 
 pub use akima::Akima1DInterpolator;
 pub use cubic_spline::{CubicSpline, SplineBoundary};
 pub use error::{InterpolateError, InterpolateResult};
 pub use interp1d::{Interp1d, InterpMethod};
+pub use interpnd::{ExtrapolateMode, InterpNdMethod, RegularGridInterpolator};
 pub use pchip::PchipInterpolator;

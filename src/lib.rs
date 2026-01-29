@@ -97,7 +97,8 @@ pub mod window;
 
 // Re-export main types for convenience
 pub use interpolate::{
-    Akima1DInterpolator, CubicSpline, Interp1d, InterpMethod, PchipInterpolator, SplineBoundary,
+    Akima1DInterpolator, CubicSpline, ExtrapolateMode, Interp1d, InterpMethod, InterpNdMethod,
+    PchipInterpolator, RegularGridInterpolator, SplineBoundary,
 };
 pub use signal::{ConvMode, SignalProcessingAlgorithms};
 pub use window::WindowFunctions;
