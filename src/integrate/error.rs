@@ -1,0 +1,153 @@
+//! Error types for numerical integration operations.
+
+use std::fmt;
+
+/// Result type for integration operations.
+pub type IntegrateResult<T> = Result<T, IntegrateError>;
+
+/// Errors that can occur during numerical integration.
+#[derive(Debug, Clone)]
+pub enum IntegrateError {
+    /// The solver did not converge within the specified tolerance.
+    DidNotConverge {
+        iterations: usize,
+        tolerance: f64,
+        context: String,
+    },
+
+    /// Invalid interval provided (e.g., a >= b).
+    InvalidInterval { a: f64, b: f64, context: String },
+
+    /// Invalid parameter value.
+    InvalidParameter { parameter: String, message: String },
+
+    /// Numerical computation failed (e.g., division by zero, NaN).
+    NumericalError { message: String },
+
+    /// Invalid input array size or dimensions.
+    InvalidInput { context: String },
+
+    /// Step size became too small during adaptive integration.
+    StepSizeTooSmall { step: f64, t: f64, context: String },
+
+    /// Maximum number of steps exceeded.
+    MaxStepsExceeded {
+        steps: usize,
+        t: f64,
+        context: String,
+    },
+
+    /// Maximum number of subdivisions exceeded (for adaptive quadrature).
+    MaxSubdivisionsExceeded {
+        subdivisions: usize,
+        context: String,
+    },
+
+    /// Integration encountered a singularity.
+    SingularityDetected { x: f64, context: String },
+
+    /// Error from underlying numr operation.
+    NumrError(String),
+}
+
+impl fmt::Display for IntegrateError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DidNotConverge {
+                iterations,
+                tolerance,
+                context,
+            } => {
+                write!(
+                    f,
+                    "{}: did not converge after {} iterations (tolerance: {:.2e})",
+                    context, iterations, tolerance
+                )
+            }
+            Self::InvalidInterval { a, b, context } => {
+                write!(
+                    f,
+                    "Invalid interval [{}, {}] in {}: bounds must satisfy a < b",
+                    a, b, context
+                )
+            }
+            Self::InvalidParameter { parameter, message } => {
+                write!(f, "Invalid parameter '{}': {}", parameter, message)
+            }
+            Self::NumericalError { message } => {
+                write!(f, "Numerical error: {}", message)
+            }
+            Self::InvalidInput { context } => {
+                write!(f, "Invalid input: {}", context)
+            }
+            Self::StepSizeTooSmall { step, t, context } => {
+                write!(
+                    f,
+                    "{}: step size {:.2e} too small at t = {:.6}",
+                    context, step, t
+                )
+            }
+            Self::MaxStepsExceeded { steps, t, context } => {
+                write!(
+                    f,
+                    "{}: exceeded maximum {} steps at t = {:.6}",
+                    context, steps, t
+                )
+            }
+            Self::MaxSubdivisionsExceeded {
+                subdivisions,
+                context,
+            } => {
+                write!(
+                    f,
+                    "{}: exceeded maximum {} subdivisions",
+                    context, subdivisions
+                )
+            }
+            Self::SingularityDetected { x, context } => {
+                write!(f, "{}: singularity detected near x = {:.6}", context, x)
+            }
+            Self::NumrError(msg) => {
+                write!(f, "numr error: {}", msg)
+            }
+        }
+    }
+}
+
+impl std::error::Error for IntegrateError {}
+
+impl From<numr::error::Error> for IntegrateError {
+    fn from(err: numr::error::Error) -> Self {
+        Self::NumrError(err.to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_error_display() {
+        let err = IntegrateError::DidNotConverge {
+            iterations: 100,
+            tolerance: 1e-8,
+            context: "quad".to_string(),
+        };
+        assert!(err.to_string().contains("did not converge"));
+        assert!(err.to_string().contains("100"));
+
+        let err = IntegrateError::InvalidInterval {
+            a: 5.0,
+            b: 3.0,
+            context: "trapezoid".to_string(),
+        };
+        assert!(err.to_string().contains("Invalid interval"));
+
+        let err = IntegrateError::StepSizeTooSmall {
+            step: 1e-15,
+            t: 0.5,
+            context: "RK45".to_string(),
+        };
+        assert!(err.to_string().contains("too small"));
+    }
+}

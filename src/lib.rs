@@ -29,12 +29,11 @@
 //! - [`signal`] - Signal processing (convolution, correlation, STFT, spectrogram)
 //! - [`window`] - Window functions (Hann, Hamming, Blackman, Kaiser)
 //! - [`interpolate`] - Interpolation methods (linear, cubic, splines)
-//! - [`optimize`] - Root finding and minimization (scalar methods)
+//! - [`optimize`] - Root finding, minimization, least squares, linear programming
+//! - [`integrate`] - ODE solvers and numerical quadrature
 //!
 //! # Planned Modules
 //!
-//! - `optimize` (expand) - Multivariate minimization, least squares, linear programming
-//! - `integrate` - ODE/PDE solvers, numerical quadrature
 //! - `stats` - Distributions, hypothesis tests, regression
 //! - `spatial` - KDTree, distance metrics, geometric algorithms
 //! - `ndimage` - N-dimensional image processing
@@ -92,12 +91,18 @@
 //! let result = client.convolve(&signal, &kernel, ConvMode::Same).unwrap();
 //! ```
 
+pub mod integrate;
 pub mod interpolate;
 pub mod optimize;
 pub mod signal;
 pub mod window;
 
 // Re-export main types for convenience
+pub use integrate::{
+    GaussLegendreQuadrature, IntegrateError, IntegrateResult, ODEMethod, ODEOptions, ODEResult,
+    QuadOptions, QuadResult, RombergOptions, cumulative_trapezoid, fixed_quad, quad, romberg,
+    simpson, solve_ivp, trapezoid,
+};
 pub use interpolate::{
     Akima1DInterpolator, CubicSpline, ExtrapolateMode, Interp1d, InterpMethod, InterpNdMethod,
     PchipInterpolator, RegularGridInterpolator, SplineBoundary,
