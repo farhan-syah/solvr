@@ -31,10 +31,10 @@
 //! - [`interpolate`] - Interpolation methods (linear, cubic, splines)
 //! - [`optimize`] - Root finding, minimization, least squares, linear programming
 //! - [`integrate`] - ODE solvers and numerical quadrature
+//! - [`stats`] - Statistical distributions, hypothesis tests, descriptive stats
 //!
 //! # Planned Modules
 //!
-//! - `stats` - Distributions, hypothesis tests, regression
 //! - `spatial` - KDTree, distance metrics, geometric algorithms
 //! - `ndimage` - N-dimensional image processing
 //!
@@ -95,6 +95,7 @@ pub mod integrate;
 pub mod interpolate;
 pub mod optimize;
 pub mod signal;
+pub mod stats;
 pub mod window;
 
 // Re-export main types for convenience
@@ -109,6 +110,21 @@ pub use interpolate::{
 };
 pub use optimize::{OptimizeError, OptimizeResult, scalar::*};
 pub use signal::{ConvMode, SignalProcessingAlgorithms};
+pub use stats::{
+    // Runtime-generic trait for statistics operations
+    StatisticsAlgorithms,
+    // Result types for tensor operations
+    TensorDescriptiveStats, TensorTestResult, LinregressResult,
+    // Distribution traits
+    ContinuousDistribution, DiscreteDistribution, Distribution,
+    // Continuous distributions
+    Beta, Cauchy, ChiSquared, Exponential, FDistribution, Gamma, Gumbel, GumbelMin, Laplace,
+    LogNormal, Normal, Pareto, StudentT, Uniform, Weibull,
+    // Discrete distributions
+    Binomial, DiscreteUniform, Geometric, Hypergeometric, NegativeBinomial, Poisson,
+    // Errors
+    StatsError, StatsResult,
+};
 pub use window::WindowFunctions;
 
 // Re-export numr types that users will commonly need
