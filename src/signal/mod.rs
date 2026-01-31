@@ -1,4 +1,4 @@
-//! Signal processing algorithms
+//! Signal processing algorithms.
 //!
 //! This module provides signal processing operations including:
 //! - 1D and 2D convolution (FFT-based)
@@ -7,9 +7,27 @@
 //! - ISTFT (Inverse STFT)
 //! - Spectrogram
 //!
+//! # Runtime-Generic Architecture
+//!
+//! All operations are implemented generically over numr's `Runtime` trait.
+//! The same code works on CPU, CUDA, and WebGPU backends with **zero duplication**.
+//!
+//! ```text
+//! signal/
+//! ├── mod.rs          # Trait definition + validation
+//! ├── impl_generic/   # Generic implementations (written once)
+//! │   ├── convolution.rs
+//! │   ├── stft.rs
+//! │   ├── helpers.rs
+//! │   ├── padding.rs
+//! │   └── slice.rs
+//! ├── cpu/mod.rs      # Pure delegation (< 100 lines)
+//! ├── cuda.rs         # Pure delegation (< 100 lines)
+//! └── wgpu.rs         # Pure delegation (< 100 lines)
+//! ```
+//!
 //! # Backend Support
 //!
-//! All operations are implemented for:
 //! - CPU (F32, F64)
 //! - CUDA (F32, F64) - requires `cuda` feature
 //! - WebGPU (F32 only) - requires `wgpu` feature
@@ -36,7 +54,7 @@
 //! ```
 
 mod cpu;
-mod stft_core;
+mod impl_generic;
 
 #[cfg(feature = "cuda")]
 mod cuda;
@@ -54,26 +72,26 @@ use numr::tensor::Tensor;
 // Convolution Mode
 // ============================================================================
 
-/// Convolution output mode
+/// Convolution output mode.
 ///
 /// Determines the size and alignment of the convolution output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ConvMode {
-    /// Full convolution output
+    /// Full convolution output.
     ///
     /// Output length = N + M - 1, where N = signal length, M = kernel length.
     /// Contains all points where the kernel and signal overlap.
     #[default]
     Full,
 
-    /// Same-size output
+    /// Same-size output.
     ///
     /// Output length = max(N, M).
     /// Output is centered relative to the 'full' output.
     /// Matches scipy.signal.convolve behavior.
     Same,
 
-    /// Valid convolution output
+    /// Valid convolution output.
     ///
     /// Output length = max(N, M) - min(N, M) + 1.
     /// Contains only points where the kernel fits entirely within the signal.
@@ -81,7 +99,7 @@ pub enum ConvMode {
 }
 
 impl ConvMode {
-    /// Calculate output length for 1D convolution
+    /// Calculate output length for 1D convolution.
     pub fn output_len(&self, signal_len: usize, kernel_len: usize) -> usize {
         match self {
             ConvMode::Full => signal_len + kernel_len - 1,
@@ -98,7 +116,7 @@ impl ConvMode {
         }
     }
 
-    /// Calculate start offset for slicing full convolution result
+    /// Calculate start offset for slicing full convolution result.
     pub fn slice_start(&self, signal_len: usize, kernel_len: usize) -> usize {
         match self {
             ConvMode::Full => 0,
@@ -111,7 +129,7 @@ impl ConvMode {
         }
     }
 
-    /// Calculate 2D output shape
+    /// Calculate 2D output shape.
     pub fn output_shape_2d(
         &self,
         signal_shape: (usize, usize),
@@ -128,12 +146,12 @@ impl ConvMode {
 // Signal Processing Trait
 // ============================================================================
 
-/// Algorithmic contract for signal processing operations
+/// Algorithmic contract for signal processing operations.
 ///
 /// All backends implementing signal processing MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
 pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
-    /// 1D convolution using FFT
+    /// 1D convolution using FFT.
     ///
     /// # Arguments
     ///
@@ -147,7 +165,7 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
     fn convolve(&self, signal: &Tensor<R>, kernel: &Tensor<R>, mode: ConvMode)
     -> Result<Tensor<R>>;
 
-    /// 2D convolution using FFT
+    /// 2D convolution using FFT.
     ///
     /// # Arguments
     ///
@@ -161,7 +179,7 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
         mode: ConvMode,
     ) -> Result<Tensor<R>>;
 
-    /// 1D cross-correlation
+    /// 1D cross-correlation.
     ///
     /// Cross-correlation is related to convolution by:
     /// `correlate(x, y) = convolve(x, reverse(y))`
@@ -172,7 +190,7 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
         mode: ConvMode,
     ) -> Result<Tensor<R>>;
 
-    /// 2D cross-correlation
+    /// 2D cross-correlation.
     fn correlate2d(
         &self,
         signal: &Tensor<R>,
@@ -180,7 +198,7 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
         mode: ConvMode,
     ) -> Result<Tensor<R>>;
 
-    /// Short-Time Fourier Transform
+    /// Short-Time Fourier Transform.
     ///
     /// # Arguments
     ///
@@ -204,7 +222,7 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
         normalized: bool,
     ) -> Result<Tensor<R>>;
 
-    /// Inverse Short-Time Fourier Transform
+    /// Inverse Short-Time Fourier Transform.
     ///
     /// Reconstructs the time-domain signal from STFT output using overlap-add.
     fn istft(
@@ -217,7 +235,7 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
         normalized: bool,
     ) -> Result<Tensor<R>>;
 
-    /// Compute power spectrogram from signal
+    /// Compute power spectrogram from signal.
     ///
     /// A spectrogram is the magnitude of the STFT raised to a power.
     ///
@@ -242,7 +260,7 @@ pub trait SignalProcessingAlgorithms<R: Runtime>: FftAlgorithms<R> {
 // Validation Helpers
 // ============================================================================
 
-/// Validate signal dtype for convolution (must be F32 or F64)
+/// Validate signal dtype for convolution (must be F32 or F64).
 pub fn validate_signal_dtype(dtype: DType, op: &'static str) -> Result<()> {
     match dtype {
         DType::F32 | DType::F64 => Ok(()),
@@ -250,7 +268,7 @@ pub fn validate_signal_dtype(dtype: DType, op: &'static str) -> Result<()> {
     }
 }
 
-/// Validate that kernel is 1D
+/// Validate that kernel is 1D.
 pub fn validate_kernel_1d(kernel: &[usize], op: &'static str) -> Result<()> {
     if kernel.len() != 1 {
         return Err(Error::InvalidArgument {
@@ -261,7 +279,7 @@ pub fn validate_kernel_1d(kernel: &[usize], op: &'static str) -> Result<()> {
     Ok(())
 }
 
-/// Validate that kernel is 2D
+/// Validate that kernel is 2D.
 pub fn validate_kernel_2d(kernel: &[usize], op: &'static str) -> Result<()> {
     if kernel.len() != 2 {
         return Err(Error::InvalidArgument {
@@ -272,7 +290,7 @@ pub fn validate_kernel_2d(kernel: &[usize], op: &'static str) -> Result<()> {
     Ok(())
 }
 
-/// Validate STFT parameters
+/// Validate STFT parameters.
 pub fn validate_stft_params(n_fft: usize, hop_length: usize, op: &'static str) -> Result<()> {
     if n_fft == 0 || !n_fft.is_power_of_two() {
         return Err(Error::InvalidArgument {
@@ -289,13 +307,13 @@ pub fn validate_stft_params(n_fft: usize, hop_length: usize, op: &'static str) -
     Ok(())
 }
 
-/// Calculate next power of 2 >= n
+/// Calculate next power of 2 >= n.
 #[inline]
 pub fn next_power_of_two(n: usize) -> usize {
     n.next_power_of_two()
 }
 
-/// Calculate number of STFT frames
+/// Calculate number of STFT frames.
 pub fn stft_num_frames(signal_len: usize, n_fft: usize, hop_length: usize, center: bool) -> usize {
     let padded_len = if center {
         signal_len + n_fft
