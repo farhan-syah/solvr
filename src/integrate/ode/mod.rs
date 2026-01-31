@@ -31,9 +31,9 @@
 //! assert!((result.y.last().unwrap()[0] - (-5.0_f64).exp()).abs() < 1e-5);
 //! ```
 
-mod dop853;
+pub mod dop853;
 mod rk;
 mod types;
 
-pub use rk::{StepSizeController, solve_ivp};
+pub use rk::{StepSizeController, compute_error, compute_initial_step, solve_ivp};
 pub use types::{ODEMethod, ODEOptions, ODEResult, ODESolution};
