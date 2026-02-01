@@ -1,7 +1,7 @@
 //! CPU implementation of simplex linear programming.
 
-use crate::optimize::linprog::impl_generic::simplex_impl;
 use crate::optimize::linprog::impl_generic::TensorLinearConstraints;
+use crate::optimize::linprog::impl_generic::simplex_impl;
 use crate::optimize::linprog::{
     LinProgAlgorithms, LinProgOptions, LinProgTensorConstraints, LinProgTensorResult,
 };
@@ -25,9 +25,8 @@ impl LinProgAlgorithms<CpuRuntime> for CpuClient {
             upper_bounds: constraints.upper_bounds.clone(),
         };
 
-        let result = simplex_impl(self, c, &tensor_constraints, options).map_err(|e| {
-            numr::error::Error::backend_limitation("cpu", "linprog", e.to_string())
-        })?;
+        let result = simplex_impl(self, c, &tensor_constraints, options)
+            .map_err(|e| numr::error::Error::backend_limitation("cpu", "linprog", e.to_string()))?;
 
         Ok(LinProgTensorResult {
             x: result.x,
@@ -58,14 +57,12 @@ mod tests {
         //   x, y >= 0
         let c = Tensor::<CpuRuntime>::from_slice(&[-1.0, -2.0], &[2], &device);
 
-        let a_ub = Tensor::<CpuRuntime>::from_slice(
-            &[1.0, 1.0, 1.0, 0.0, 0.0, 1.0],
-            &[3, 2],
-            &device,
-        );
+        let a_ub =
+            Tensor::<CpuRuntime>::from_slice(&[1.0, 1.0, 1.0, 0.0, 0.0, 1.0], &[3, 2], &device);
         let b_ub = Tensor::<CpuRuntime>::from_slice(&[4.0, 2.0, 3.0], &[3], &device);
         let lower = Tensor::<CpuRuntime>::from_slice(&[0.0, 0.0], &[2], &device);
-        let upper = Tensor::<CpuRuntime>::from_slice(&[f64::INFINITY, f64::INFINITY], &[2], &device);
+        let upper =
+            Tensor::<CpuRuntime>::from_slice(&[f64::INFINITY, f64::INFINITY], &[2], &device);
 
         let constraints = LinProgTensorConstraints {
             a_ub: Some(a_ub),
@@ -96,7 +93,8 @@ mod tests {
         let a_eq = Tensor::<CpuRuntime>::from_slice(&[1.0, 1.0], &[1, 2], &device);
         let b_eq = Tensor::<CpuRuntime>::from_slice(&[2.0], &[1], &device);
         let lower = Tensor::<CpuRuntime>::from_slice(&[0.0, 0.0], &[2], &device);
-        let upper = Tensor::<CpuRuntime>::from_slice(&[f64::INFINITY, f64::INFINITY], &[2], &device);
+        let upper =
+            Tensor::<CpuRuntime>::from_slice(&[f64::INFINITY, f64::INFINITY], &[2], &device);
 
         let constraints = LinProgTensorConstraints {
             a_ub: None,

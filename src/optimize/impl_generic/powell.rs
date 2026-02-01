@@ -56,8 +56,7 @@ where
             let direction = extract_row(client, &directions, i)?;
 
             // Line search along this direction
-            let (x_new, fx_new, evals) =
-                line_search_tensor(client, &f, &x, &direction, fx)?;
+            let (x_new, fx_new, evals) = line_search_tensor(client, &f, &x, &direction, fx)?;
             nfev += evals;
 
             let decrease = fx - fx_new;
@@ -84,11 +83,12 @@ where
         }
 
         // Compute new direction: x - x_start
-        let new_direction = client
-            .sub(&x, &x_start)
-            .map_err(|e| OptimizeError::NumericalError {
-                message: format!("powell: new direction - {}", e),
-            })?;
+        let new_direction =
+            client
+                .sub(&x, &x_start)
+                .map_err(|e| OptimizeError::NumericalError {
+                    message: format!("powell: new direction - {}", e),
+                })?;
         let new_dir_norm =
             tensor_norm(client, &new_direction).map_err(|e| OptimizeError::NumericalError {
                 message: format!("powell: direction norm - {}", e),
@@ -96,7 +96,8 @@ where
 
         if new_dir_norm > SINGULAR_THRESHOLD {
             // Update direction set: shift directions and add new one
-            directions = update_direction_set(client, &directions, max_decrease_idx, &new_direction, n)?;
+            directions =
+                update_direction_set(client, &directions, max_decrease_idx, &new_direction, n)?;
         }
     }
 
@@ -157,12 +158,13 @@ where
     C: TensorOps<R> + RuntimeClient<R>,
 {
     // Reshape new_direction to [1, n] for concatenation
-    let new_dir_row = new_direction
-        .contiguous()
-        .unsqueeze(0)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("powell: unsqueeze new dir - {}", e),
-        })?;
+    let new_dir_row =
+        new_direction
+            .contiguous()
+            .unsqueeze(0)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("powell: unsqueeze new dir - {}", e),
+            })?;
 
     // Collect rows to keep (all except remove_idx)
     let mut rows_to_cat: Vec<Tensor<R>> = Vec::with_capacity(n);

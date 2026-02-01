@@ -64,18 +64,25 @@ pub use minimize::MinimizeOptions;
 
 // Re-export scalar optimization (1D) - these are inherently scalar, not tensor
 pub use scalar::{
-    MinimizeResult as ScalarMinResult, RootResult as ScalarRootResult,
-    ScalarOptions as ScalarOpts, bisect, brentq, minimize_scalar_bounded, minimize_scalar_brent,
-    minimize_scalar_golden, newton, ridder, secant,
+    MinimizeResult as ScalarMinResult, RootResult as ScalarRootResult, ScalarOptions as ScalarOpts,
+    bisect, brentq, minimize_scalar_bounded, minimize_scalar_brent, minimize_scalar_golden, newton,
+    ridder, secant,
 };
 
 // All modules fully migrated to tensor operations
 
 // Global optimization
-pub use global::{GlobalOptimizationAlgorithms, GlobalOptions, GlobalTensorResult};
+pub use global::{
+    BasinHoppingAlgorithms, BasinHoppingResult, DifferentialEvolutionAlgorithms,
+    DifferentialEvolutionResult, DualAnnealingAlgorithms, DualAnnealingResult, GlobalOptions,
+    SimulatedAnnealingAlgorithms, SimulatedAnnealingResult,
+};
 
 // Root finding (systems of nonlinear equations)
-pub use roots::{RootFindingAlgorithms, RootOptions, RootTensorResult};
+pub use roots::{
+    Broyden1Algorithms, LevenbergMarquardtAlgorithms, NewtonSystemAlgorithms, RootOptions,
+    RootTensorResult,
+};
 
 // Least squares optimization
 pub use least_squares::{LeastSquaresAlgorithms, LeastSquaresOptions, LeastSquaresTensorResult};

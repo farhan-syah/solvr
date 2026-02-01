@@ -71,21 +71,23 @@ where
             .map_err(|e| OptimizeError::NumericalError {
                 message: format!("bfgs: grad reshape - {}", e),
             })?;
-        let h_grad = client
-            .matmul(&h_inv, &grad_col)
-            .map_err(|e| OptimizeError::NumericalError {
-                message: format!("bfgs: h_inv @ grad - {}", e),
-            })?;
+        let h_grad =
+            client
+                .matmul(&h_inv, &grad_col)
+                .map_err(|e| OptimizeError::NumericalError {
+                    message: format!("bfgs: h_inv @ grad - {}", e),
+                })?;
         let h_grad_flat = h_grad
             .reshape(&[n])
             .map_err(|e| OptimizeError::NumericalError {
                 message: format!("bfgs: h_grad reshape - {}", e),
             })?;
-        let p = client
-            .mul_scalar(&h_grad_flat, -1.0)
-            .map_err(|e| OptimizeError::NumericalError {
-                message: format!("bfgs: negate direction - {}", e),
-            })?;
+        let p =
+            client
+                .mul_scalar(&h_grad_flat, -1.0)
+                .map_err(|e| OptimizeError::NumericalError {
+                    message: format!("bfgs: negate direction - {}", e),
+                })?;
 
         // Line search
         let (x_new, fx_new, evals) =
@@ -160,11 +162,12 @@ where
                 })?;
 
             // Compute s @ s.T (outer product)
-            let s_st = client
-                .matmul(&s_col, &s_row)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("bfgs: s @ s.T - {}", e),
-                })?;
+            let s_st =
+                client
+                    .matmul(&s_col, &s_row)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("bfgs: s @ s.T - {}", e),
+                    })?;
 
             // Compute H_inv @ y (as column vector)
             let h_y = client
@@ -175,21 +178,22 @@ where
 
             // Compute y.T @ H_inv @ y
             let y_row_h = y_row.clone();
-            let yhy = {
-                let yt_h = client
-                    .matmul(&y_row_h, &h_inv)
-                    .map_err(|e| OptimizeError::NumericalError {
-                        message: format!("bfgs: y.T @ H_inv - {}", e),
+            let yhy =
+                {
+                    let yt_h = client.matmul(&y_row_h, &h_inv).map_err(|e| {
+                        OptimizeError::NumericalError {
+                            message: format!("bfgs: y.T @ H_inv - {}", e),
+                        }
                     })?;
-                let yt_h_y = client
-                    .matmul(&yt_h, &y_col)
-                    .map_err(|e| OptimizeError::NumericalError {
-                        message: format!("bfgs: y.T @ H_inv @ y - {}", e),
+                    let yt_h_y = client.matmul(&yt_h, &y_col).map_err(|e| {
+                        OptimizeError::NumericalError {
+                            message: format!("bfgs: y.T @ H_inv @ y - {}", e),
+                        }
                     })?;
-                // yt_h_y is [1,1], extract scalar
-                let vals: Vec<f64> = yt_h_y.to_vec();
-                vals[0]
-            };
+                    // yt_h_y is [1,1], extract scalar
+                    let vals: Vec<f64> = yt_h_y.to_vec();
+                    vals[0]
+                };
 
             // BFGS update formula (Sherman-Morrison variant):
             // H_inv_new = H_inv + rho * (1 + rho * y.T @ H_inv @ y) * s @ s.T
@@ -205,11 +209,12 @@ where
                 })?;
 
             // s @ h_y.T
-            let s_hyt = client
-                .matmul(&s_col, &h_y_row)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("bfgs: s @ h_y.T - {}", e),
-                })?;
+            let s_hyt =
+                client
+                    .matmul(&s_col, &h_y_row)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("bfgs: s @ h_y.T - {}", e),
+                    })?;
 
             // h_y @ s.T
             let hy_st = client
@@ -220,35 +225,40 @@ where
 
             // term1 = rho * (1 + rho * yHy) * s @ s.T
             let coeff1 = rho * (1.0 + rho * yhy);
-            let term1 = client
-                .mul_scalar(&s_st, coeff1)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("bfgs: term1 - {}", e),
-                })?;
+            let term1 =
+                client
+                    .mul_scalar(&s_st, coeff1)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("bfgs: term1 - {}", e),
+                    })?;
 
             // term2 = rho * (s @ h_y.T + h_y @ s.T)
-            let sum_outer = client
-                .add(&s_hyt, &hy_st)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("bfgs: s_hyt + hy_st - {}", e),
-                })?;
-            let term2 = client
-                .mul_scalar(&sum_outer, rho)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("bfgs: term2 - {}", e),
-                })?;
+            let sum_outer =
+                client
+                    .add(&s_hyt, &hy_st)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("bfgs: s_hyt + hy_st - {}", e),
+                    })?;
+            let term2 =
+                client
+                    .mul_scalar(&sum_outer, rho)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("bfgs: term2 - {}", e),
+                    })?;
 
             // H_inv_new = H_inv + term1 - term2
-            let h_plus_term1 = client
-                .add(&h_inv, &term1)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("bfgs: H + term1 - {}", e),
-                })?;
-            h_inv = client
-                .sub(&h_plus_term1, &term2)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("bfgs: H + term1 - term2 - {}", e),
-                })?;
+            let h_plus_term1 =
+                client
+                    .add(&h_inv, &term1)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("bfgs: H + term1 - {}", e),
+                    })?;
+            h_inv =
+                client
+                    .sub(&h_plus_term1, &term2)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("bfgs: H + term1 - term2 - {}", e),
+                    })?;
         }
 
         x = x_new;

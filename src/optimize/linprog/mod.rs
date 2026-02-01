@@ -19,9 +19,9 @@
 //! └── wgpu/               # WebGPU implementations
 //! ```
 
-mod traits;
-mod impl_generic;
 mod cpu;
+mod impl_generic;
+mod traits;
 
 #[cfg(feature = "cuda")]
 mod cuda;

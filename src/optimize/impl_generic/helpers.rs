@@ -102,11 +102,12 @@ where
 
     for _ in 0..20 {
         // x_new = x + alpha * direction (all on device)
-        let scaled_dir = client
-            .mul_scalar(direction, alpha)
-            .map_err(|e| OptimizeError::NumericalError {
-                message: format!("powell line_search: scale - {}", e),
-            })?;
+        let scaled_dir =
+            client
+                .mul_scalar(direction, alpha)
+                .map_err(|e| OptimizeError::NumericalError {
+                    message: format!("powell line_search: scale - {}", e),
+                })?;
         let x_new = client
             .add(x, &scaled_dir)
             .map_err(|e| OptimizeError::NumericalError {

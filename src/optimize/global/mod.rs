@@ -5,17 +5,17 @@
 //!
 //! All algorithms use tensor operations and are generic over `R: Runtime`.
 
-mod cpu;
+pub mod cpu;
+pub mod impl_generic;
+mod traits;
 
 #[cfg(feature = "cuda")]
-mod cuda;
+pub mod cuda;
 
 #[cfg(feature = "wgpu")]
-mod wgpu;
+pub mod wgpu;
 
-use numr::error::Result;
-use numr::runtime::Runtime;
-use numr::tensor::Tensor;
+pub use traits::*;
 
 /// Options for global optimization.
 #[derive(Debug, Clone)]
@@ -38,78 +38,14 @@ impl Default for GlobalOptions {
     }
 }
 
-/// Result from tensor-based global optimization.
-#[derive(Debug, Clone)]
-pub struct GlobalTensorResult<R: Runtime> {
-    pub x: Tensor<R>,
-    pub fun: f64,
-    pub iterations: usize,
-    pub nfev: usize,
-    pub converged: bool,
-}
-
-/// Algorithmic contract for global optimization operations.
-pub trait GlobalOptimizationAlgorithms<R: Runtime> {
-    /// Simulated annealing global optimizer.
-    ///
-    /// Uses probabilistic acceptance of worse solutions to escape local minima.
-    fn simulated_annealing<F>(
-        &self,
-        f: F,
-        lower_bounds: &Tensor<R>,
-        upper_bounds: &Tensor<R>,
-        options: &GlobalOptions,
-    ) -> Result<GlobalTensorResult<R>>
-    where
-        F: Fn(&Tensor<R>) -> Result<f64>;
-
-    /// Differential Evolution global optimizer.
-    ///
-    /// Population-based optimizer using mutation, crossover, and selection.
-    fn differential_evolution<F>(
-        &self,
-        f: F,
-        lower_bounds: &Tensor<R>,
-        upper_bounds: &Tensor<R>,
-        options: &GlobalOptions,
-    ) -> Result<GlobalTensorResult<R>>
-    where
-        F: Fn(&Tensor<R>) -> Result<f64>;
-
-    /// Basin-hopping global optimizer.
-    ///
-    /// Combines local minimization with random perturbations to escape local minima.
-    fn basinhopping<F>(
-        &self,
-        f: F,
-        x0: &Tensor<R>,
-        lower_bounds: &Tensor<R>,
-        upper_bounds: &Tensor<R>,
-        options: &GlobalOptions,
-    ) -> Result<GlobalTensorResult<R>>
-    where
-        F: Fn(&Tensor<R>) -> Result<f64>;
-
-    /// Dual annealing global optimizer.
-    ///
-    /// Combines simulated annealing with local search for smooth functions.
-    fn dual_annealing<F>(
-        &self,
-        f: F,
-        lower_bounds: &Tensor<R>,
-        upper_bounds: &Tensor<R>,
-        options: &GlobalOptions,
-    ) -> Result<GlobalTensorResult<R>>
-    where
-        F: Fn(&Tensor<R>) -> Result<f64>;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use numr::error::Result;
     use numr::runtime::cpu::{CpuClient, CpuDevice, CpuRuntime};
+    use numr::tensor::Tensor;
 
-    fn sphere_tensor<R: Runtime>(x: &Tensor<R>) -> Result<f64> {
+    fn sphere_tensor(x: &Tensor<CpuRuntime>) -> Result<f64> {
         let data: Vec<f64> = x.to_vec();
         Ok(data.iter().map(|&xi| xi * xi).sum())
     }

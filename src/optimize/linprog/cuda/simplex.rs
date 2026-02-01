@@ -1,7 +1,7 @@
 //! CUDA implementation of simplex linear programming.
 
-use crate::optimize::linprog::impl_generic::simplex_impl;
 use crate::optimize::linprog::impl_generic::TensorLinearConstraints;
+use crate::optimize::linprog::impl_generic::simplex_impl;
 use crate::optimize::linprog::{
     LinProgAlgorithms, LinProgOptions, LinProgTensorConstraints, LinProgTensorResult,
 };

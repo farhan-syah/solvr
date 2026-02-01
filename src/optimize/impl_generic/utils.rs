@@ -69,10 +69,7 @@ where
 
     for i in 0..n {
         // Extract row i as delta vector using narrow
-        let delta = eps_identity
-            .narrow(0, i, 1)?
-            .contiguous()
-            .reshape(&[n])?;
+        let delta = eps_identity.narrow(0, i, 1)?.contiguous().reshape(&[n])?;
 
         // x_plus = x + delta (tensor addition on device)
         let x_plus = client.add(x, &delta)?;

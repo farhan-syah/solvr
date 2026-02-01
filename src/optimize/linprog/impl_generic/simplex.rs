@@ -123,11 +123,23 @@ where
 
     loop {
         if nit >= options.max_iter {
-            return make_result(client, &tableau, &basis, n_orig, n_ub, n_cols, &c_data, nit, false, "Maximum iterations reached");
+            return make_result(
+                client,
+                &tableau,
+                &basis,
+                n_orig,
+                n_ub,
+                n_cols,
+                &c_data,
+                nit,
+                false,
+                "Maximum iterations reached",
+            );
         }
 
         // Find pivot column (most negative reduced cost in objective row)
-        let pivot_col = find_pivot_column_tensor(client, &tableau, n_constraints, n_total, options.tol)?;
+        let pivot_col =
+            find_pivot_column_tensor(client, &tableau, n_constraints, n_total, options.tol)?;
 
         let pivot_col = match pivot_col {
             Some(col) => col,
@@ -135,12 +147,30 @@ where
         };
 
         // Find pivot row (minimum ratio test)
-        let pivot_row = find_pivot_row_tensor(client, &tableau, pivot_col, n_constraints, n_cols, options.tol)?;
+        let pivot_row = find_pivot_row_tensor(
+            client,
+            &tableau,
+            pivot_col,
+            n_constraints,
+            n_cols,
+            options.tol,
+        )?;
 
         let pivot_row = match pivot_row {
             Some(row) => row,
             None => {
-                return make_result(client, &tableau, &basis, n_orig, n_ub, n_cols, &c_data, nit, false, "Problem is unbounded");
+                return make_result(
+                    client,
+                    &tableau,
+                    &basis,
+                    n_orig,
+                    n_ub,
+                    n_cols,
+                    &c_data,
+                    nit,
+                    false,
+                    "Problem is unbounded",
+                );
             }
         };
 
@@ -152,10 +182,32 @@ where
 
     // Check feasibility (artificial variables should be zero)
     if !check_feasibility(&tableau, &basis, n_orig, n_slack, n_cols, options.tol) {
-        return make_result(client, &tableau, &basis, n_orig, n_ub, n_cols, &c_data, nit, false, "Problem is infeasible");
+        return make_result(
+            client,
+            &tableau,
+            &basis,
+            n_orig,
+            n_ub,
+            n_cols,
+            &c_data,
+            nit,
+            false,
+            "Problem is infeasible",
+        );
     }
 
-    make_result(client, &tableau, &basis, n_orig, n_ub, n_cols, &c_data, nit, true, "Optimal solution found")
+    make_result(
+        client,
+        &tableau,
+        &basis,
+        n_orig,
+        n_ub,
+        n_cols,
+        &c_data,
+        nit,
+        true,
+        "Optimal solution found",
+    )
 }
 
 /// Extract bounds from constraints, defaulting to [0, inf).
@@ -355,11 +407,12 @@ where
         })?;
 
     // Use tensor argmin to find the minimum - stays on device
-    let min_idx_tensor = client
-        .argmin(&obj_row, 0, false)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("pivot_column: argmin - {}", e),
-        })?;
+    let min_idx_tensor =
+        client
+            .argmin(&obj_row, 0, false)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("pivot_column: argmin - {}", e),
+            })?;
 
     // Extract scalar index (single value, acceptable for control flow)
     let min_idx_data: Vec<i64> = min_idx_tensor.to_vec();
@@ -437,14 +490,18 @@ where
         })?;
 
     // Create mask: col > tol (positive pivot column elements)
-    let mask = client.gt(&col, &tol_tensor).map_err(|e| OptimizeError::NumericalError {
-        message: format!("pivot_row: gt comparison - {}", e),
-    })?;
+    let mask = client
+        .gt(&col, &tol_tensor)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("pivot_row: gt comparison - {}", e),
+        })?;
 
     // Compute ratios: rhs / col (will have invalid values where col <= tol)
-    let ratios = client.div(&rhs, &col).map_err(|e| OptimizeError::NumericalError {
-        message: format!("pivot_row: compute ratios - {}", e),
-    })?;
+    let ratios = client
+        .div(&rhs, &col)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("pivot_row: compute ratios - {}", e),
+        })?;
 
     // Create infinity tensor for invalid ratios
     let infinity = client
@@ -454,19 +511,19 @@ where
         })?;
 
     // Apply where_cond: valid_ratios = where(col > tol, ratio, infinity)
-    let valid_ratios =
-        client
-            .where_cond(&mask, &ratios, &infinity)
-            .map_err(|e| OptimizeError::NumericalError {
-                message: format!("pivot_row: where_cond - {}", e),
-            })?;
-
-    // Find argmin of valid_ratios
-    let min_idx_tensor = client.argmin(&valid_ratios, 0, false).map_err(|e| {
+    let valid_ratios = client.where_cond(&mask, &ratios, &infinity).map_err(|e| {
         OptimizeError::NumericalError {
-            message: format!("pivot_row: argmin - {}", e),
+            message: format!("pivot_row: where_cond - {}", e),
         }
     })?;
+
+    // Find argmin of valid_ratios
+    let min_idx_tensor =
+        client
+            .argmin(&valid_ratios, 0, false)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("pivot_row: argmin - {}", e),
+            })?;
 
     // Extract scalar index for control flow
     let min_idx_data: Vec<i64> = min_idx_tensor.to_vec();

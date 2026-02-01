@@ -124,11 +124,12 @@ where
         };
 
         // New search direction: p = -grad_new + beta * p
-        let neg_grad_new = client
-            .mul_scalar(&grad_new, -1.0)
-            .map_err(|e| OptimizeError::NumericalError {
-                message: format!("cg: neg grad new - {}", e),
-            })?;
+        let neg_grad_new =
+            client
+                .mul_scalar(&grad_new, -1.0)
+                .map_err(|e| OptimizeError::NumericalError {
+                    message: format!("cg: neg grad new - {}", e),
+                })?;
         let beta_p = client
             .mul_scalar(&p, beta)
             .map_err(|e| OptimizeError::NumericalError {

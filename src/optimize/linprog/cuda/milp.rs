@@ -1,6 +1,8 @@
 //! CUDA implementation of mixed-integer linear programming.
 
-use crate::optimize::linprog::impl_generic::{milp_impl, MilpOptionsInternal, TensorLinearConstraints};
+use crate::optimize::linprog::impl_generic::{
+    MilpOptionsInternal, TensorLinearConstraints, milp_impl,
+};
 use crate::optimize::linprog::{
     LinProgOptions, LinProgTensorConstraints, MilpAlgorithms, MilpOptions, MilpTensorResult,
 };
@@ -35,8 +37,14 @@ impl MilpAlgorithms<CudaRuntime> for CudaClient {
             lp_options: options.lp_options.clone(),
         };
 
-        let result = milp_impl(self, c, &internal_constraints, integrality, &internal_options)
-            .map_err(|e| numr::error::Error::backend_limitation("cuda", "milp", e.to_string()))?;
+        let result = milp_impl(
+            self,
+            c,
+            &internal_constraints,
+            integrality,
+            &internal_options,
+        )
+        .map_err(|e| numr::error::Error::backend_limitation("cuda", "milp", e.to_string()))?;
 
         Ok(MilpTensorResult {
             x: result.x,

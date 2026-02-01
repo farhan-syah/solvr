@@ -48,7 +48,9 @@ pub struct MilpTensorResult<R: Runtime> {
 }
 
 /// Algorithmic contract for mixed-integer linear programming.
-pub trait MilpAlgorithms<R: Runtime>: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R> {
+pub trait MilpAlgorithms<R: Runtime>:
+    TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>
+{
     /// Solve a mixed-integer linear programming problem using branch-and-bound.
     ///
     /// # Arguments

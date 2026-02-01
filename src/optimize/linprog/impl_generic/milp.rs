@@ -1,6 +1,6 @@
 //! Tensor-based mixed-integer linear programming via branch-and-bound.
 
-use super::{simplex_impl, TensorLinProgResult, TensorLinearConstraints};
+use super::{TensorLinProgResult, TensorLinearConstraints, simplex_impl};
 use crate::optimize::error::{OptimizeError, OptimizeResult};
 use crate::optimize::linprog::LinProgOptions;
 use numr::ops::{CompareOps, ScalarOps, TensorOps};

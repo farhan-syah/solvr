@@ -1,7 +1,7 @@
 //! CUDA implementations for linear programming algorithms.
 
-mod simplex;
 mod milp;
+mod simplex;
 
-pub use simplex::*;
 pub use milp::*;
+pub use simplex::*;

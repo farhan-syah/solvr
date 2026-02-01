@@ -10,13 +10,33 @@
 //!
 //! ```text
 //! roots/
-//! ├── mod.rs    # Trait definition + types (exports only)
-//! ├── cpu.rs    # CPU impl + scalar convenience functions
-//! ├── cuda.rs   # CUDA impl (pure delegation)
-//! └── wgpu.rs   # WebGPU impl (pure delegation)
+//! ├── mod.rs                # Exports only (pub mod + pub use)
+//! ├── traits/
+//! │   ├── mod.rs            # Exports only
+//! │   ├── newton.rs         # NewtonSystemAlgorithms trait
+//! │   ├── broyden.rs        # Broyden1Algorithms trait
+//! │   └── levenberg_marquardt.rs # LevenbergMarquardtAlgorithms trait
+//! ├── impl_generic/
+//! │   ├── mod.rs            # Exports + TensorRootResult
+//! │   ├── newton.rs         # newton_system_impl()
+//! │   ├── broyden.rs        # broyden1_impl()
+//! │   └── levenberg_marquardt.rs # levenberg_marquardt_impl()
+//! ├── cpu/
+//! │   ├── mod.rs            # Exports only
+//! │   ├── newton.rs         # CpuClient impl for NewtonSystemAlgorithms
+//! │   ├── broyden.rs        # CpuClient impl for Broyden1Algorithms
+//! │   └── levenberg_marquardt.rs # CpuClient impl for LevenbergMarquardtAlgorithms
+//! ├── cuda/
+//! │   ├── mod.rs            # Exports only (feature-gated)
+//! │   ├── newton.rs         # CudaClient impl
+//! │   ├── broyden.rs        # CudaClient impl
+//! │   └── levenberg_marquardt.rs # CudaClient impl
+//! └── wgpu/
+//!     ├── mod.rs            # Exports only (feature-gated)
+//!     ├── newton.rs         # WgpuClient impl
+//!     ├── broyden.rs        # WgpuClient impl
+//!     └── levenberg_marquardt.rs # WgpuClient impl
 //! ```
-//!
-//! Generic implementations live in `optimize/impl_generic/roots/`.
 
 mod cpu;
 
@@ -26,9 +46,17 @@ mod cuda;
 #[cfg(feature = "wgpu")]
 mod wgpu;
 
-use numr::error::Result;
-use numr::runtime::Runtime;
-use numr::tensor::Tensor;
+pub mod impl_generic;
+pub mod traits;
+
+// Re-export traits
+pub use traits::{Broyden1Algorithms, LevenbergMarquardtAlgorithms, NewtonSystemAlgorithms};
+
+// Re-export result type from impl_generic
+pub use impl_generic::TensorRootResult;
+
+/// Alias for TensorRootResult for convenience
+pub type RootTensorResult<R> = TensorRootResult<R>;
 
 /// Options for multivariate root finding.
 #[derive(Debug, Clone)]
@@ -52,64 +80,6 @@ impl Default for RootOptions {
             eps: 1e-8,
         }
     }
-}
-
-/// Algorithmic contract for root finding operations.
-///
-/// All backends implementing root finding MUST implement this trait using
-/// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait RootFindingAlgorithms<R: Runtime> {
-    /// Newton's method for systems of nonlinear equations.
-    ///
-    /// Uses finite differences to approximate the Jacobian.
-    fn newton_system<F>(
-        &self,
-        f: F,
-        x0: &Tensor<R>,
-        options: &RootOptions,
-    ) -> Result<RootTensorResult<R>>
-    where
-        F: Fn(&Tensor<R>) -> Result<Tensor<R>>;
-
-    /// Broyden's method (rank-1 update) for systems of nonlinear equations.
-    ///
-    /// A quasi-Newton method that approximates the Jacobian using rank-1 updates.
-    fn broyden1<F>(
-        &self,
-        f: F,
-        x0: &Tensor<R>,
-        options: &RootOptions,
-    ) -> Result<RootTensorResult<R>>
-    where
-        F: Fn(&Tensor<R>) -> Result<Tensor<R>>;
-
-    /// Levenberg-Marquardt algorithm for systems of nonlinear equations.
-    ///
-    /// A damped Newton method that interpolates between Newton's method and
-    /// gradient descent. More robust when initial guess is far from solution.
-    fn levenberg_marquardt<F>(
-        &self,
-        f: F,
-        x0: &Tensor<R>,
-        options: &RootOptions,
-    ) -> Result<RootTensorResult<R>>
-    where
-        F: Fn(&Tensor<R>) -> Result<Tensor<R>>;
-}
-
-/// Result from tensor-based root finding.
-#[derive(Debug, Clone)]
-pub struct RootTensorResult<R: Runtime> {
-    /// The root found
-    pub x: Tensor<R>,
-    /// Function value at root
-    pub fun: Tensor<R>,
-    /// Number of iterations used
-    pub iterations: usize,
-    /// Norm of the residual
-    pub residual_norm: f64,
-    /// Whether the method converged
-    pub converged: bool,
 }
 
 #[cfg(test)]

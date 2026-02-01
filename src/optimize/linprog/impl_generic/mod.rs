@@ -1,10 +1,10 @@
 //! Generic implementations for linear programming algorithms.
 
-mod simplex;
 mod milp;
+mod simplex;
 
-pub use simplex::{simplex_impl, TensorLinProgResult};
-pub use milp::{milp_impl, MilpOptionsInternal};
+pub use milp::{MilpOptionsInternal, milp_impl};
+pub use simplex::{TensorLinProgResult, simplex_impl};
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;

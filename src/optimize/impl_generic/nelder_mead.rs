@@ -160,21 +160,24 @@ where
         let best = &vertices[best_idx].clone();
         for &idx in &indices[1..=n] {
             // new_vertex = best + sigma * (vertex - best)
-            let diff = client
-                .sub(&vertices[idx], best)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("nelder_mead: shrink diff - {}", e),
-                })?;
-            let scaled = client
-                .mul_scalar(&diff, sigma)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("nelder_mead: shrink scale - {}", e),
-                })?;
-            vertices[idx] = client
-                .add(best, &scaled)
-                .map_err(|e| OptimizeError::NumericalError {
-                    message: format!("nelder_mead: shrink add - {}", e),
-                })?;
+            let diff =
+                client
+                    .sub(&vertices[idx], best)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("nelder_mead: shrink diff - {}", e),
+                    })?;
+            let scaled =
+                client
+                    .mul_scalar(&diff, sigma)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("nelder_mead: shrink scale - {}", e),
+                    })?;
+            vertices[idx] =
+                client
+                    .add(best, &scaled)
+                    .map_err(|e| OptimizeError::NumericalError {
+                        message: format!("nelder_mead: shrink add - {}", e),
+                    })?;
             f_values[idx] = f(&vertices[idx]).map_err(|e| OptimizeError::NumericalError {
                 message: format!("nelder_mead: shrink eval - {}", e),
             })?;
@@ -203,21 +206,15 @@ where
 ///
 /// Returns a [n+1, n] tensor where row 0 is x0 and rows 1..n+1 are perturbations.
 /// No to_vec()/from_slice() - all computation stays on device.
-fn initialize_simplex<R, C>(
-    client: &C,
-    x0: &Tensor<R>,
-    n: usize,
-) -> OptimizeResult<Tensor<R>>
+fn initialize_simplex<R, C>(client: &C, x0: &Tensor<R>, n: usize) -> OptimizeResult<Tensor<R>>
 where
     R: Runtime,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     // Compute deltas: if |x0[j]| > threshold then 0.05*x0[j] else 0.00025
-    let abs_x0 = client
-        .abs(x0)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("nelder_mead: abs x0 - {}", e),
-        })?;
+    let abs_x0 = client.abs(x0).map_err(|e| OptimizeError::NumericalError {
+        message: format!("nelder_mead: abs x0 - {}", e),
+    })?;
 
     let threshold_tensor = client
         .fill(&[n], SINGULAR_THRESHOLD, DType::F64)
@@ -226,11 +223,12 @@ where
         })?;
 
     // Mask: where |x0| > threshold (returns F64 0.0/1.0)
-    let mask_f64 = client
-        .gt(&abs_x0, &threshold_tensor)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("nelder_mead: gt comparison - {}", e),
-        })?;
+    let mask_f64 =
+        client
+            .gt(&abs_x0, &threshold_tensor)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("nelder_mead: gt comparison - {}", e),
+            })?;
 
     // Cast to U8 for where_cond
     let mask = client
@@ -247,11 +245,12 @@ where
         })?;
 
     // Small delta = constant 0.00025
-    let small_delta = client
-        .fill(&[n], 0.00025, DType::F64)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("nelder_mead: small delta - {}", e),
-        })?;
+    let small_delta =
+        client
+            .fill(&[n], 0.00025, DType::F64)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("nelder_mead: small delta - {}", e),
+            })?;
 
     // deltas = where(|x0| > threshold, 0.05*x0, 0.00025)
     let deltas = client
@@ -279,11 +278,12 @@ where
         })?;
 
     // Diagonal perturbation matrix: identity * deltas (element-wise)
-    let perturbation = client
-        .mul(&identity, &deltas_broadcast)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("nelder_mead: perturbation matrix - {}", e),
-        })?;
+    let perturbation =
+        client
+            .mul(&identity, &deltas_broadcast)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("nelder_mead: perturbation matrix - {}", e),
+            })?;
 
     // Broadcast x0 to [n, n] - each row is x0
     let x0_broadcast = x0
@@ -297,11 +297,12 @@ where
         })?;
 
     // Perturbed vertices: x0 + perturbation (each row is x0 with one element perturbed)
-    let perturbed = client
-        .add(&x0_broadcast, &perturbation)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("nelder_mead: perturbed vertices - {}", e),
-        })?;
+    let perturbed =
+        client
+            .add(&x0_broadcast, &perturbation)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("nelder_mead: perturbed vertices - {}", e),
+            })?;
 
     // Make x0 contiguous and reshape to [1, n] for concatenation
     let x0_row = x0
