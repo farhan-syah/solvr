@@ -1,7 +1,8 @@
 //! Ordinary differential equation (ODE) solvers.
 //!
-//! This module provides methods for solving initial value problems (IVPs)
-//! of the form dy/dt = f(t, y), y(t0) = y0.
+//! This module provides types for configuring ODE solvers. The actual
+//! implementations use tensor operations and are available via the
+//! [`IntegrationAlgorithms`](crate::integrate::IntegrationAlgorithms) trait.
 //!
 //! # Available Methods
 //!
@@ -13,27 +14,30 @@
 //!
 //! # Usage
 //!
-//! Use [`solve_ivp`] as the main entry point. It provides a unified interface
-//! to all ODE solving methods.
+//! Use the `solve_ivp` method on a client implementing `IntegrationAlgorithms`:
 //!
 //! ```ignore
-//! use solvr::integrate::{solve_ivp, ODEMethod, ODEOptions};
+//! use solvr::integrate::{IntegrationAlgorithms, ODEOptions};
+//! use numr::runtime::cpu::{CpuClient, CpuDevice};
+//! use numr::tensor::Tensor;
+//!
+//! let device = CpuDevice::new();
+//! let client = CpuClient::new(device.clone());
 //!
 //! // Solve dy/dt = -y, y(0) = 1
-//! let result = solve_ivp(
-//!     |_t, y| vec![-y[0]],  // RHS function
-//!     [0.0, 5.0],           // time span
-//!     &[1.0],               // initial condition
+//! let y0 = Tensor::from_slice(&[1.0], &[1], &device);
+//! let result = client.solve_ivp(
+//!     |_t, y| client.mul_scalar(y, -1.0),
+//!     [0.0, 5.0],
+//!     &y0,
 //!     &ODEOptions::default(),
 //! )?;
 //!
 //! // y(5) ≈ exp(-5) ≈ 0.00674
-//! assert!((result.y.last().unwrap()[0] - (-5.0_f64).exp()).abs() < 1e-5);
+//! let y_final = result.y_final_vec();
+//! assert!((y_final[0] - (-5.0_f64).exp()).abs() < 1e-5);
 //! ```
 
-pub mod dop853;
-mod rk;
 mod types;
 
-pub use rk::{StepSizeController, compute_error, compute_initial_step, solve_ivp};
-pub use types::{ODEMethod, ODEOptions, ODEResult, ODESolution};
+pub use types::{ODEMethod, ODEOptions};

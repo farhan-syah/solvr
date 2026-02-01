@@ -133,6 +133,7 @@ impl StepSizeController {
 /// Compute initial step size using the algorithm from Hairer & Wanner.
 ///
 /// Uses tensor operations - data stays on device.
+#[allow(clippy::too_many_arguments)]
 pub fn compute_initial_step_tensor<R, C, F>(
     client: &C,
     f: &F,

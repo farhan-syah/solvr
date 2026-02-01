@@ -60,11 +60,11 @@ use numr::tensor::Tensor;
 // Re-export error types
 pub use error::{IntegrateError, IntegrateResult};
 
-// Re-export ODE types and functions
-pub use ode::{ODEMethod, ODEOptions, ODEResult, ODESolution, StepSizeController, solve_ivp};
+// Re-export ODE types
+pub use ode::{ODEMethod, ODEOptions};
 
-// Re-export tensor-based ODE types
-pub use impl_generic::ode::{ODEResultTensor, solve_ivp_impl};
+// Re-export tensor-based ODE types and functions
+pub use impl_generic::ode::{ODEResultTensor, StepSizeController, solve_ivp_impl};
 
 /// Options for adaptive quadrature.
 #[derive(Debug, Clone)]
