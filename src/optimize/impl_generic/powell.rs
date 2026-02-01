@@ -1,5 +1,6 @@
 //! Powell's method for multivariate minimization.
 
+use numr::dtype::DType;
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -108,35 +109,33 @@ where
     })
 }
 
-/// Create an n x n identity matrix as a tensor.
+/// Create an n x n identity matrix using tensor ops.
 fn create_identity_matrix<R, C>(client: &C, n: usize) -> OptimizeResult<Tensor<R>>
-where
-    R: Runtime,
-    C: RuntimeClient<R>,
-{
-    let mut data = vec![0.0f64; n * n];
-    for i in 0..n {
-        data[i * n + i] = 1.0;
-    }
-    Ok(Tensor::<R>::from_slice(&data, &[n, n], client.device()))
-}
-
-/// Extract row i from a 2D tensor as a 1D tensor.
-fn extract_row<R, C>(client: &C, matrix: &Tensor<R>, row: usize) -> OptimizeResult<Tensor<R>>
 where
     R: Runtime,
     C: TensorOps<R> + RuntimeClient<R>,
 {
-    let n = matrix.shape()[1];
-    // Create index tensor for the row
-    let indices = Tensor::<R>::from_slice(&[row as i64], &[1], client.device());
-    let row_2d = client
-        .index_select(matrix, 0, &indices)
+    client
+        .eye(n, None, DType::F64)
         .map_err(|e| OptimizeError::NumericalError {
-            message: format!("powell: extract row - {}", e),
-        })?;
-    // Reshape from [1, n] to [n]
-    row_2d
+            message: format!("powell: create identity - {}", e),
+        })
+}
+
+/// Extract row i from a 2D tensor as a 1D tensor using narrow().
+fn extract_row<R, C>(_client: &C, matrix: &Tensor<R>, row: usize) -> OptimizeResult<Tensor<R>>
+where
+    R: Runtime,
+    C: RuntimeClient<R>,
+{
+    let n = matrix.shape()[1];
+    // Use narrow instead of index_select to avoid from_slice
+    matrix
+        .narrow(0, row, 1)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("powell: narrow row - {}", e),
+        })?
+        .contiguous()
         .reshape(&[n])
         .map_err(|e| OptimizeError::NumericalError {
             message: format!("powell: reshape row - {}", e),
@@ -145,8 +144,7 @@ where
 
 /// Update direction set by removing direction at idx and adding new_direction at the end.
 ///
-/// This implements the Powell direction update: remove the direction that gave
-/// the maximum decrease and append the new extrapolated direction.
+/// Uses tensor ops (narrow, cat) to stay on device.
 fn update_direction_set<R, C>(
     client: &C,
     directions: &Tensor<R>,
@@ -158,23 +156,38 @@ where
     R: Runtime,
     C: TensorOps<R> + RuntimeClient<R>,
 {
-    // For simplicity, we reconstruct the matrix
-    // This is acceptable as direction update is O(n²) anyway and done once per iteration
-    let dir_data: Vec<f64> = directions.to_vec();
-    let new_dir_data: Vec<f64> = new_direction.to_vec();
+    // Reshape new_direction to [1, n] for concatenation
+    let new_dir_row = new_direction
+        .contiguous()
+        .unsqueeze(0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("powell: unsqueeze new dir - {}", e),
+        })?;
 
-    let mut new_data = Vec::with_capacity(n * n);
+    // Collect rows to keep (all except remove_idx)
+    let mut rows_to_cat: Vec<Tensor<R>> = Vec::with_capacity(n);
 
-    // Copy all rows except the one to remove, then append new direction
     for i in 0..n {
         if i == remove_idx {
             continue;
         }
-        let start = i * n;
-        new_data.extend_from_slice(&dir_data[start..start + n]);
+        let row = directions
+            .narrow(0, i, 1)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("powell: narrow row {} - {}", i, e),
+            })?
+            .contiguous();
+        rows_to_cat.push(row);
     }
-    // Append new direction as last row
-    new_data.extend_from_slice(&new_dir_data);
 
-    Ok(Tensor::<R>::from_slice(&new_data, &[n, n], client.device()))
+    // Add new direction as last row
+    rows_to_cat.push(new_dir_row);
+
+    // Concatenate all rows
+    let refs: Vec<&Tensor<R>> = rows_to_cat.iter().collect();
+    client
+        .cat(&refs, 0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("powell: concat directions - {}", e),
+        })
 }

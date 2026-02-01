@@ -3,8 +3,9 @@
 //! This implementation uses tensor operations throughout to leverage
 //! SIMD on CPU and GPU acceleration when available.
 
+use numr::dtype::DType;
 use numr::error::Result;
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{CompareOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -26,7 +27,7 @@ pub fn nelder_mead_impl<R, C, F>(
 ) -> OptimizeResult<TensorMinimizeResult<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
     let n = x0.shape()[0];
@@ -198,8 +199,10 @@ where
     })
 }
 
-/// Initialize simplex with n+1 vertices.
+/// Initialize simplex with n+1 vertices using pure tensor operations.
+///
 /// Returns a [n+1, n] tensor where row 0 is x0 and rows 1..n+1 are perturbations.
+/// No to_vec()/from_slice() - all computation stays on device.
 fn initialize_simplex<R, C>(
     client: &C,
     x0: &Tensor<R>,
@@ -207,56 +210,138 @@ fn initialize_simplex<R, C>(
 ) -> OptimizeResult<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
-    // Build simplex data: first row is x0, others are x0 + delta*e_i
-    let x0_data: Vec<f64> = x0.to_vec();
-    let mut simplex_data = Vec::with_capacity((n + 1) * n);
+    // Compute deltas: if |x0[j]| > threshold then 0.05*x0[j] else 0.00025
+    let abs_x0 = client
+        .abs(x0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: abs x0 - {}", e),
+        })?;
 
-    // First vertex is x0
-    simplex_data.extend_from_slice(&x0_data);
+    let threshold_tensor = client
+        .fill(&[n], SINGULAR_THRESHOLD, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: threshold tensor - {}", e),
+        })?;
 
-    // Other vertices are perturbations
-    for i in 0..n {
-        for (j, &x0j) in x0_data.iter().enumerate() {
-            if i == j {
-                let delta = if x0j.abs() > SINGULAR_THRESHOLD {
-                    0.05 * x0j
-                } else {
-                    0.00025
-                };
-                simplex_data.push(x0j + delta);
-            } else {
-                simplex_data.push(x0j);
-            }
-        }
-    }
+    // Mask: where |x0| > threshold (returns F64 0.0/1.0)
+    let mask_f64 = client
+        .gt(&abs_x0, &threshold_tensor)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: gt comparison - {}", e),
+        })?;
 
-    Ok(Tensor::<R>::from_slice(
-        &simplex_data,
-        &[n + 1, n],
-        client.device(),
-    ))
+    // Cast to U8 for where_cond
+    let mask = client
+        .cast(&mask_f64, DType::U8)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: cast mask - {}", e),
+        })?;
+
+    // Large delta = 0.05 * x0
+    let large_delta = client
+        .mul_scalar(x0, 0.05)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: large delta - {}", e),
+        })?;
+
+    // Small delta = constant 0.00025
+    let small_delta = client
+        .fill(&[n], 0.00025, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: small delta - {}", e),
+        })?;
+
+    // deltas = where(|x0| > threshold, 0.05*x0, 0.00025)
+    let deltas = client
+        .where_cond(&mask, &large_delta, &small_delta)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: select deltas - {}", e),
+        })?;
+
+    // Create identity matrix [n, n]
+    let identity = client
+        .eye(n, None, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: eye - {}", e),
+        })?;
+
+    // Broadcast deltas to [n, n] for element-wise multiply with identity
+    let deltas_broadcast = deltas
+        .unsqueeze(0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: unsqueeze deltas - {}", e),
+        })?
+        .broadcast_to(&[n, n])
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: broadcast deltas - {}", e),
+        })?;
+
+    // Diagonal perturbation matrix: identity * deltas (element-wise)
+    let perturbation = client
+        .mul(&identity, &deltas_broadcast)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: perturbation matrix - {}", e),
+        })?;
+
+    // Broadcast x0 to [n, n] - each row is x0
+    let x0_broadcast = x0
+        .unsqueeze(0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: unsqueeze x0 - {}", e),
+        })?
+        .broadcast_to(&[n, n])
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: broadcast x0 - {}", e),
+        })?;
+
+    // Perturbed vertices: x0 + perturbation (each row is x0 with one element perturbed)
+    let perturbed = client
+        .add(&x0_broadcast, &perturbation)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: perturbed vertices - {}", e),
+        })?;
+
+    // Make x0 contiguous and reshape to [1, n] for concatenation
+    let x0_row = x0
+        .contiguous()
+        .unsqueeze(0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: x0 row - {}", e),
+        })?;
+
+    // Make perturbed contiguous for cat
+    let perturbed_contig = perturbed.contiguous();
+
+    // Concatenate: [x0_row, perturbed] along dim 0 -> [n+1, n]
+    client
+        .cat(&[&x0_row, &perturbed_contig], 0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("nelder_mead: concat simplex - {}", e),
+        })
 }
 
 /// Extract row i from a [m, n] tensor as a [n] tensor.
+///
+/// Uses narrow() instead of index_select to avoid from_slice.
 fn extract_row<R, C>(
-    client: &C,
+    _client: &C,
     matrix: &Tensor<R>,
     row: usize,
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: RuntimeClient<R>,
 {
-    let indices = Tensor::<R>::from_slice(&[row as i64], &[1], client.device());
-    let row_2d = client
-        .index_select(matrix, 0, &indices)
+    // narrow(dim=0, start=row, length=1) -> [1, n], then make contiguous and reshape to [n]
+    matrix
+        .narrow(0, row, 1)
         .map_err(|e| OptimizeError::NumericalError {
-            message: format!("nelder_mead: extract row - {}", e),
-        })?;
-    row_2d
+            message: format!("nelder_mead: narrow row - {}", e),
+        })?
+        .contiguous()
         .reshape(&[n])
         .map_err(|e| OptimizeError::NumericalError {
             message: format!("nelder_mead: reshape row - {}", e),
