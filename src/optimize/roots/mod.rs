@@ -30,9 +30,6 @@ use numr::error::Result;
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
 
-// Re-export CPU implementation for convenience
-pub use cpu::*;
-
 /// Options for multivariate root finding.
 #[derive(Debug, Clone)]
 pub struct RootOptions {
@@ -55,21 +52,6 @@ impl Default for RootOptions {
             eps: 1e-8,
         }
     }
-}
-
-/// Result from a multivariate root finding method (scalar API).
-#[derive(Debug, Clone)]
-pub struct MultiRootResult {
-    /// The root found
-    pub x: Vec<f64>,
-    /// Function value at root (should be near zero)
-    pub fun: Vec<f64>,
-    /// Number of iterations used
-    pub iterations: usize,
-    /// Norm of the residual
-    pub residual_norm: f64,
-    /// Whether the method converged
-    pub converged: bool,
 }
 
 /// Algorithmic contract for root finding operations.
