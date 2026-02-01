@@ -32,9 +32,6 @@ use numr::error::Result;
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
 
-// Re-export CPU implementation for convenience
-pub use cpu::*;
-
 /// Options for least squares optimization.
 #[derive(Debug, Clone)]
 pub struct LeastSquaresOptions {
@@ -60,23 +57,6 @@ impl Default for LeastSquaresOptions {
             eps: 1e-8,
         }
     }
-}
-
-/// Result from least squares optimization (scalar API).
-#[derive(Debug, Clone)]
-pub struct LeastSquaresResult {
-    /// The optimal parameters found
-    pub x: Vec<f64>,
-    /// Residual vector at solution
-    pub residuals: Vec<f64>,
-    /// Sum of squared residuals (cost)
-    pub cost: f64,
-    /// Number of iterations
-    pub iterations: usize,
-    /// Number of function evaluations
-    pub nfev: usize,
-    /// Whether the method converged
-    pub converged: bool,
 }
 
 /// Algorithmic contract for least squares optimization.
