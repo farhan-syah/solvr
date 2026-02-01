@@ -100,9 +100,8 @@ pub mod window;
 
 // Re-export main types for convenience
 pub use integrate::{
-    GaussLegendreQuadrature, IntegrateError, IntegrateResult, ODEMethod, ODEOptions, ODEResult,
-    QuadOptions, QuadResult, RombergOptions, cumulative_trapezoid, fixed_quad, quad, romberg,
-    simpson, solve_ivp, trapezoid,
+    IntegrateError, IntegrateResult, IntegrationAlgorithms, ODEMethod, ODEOptions, ODEResult,
+    ODEResultTensor, QuadOptions, QuadResult, RombergOptions, solve_ivp,
 };
 pub use interpolate::{
     Akima1DInterpolator, CubicSpline, ExtrapolateMode, Interp1d, InterpMethod, InterpNdMethod,

@@ -11,20 +11,11 @@
 //!
 //! # Quadrature Methods
 //!
-//! ## Basic Methods (Tensor-based)
-//!
 //! - [`IntegrationAlgorithms::trapezoid`] - Trapezoidal rule with tensor support
 //! - [`IntegrationAlgorithms::simpson`] - Simpson's rule with tensor support
 //! - [`IntegrationAlgorithms::fixed_quad`] - Gaussian quadrature with tensor functions
-//!
-//! ## Legacy Scalar Methods
-//!
-//! - [`trapezoid`] - Trapezoidal rule for slice data
-//! - [`cumulative_trapezoid`] - Cumulative trapezoidal integration
-//! - [`simpson`] - Simpson's rule
-//! - [`fixed_quad`] - Fixed-order Gaussian quadrature
-//! - [`quad`] - Adaptive Gauss-Kronrod quadrature
-//! - [`romberg`] - Romberg integration
+//! - [`IntegrationAlgorithms::quad`] - Adaptive Gauss-Kronrod quadrature
+//! - [`IntegrationAlgorithms::romberg`] - Romberg integration via Richardson extrapolation
 //!
 //! # ODE Solvers
 //!
@@ -59,7 +50,6 @@ mod cuda;
 pub mod error;
 pub mod impl_generic;
 pub mod ode;
-pub mod quadrature;
 #[cfg(feature = "wgpu")]
 mod wgpu;
 
@@ -70,25 +60,66 @@ use numr::tensor::Tensor;
 // Re-export error types
 pub use error::{IntegrateError, IntegrateResult};
 
-// Re-export quadrature functions (legacy scalar API)
-pub use quadrature::{
-    GaussLegendreQuadrature,
-    QuadOptions,
-    QuadResult,
-    RombergOptions,
-    // Basic quadrature
-    cumulative_trapezoid,
-    // Gaussian quadrature
-    fixed_quad,
-    // Adaptive quadrature
-    quad,
-    romberg,
-    simpson,
-    trapezoid,
-};
-
 // Re-export ODE types and functions
 pub use ode::{ODEMethod, ODEOptions, ODEResult, ODESolution, StepSizeController, solve_ivp};
+
+// Re-export tensor-based ODE types
+pub use impl_generic::ode::{ODEResultTensor, solve_ivp_impl};
+
+/// Options for adaptive quadrature.
+#[derive(Debug, Clone)]
+pub struct QuadOptions {
+    /// Relative tolerance (default: 1e-8)
+    pub rtol: f64,
+    /// Absolute tolerance (default: 1e-8)
+    pub atol: f64,
+    /// Maximum number of subdivisions (default: 50)
+    pub limit: usize,
+}
+
+impl Default for QuadOptions {
+    fn default() -> Self {
+        Self {
+            rtol: 1e-8,
+            atol: 1e-8,
+            limit: 50,
+        }
+    }
+}
+
+/// Result of adaptive quadrature.
+#[derive(Debug, Clone)]
+pub struct QuadResult<R: Runtime> {
+    /// Computed integral value (0-D tensor)
+    pub integral: Tensor<R>,
+    /// Estimated absolute error
+    pub error: f64,
+    /// Number of function evaluations
+    pub neval: usize,
+    /// Whether integration converged
+    pub converged: bool,
+}
+
+/// Options for Romberg integration.
+#[derive(Debug, Clone)]
+pub struct RombergOptions {
+    /// Relative tolerance (default: 1e-8)
+    pub rtol: f64,
+    /// Absolute tolerance (default: 1e-8)
+    pub atol: f64,
+    /// Maximum number of extrapolation levels (default: 20)
+    pub max_levels: usize,
+}
+
+impl Default for RombergOptions {
+    fn default() -> Self {
+        Self {
+            rtol: 1e-8,
+            atol: 1e-8,
+            max_levels: 20,
+        }
+    }
+}
 
 /// Trait for integration algorithms that work across all Runtime backends.
 ///
@@ -96,7 +127,8 @@ pub use ode::{ODEMethod, ODEOptions, ODEResult, ODESolution, StepSizeController,
 /// - Trapezoidal integration
 /// - Simpson's rule
 /// - Gaussian quadrature
-/// - Cumulative integration
+/// - Adaptive quadrature
+/// - Romberg integration
 ///
 /// All methods work with `Tensor<R>` for GPU acceleration and batch operations.
 ///
@@ -173,4 +205,80 @@ pub trait IntegrationAlgorithms<R: Runtime> {
     fn fixed_quad<F>(&self, f: F, a: f64, b: f64, n: usize) -> Result<Tensor<R>>
     where
         F: Fn(&Tensor<R>) -> Result<Tensor<R>>;
+
+    /// Adaptive Gauss-Kronrod quadrature.
+    ///
+    /// Uses the G7-K15 rule (7-point Gauss, 15-point Kronrod) with adaptive
+    /// interval subdivision to achieve the requested tolerance.
+    ///
+    /// # Arguments
+    /// * `f` - Function that takes tensor of evaluation points and returns tensor of values
+    /// * `a` - Lower bound
+    /// * `b` - Upper bound
+    /// * `options` - Quadrature options (tolerances, max subdivisions)
+    ///
+    /// # Returns
+    /// A [`QuadResult`] containing the integral, error estimate, and diagnostics.
+    fn quad<F>(&self, f: F, a: f64, b: f64, options: &QuadOptions) -> Result<QuadResult<R>>
+    where
+        F: Fn(&Tensor<R>) -> Result<Tensor<R>>;
+
+    /// Romberg integration using Richardson extrapolation.
+    ///
+    /// Applies Richardson extrapolation to the trapezoidal rule to achieve
+    /// high accuracy for smooth functions.
+    ///
+    /// # Arguments
+    /// * `f` - Function that takes tensor of evaluation points and returns tensor of values
+    /// * `a` - Lower bound
+    /// * `b` - Upper bound
+    /// * `options` - Integration options (tolerances, max levels)
+    ///
+    /// # Returns
+    /// A [`QuadResult`] containing the integral, error estimate, and diagnostics.
+    fn romberg<F>(&self, f: F, a: f64, b: f64, options: &RombergOptions) -> Result<QuadResult<R>>
+    where
+        F: Fn(&Tensor<R>) -> Result<Tensor<R>>;
+
+    /// Solve an initial value problem for ODEs using tensor operations.
+    ///
+    /// Solves the system dy/dt = f(t, y) with initial condition y(t0) = y0.
+    /// All computation stays on device - no GPU→CPU→GPU roundtrips.
+    ///
+    /// # Arguments
+    /// * `f` - Right-hand side function f(t, y) -> dy/dt, operating on tensors
+    /// * `t_span` - Integration interval [t0, tf]
+    /// * `y0` - Initial condition as a 1-D tensor
+    /// * `options` - Solver options (method, tolerances, step bounds)
+    ///
+    /// # Returns
+    /// An [`ODEResultTensor`] with solution trajectory stored as tensors.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use solvr::integrate::{IntegrationAlgorithms, ODEOptions};
+    /// use numr::runtime::cpu::{CpuClient, CpuDevice};
+    ///
+    /// let device = CpuDevice::new();
+    /// let client = CpuClient::new(device.clone());
+    ///
+    /// // Solve dy/dt = -y, y(0) = 1
+    /// let y0 = Tensor::from_slice(&[1.0], &[1], &device);
+    /// let result = client.solve_ivp(
+    ///     |_t, y| client.mul_scalar(y, -1.0),
+    ///     [0.0, 5.0],
+    ///     &y0,
+    ///     &ODEOptions::default(),
+    /// )?;
+    /// ```
+    fn solve_ivp<F>(
+        &self,
+        f: F,
+        t_span: [f64; 2],
+        y0: &Tensor<R>,
+        options: &ODEOptions,
+    ) -> error::IntegrateResult<ODEResultTensor<R>>
+    where
+        F: Fn(f64, &Tensor<R>) -> Result<Tensor<R>>;
 }

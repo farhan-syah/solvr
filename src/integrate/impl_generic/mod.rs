@@ -3,4 +3,5 @@
 //! These implementations work across all Runtime backends by using
 //! numr's tensor operations.
 
+pub mod ode;
 pub mod quadrature;
