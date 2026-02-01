@@ -1,18 +1,21 @@
-//! Fixed-order Gaussian quadrature.
+//! Fixed-order Gaussian quadrature using tensor operations.
+//!
+//! The Gauss-Legendre node computation is inherently scalar (one-time setup),
+//! but the function evaluation and weighted sum use tensor ops for GPU acceleration.
 
 use numr::error::{Error, Result};
-use numr::ops::TensorOps;
+use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
 /// Fixed-order Gaussian quadrature.
 ///
 /// Integrates a function from a to b using n-point Gauss-Legendre quadrature.
-/// All n evaluation points are computed in a single batch.
+/// All n evaluation points are computed in a single batch using tensor operations.
 pub fn fixed_quad_impl<R, C, F>(client: &C, f: F, a: f64, b: f64, n: usize) -> Result<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
     if n == 0 {
@@ -23,6 +26,7 @@ where
     }
 
     // Get Gauss-Legendre nodes and weights for [-1, 1]
+    // This is a one-time scalar computation (acceptable)
     let (nodes, weights) = gauss_legendre_nodes_weights(n);
 
     // Transform nodes from [-1, 1] to [a, b]
@@ -34,21 +38,24 @@ where
     // Evaluate function at all nodes in a single batch
     let x_tensor = Tensor::<R>::from_slice(&transformed_nodes, &[n], client.device());
     let f_values = f(&x_tensor)?;
-    let f_data: Vec<f64> = f_values.to_vec();
 
-    // Compute weighted sum
-    let mut integral = 0.0;
-    for i in 0..n {
-        integral += weights[i] * f_data[i];
-    }
-    integral *= half_width;
+    // Create weight tensor and compute weighted sum using tensor ops
+    let weight_tensor = Tensor::<R>::from_slice(&weights, &[n], client.device());
 
-    Ok(Tensor::<R>::from_slice(&[integral], &[], client.device()))
+    // weighted = f_values * weights
+    let weighted = client.mul(&f_values, &weight_tensor)?;
+
+    // integral = sum(weighted) * half_width
+    let sum = client.sum(&weighted, &[0], false)?;
+
+    client.mul_scalar(&sum, half_width)
 }
 
 /// Compute Gauss-Legendre nodes and weights.
 ///
 /// Uses Newton iteration to find roots of Legendre polynomials.
+/// This is an inherently scalar one-time computation that produces
+/// the quadrature points. The actual integration uses tensor ops.
 fn gauss_legendre_nodes_weights(n: usize) -> (Vec<f64>, Vec<f64>) {
     let mut nodes = vec![0.0; n];
     let mut weights = vec![0.0; n];
@@ -105,4 +112,92 @@ fn legendre_p_and_dp(n: usize, x: f64) -> (f64, f64) {
     let dp = n as f64 * (x * p_curr - p_prev) / (x * x - 1.0);
 
     (p_curr, dp)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use numr::runtime::cpu::{CpuClient, CpuDevice};
+
+    fn get_client() -> CpuClient {
+        let device = CpuDevice::new();
+        CpuClient::new(device)
+    }
+
+    #[test]
+    fn test_fixed_quad_constant() {
+        let client = get_client();
+
+        // Integrate f(x) = 1 from 0 to 1
+        // Exact: 1.0
+        let result = fixed_quad_impl(
+            &client,
+            |x| Ok(Tensor::from_slice(&vec![1.0; x.numel()], x.shape(), x.device())),
+            0.0,
+            1.0,
+            5,
+        )
+        .unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        assert!((values[0] - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_fixed_quad_linear() {
+        let client = get_client();
+
+        // Integrate f(x) = x from 0 to 1
+        // Exact: 0.5
+        let result = fixed_quad_impl(&client, |x| Ok(x.clone()), 0.0, 1.0, 5).unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        assert!((values[0] - 0.5).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_fixed_quad_quadratic() {
+        let client = get_client();
+
+        // Integrate f(x) = x^2 from 0 to 1
+        // Exact: 1/3
+        let result = fixed_quad_impl(
+            &client,
+            |x| {
+                let client = get_client();
+                client.mul(x, x)
+            },
+            0.0,
+            1.0,
+            5,
+        )
+        .unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        assert!((values[0] - 1.0 / 3.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_fixed_quad_polynomial() {
+        let client = get_client();
+
+        // Integrate f(x) = x^4 from 0 to 2
+        // Exact: 32/5 = 6.4
+        // Gauss-Legendre with n=3 is exact for polynomials up to degree 2n-1=5
+        let result = fixed_quad_impl(
+            &client,
+            |x| {
+                let client = get_client();
+                let x2 = client.mul(x, x)?;
+                client.mul(&x2, &x2)
+            },
+            0.0,
+            2.0,
+            3,
+        )
+        .unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        assert!((values[0] - 6.4).abs() < 1e-10);
+    }
 }

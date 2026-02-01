@@ -1,7 +1,9 @@
-//! Trapezoidal rule integration.
+//! Trapezoidal rule integration using tensor operations.
+//!
+//! All implementations use numr tensor ops - no scalar loops.
 
 use numr::error::{Error, Result};
-use numr::ops::TensorOps;
+use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -10,10 +12,12 @@ use numr::tensor::Tensor;
 /// Computes ∫y dx using the composite trapezoidal rule.
 /// For 1D tensors, returns a 0-D tensor with the integral.
 /// For 2D tensors, integrates each row and returns a 1D tensor.
+///
+/// Uses tensor operations throughout - works efficiently on CPU, CUDA, and WebGPU.
 pub fn trapezoid_impl<R, C>(client: &C, y: &Tensor<R>, x: &Tensor<R>) -> Result<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
     let x_shape = x.shape();
@@ -45,48 +49,37 @@ where
         });
     }
 
-    // Get data as vectors for computation
-    // Note: This is acceptable because trapezoid is typically called once
-    // with pre-computed y values, not in a loop
-    let y_data: Vec<f64> = y.to_vec();
-    let x_data: Vec<f64> = x.to_vec();
+    let last_dim = y_shape.len() - 1;
+    let x_last_dim = x_shape.len() - 1;
 
-    // For 1D case
-    if y_shape.len() == 1 {
-        let mut integral = 0.0;
-        for i in 0..n - 1 {
-            let dx = x_data[i + 1] - x_data[i];
-            integral += 0.5 * dx * (y_data[i] + y_data[i + 1]);
-        }
-        return Ok(Tensor::<R>::from_slice(&[integral], &[], client.device()));
-    }
+    // Compute dx = x[1:] - x[:-1] using tensor ops
+    let x_left = x.narrow(x_last_dim as isize, 0, n - 1)?.contiguous();
+    let x_right = x.narrow(x_last_dim as isize, 1, n - 1)?.contiguous();
+    let dx = client.sub(&x_right, &x_left)?;
 
-    // For 2D case (batch integration - integrate each row)
-    let batch_size = y_shape[0];
-    let mut results = Vec::with_capacity(batch_size);
+    // Compute y_left = y[:-1], y_right = y[1:]
+    let y_left = y.narrow(last_dim as isize, 0, n - 1)?.contiguous();
+    let y_right = y.narrow(last_dim as isize, 1, n - 1)?.contiguous();
 
-    for b in 0..batch_size {
-        let mut integral = 0.0;
-        let row_offset = b * n;
-        for i in 0..n - 1 {
-            let dx = x_data[i + 1] - x_data[i];
-            integral += 0.5 * dx * (y_data[row_offset + i] + y_data[row_offset + i + 1]);
-        }
-        results.push(integral);
-    }
+    // y_sum = y_left + y_right
+    let y_sum = client.add(&y_left, &y_right)?;
 
-    Ok(Tensor::<R>::from_slice(
-        &results,
-        &[batch_size],
-        client.device(),
-    ))
+    // areas = 0.5 * dx * y_sum
+    let scaled_y = client.mul_scalar(&y_sum, 0.5)?;
+    let areas = client.mul(&dx, &scaled_y)?;
+
+    // Sum along last dimension to get integral
+    client.sum(&areas, &[last_dim], false)
 }
 
 /// Trapezoidal rule with uniform spacing.
+///
+/// Uses the formula: integral = dx * (sum(y) - 0.5*(y[0] + y[n-1]))
+/// All operations are tensor-based.
 pub fn trapezoid_uniform_impl<R, C>(client: &C, y: &Tensor<R>, dx: f64) -> Result<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
 
@@ -106,40 +99,33 @@ where
         });
     }
 
-    let y_data: Vec<f64> = y.to_vec();
+    let last_dim = y_shape.len() - 1;
 
-    // For 1D case
-    if y_shape.len() == 1 {
-        let mut integral = 0.5 * dx * (y_data[0] + y_data[n - 1]);
-        for &val in &y_data[1..n - 1] {
-            integral += dx * val;
-        }
-        return Ok(Tensor::<R>::from_slice(&[integral], &[], client.device()));
-    }
+    // Trapezoidal rule: integral = dx * (0.5*y[0] + y[1] + ... + y[n-2] + 0.5*y[n-1])
+    //                           = dx * sum(y) - 0.5*dx*(y[0] + y[n-1])
 
-    // For 2D case (batch integration)
-    let batch_size = y_shape[0];
-    let mut results = Vec::with_capacity(batch_size);
+    // Sum all y values
+    let total_sum = client.sum(y, &[last_dim], false)?;
 
-    for b in 0..batch_size {
-        let row_offset = b * n;
-        let mut integral = 0.5 * dx * (y_data[row_offset] + y_data[row_offset + n - 1]);
-        for i in 1..n - 1 {
-            integral += dx * y_data[row_offset + i];
-        }
-        results.push(integral);
-    }
+    // Get endpoints: y[0] and y[n-1]
+    let y_first = y.narrow(last_dim as isize, 0, 1)?.contiguous();
+    let y_last = y.narrow(last_dim as isize, n - 1, 1)?.contiguous();
 
-    Ok(Tensor::<R>::from_slice(
-        &results,
-        &[batch_size],
-        client.device(),
-    ))
+    // endpoints_sum = y[0] + y[n-1], then reduce the size-1 dimension
+    let endpoints = client.add(&y_first, &y_last)?;
+    let endpoints_sum = client.sum(&endpoints, &[last_dim], false)?;
+
+    // integral = dx * total_sum - 0.5 * dx * endpoints_sum
+    let scaled_total = client.mul_scalar(&total_sum, dx)?;
+    let endpoint_correction = client.mul_scalar(&endpoints_sum, 0.5 * dx)?;
+
+    client.sub(&scaled_total, &endpoint_correction)
 }
 
 /// Cumulative trapezoidal integration.
 ///
-/// Returns a tensor of the same shape as y with cumulative integrals.
+/// Returns a tensor with n-1 elements containing cumulative integrals.
+/// Uses tensor operations including cumsum for efficient GPU execution.
 pub fn cumulative_trapezoid_impl<R, C>(
     client: &C,
     y: &Tensor<R>,
@@ -148,7 +134,7 @@ pub fn cumulative_trapezoid_impl<R, C>(
 ) -> Result<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
 
@@ -168,51 +154,124 @@ where
         });
     }
 
-    let y_data: Vec<f64> = y.to_vec();
-    let x_data: Option<Vec<f64>> = x.map(|t| t.to_vec());
+    let last_dim = y_shape.len() - 1;
 
-    // For 1D case
-    if y_shape.len() == 1 {
-        let mut result = vec![0.0; n - 1];
-        let mut cumsum = 0.0;
+    // Compute y_left = y[:-1], y_right = y[1:]
+    let y_left = y.narrow(last_dim as isize, 0, n - 1)?.contiguous();
+    let y_right = y.narrow(last_dim as isize, 1, n - 1)?.contiguous();
 
-        for i in 0..n - 1 {
-            let step_dx = if let Some(ref xd) = x_data {
-                xd[i + 1] - xd[i]
-            } else {
-                dx
-            };
-            cumsum += 0.5 * step_dx * (y_data[i] + y_data[i + 1]);
-            result[i] = cumsum;
-        }
+    // y_sum = y_left + y_right
+    let y_sum = client.add(&y_left, &y_right)?;
 
-        return Ok(Tensor::<R>::from_slice(&result, &[n - 1], client.device()));
+    // Compute per-interval areas
+    let areas = if let Some(x_tensor) = x {
+        // Variable spacing: areas[i] = 0.5 * (x[i+1] - x[i]) * (y[i] + y[i+1])
+        let x_shape = x_tensor.shape();
+        let x_last_dim = x_shape.len() - 1;
+
+        let x_left = x_tensor
+            .narrow(x_last_dim as isize, 0, n - 1)?
+            .contiguous();
+        let x_right = x_tensor
+            .narrow(x_last_dim as isize, 1, n - 1)?
+            .contiguous();
+        let dx_tensor = client.sub(&x_right, &x_left)?;
+
+        let scaled_y = client.mul_scalar(&y_sum, 0.5)?;
+        client.mul(&dx_tensor, &scaled_y)?
+    } else {
+        // Uniform spacing: areas[i] = 0.5 * dx * (y[i] + y[i+1])
+        client.mul_scalar(&y_sum, 0.5 * dx)?
+    };
+
+    // Cumulative sum along last dimension
+    client.cumsum(&areas, last_dim as isize)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use numr::runtime::cpu::{CpuClient, CpuDevice};
+
+    fn get_client() -> CpuClient {
+        let device = CpuDevice::new();
+        CpuClient::new(device)
     }
 
-    // For 2D case
-    let batch_size = y_shape[0];
-    let out_n = n - 1;
-    let mut result = vec![0.0; batch_size * out_n];
+    #[test]
+    fn test_trapezoid_uniform() {
+        let client = get_client();
 
-    for b in 0..batch_size {
-        let row_offset = b * n;
-        let out_offset = b * out_n;
-        let mut cumsum = 0.0;
+        // Integrate y = x from 0 to 1 with 5 points
+        // Points: [0, 0.25, 0.5, 0.75, 1.0]
+        // Exact integral = 0.5
+        let y = Tensor::from_slice(&[0.0, 0.25, 0.5, 0.75, 1.0], &[5], client.device());
+        let result = trapezoid_uniform_impl(&client, &y, 0.25).unwrap();
 
-        for i in 0..n - 1 {
-            let step_dx = if let Some(ref xd) = x_data {
-                xd[i + 1] - xd[i]
-            } else {
-                dx
-            };
-            cumsum += 0.5 * step_dx * (y_data[row_offset + i] + y_data[row_offset + i + 1]);
-            result[out_offset + i] = cumsum;
-        }
+        let values: Vec<f64> = result.to_vec();
+        assert!((values[0] - 0.5).abs() < 1e-10);
     }
 
-    Ok(Tensor::<R>::from_slice(
-        &result,
-        &[batch_size, out_n],
-        client.device(),
-    ))
+    #[test]
+    fn test_trapezoid_variable() {
+        let client = get_client();
+
+        // Integrate y = x from 0 to 1
+        let x = Tensor::from_slice(&[0.0, 0.25, 0.5, 0.75, 1.0], &[5], client.device());
+        let y = Tensor::from_slice(&[0.0, 0.25, 0.5, 0.75, 1.0], &[5], client.device());
+        let result = trapezoid_impl(&client, &y, &x).unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        assert!((values[0] - 0.5).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_trapezoid_batch() {
+        let client = get_client();
+
+        // Batch integration: two rows
+        // Row 0: y = x, integral = 0.5
+        // Row 1: y = 2x, integral = 1.0
+        let x = Tensor::from_slice(&[0.0, 0.5, 1.0], &[3], client.device());
+        let y = Tensor::from_slice(&[0.0, 0.5, 1.0, 0.0, 1.0, 2.0], &[2, 3], client.device());
+        let result = trapezoid_impl(&client, &y, &x).unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        assert!((values[0] - 0.5).abs() < 1e-10);
+        assert!((values[1] - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_cumulative_trapezoid() {
+        let client = get_client();
+
+        // Cumulative integral of y = 1 (constant)
+        // With dx = 1: cumulative = [1, 2, 3, 4]
+        let y = Tensor::from_slice(&[1.0, 1.0, 1.0, 1.0, 1.0], &[5], client.device());
+        let result = cumulative_trapezoid_impl(&client, &y, None, 1.0).unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        assert_eq!(values.len(), 4);
+        assert!((values[0] - 1.0).abs() < 1e-10);
+        assert!((values[1] - 2.0).abs() < 1e-10);
+        assert!((values[2] - 3.0).abs() < 1e-10);
+        assert!((values[3] - 4.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_cumulative_trapezoid_variable() {
+        let client = get_client();
+
+        // Cumulative integral with variable spacing
+        let x = Tensor::from_slice(&[0.0, 1.0, 3.0, 6.0], &[4], client.device());
+        let y = Tensor::from_slice(&[1.0, 1.0, 1.0, 1.0], &[4], client.device());
+        let result = cumulative_trapezoid_impl(&client, &y, Some(&x), 1.0).unwrap();
+
+        let values: Vec<f64> = result.to_vec();
+        // Intervals: [0,1], [1,3], [3,6] with widths 1, 2, 3
+        // Cumulative: 1, 1+2=3, 3+3=6
+        assert!((values[0] - 1.0).abs() < 1e-10);
+        assert!((values[1] - 3.0).abs() < 1e-10);
+        assert!((values[2] - 6.0).abs() < 1e-10);
+    }
 }
