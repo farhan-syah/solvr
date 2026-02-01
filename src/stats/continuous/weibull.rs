@@ -2,7 +2,11 @@
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{ContinuousDistribution, Distribution};
-
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 use super::special::lgamma;
 
 /// Weibull distribution.
@@ -223,6 +227,138 @@ impl ContinuousDistribution for Weibull {
             return Ok(0.0);
         }
         Ok(self.scale * (-(p.ln())).powf(1.0 / self.shape))
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // f(x) = (k/λ) * (x/λ)^(k-1) * exp(-(x/λ)^k)
+        self.log_pdf_tensor(x, client).and_then(|log_pdf| client.exp(&log_pdf))
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(f(x)) = ln(k) - ln(λ) + (k-1)*ln(x/λ) - (x/λ)^k
+        let x_over_lambda = client.mul_scalar(x, 1.0 / self.scale)?;
+        let ln_x_over_lambda = client.log(&x_over_lambda)?;
+        let term1 = client.mul_scalar(&ln_x_over_lambda, self.shape - 1.0)?;
+
+        // (x/λ)^k = exp(k * ln(x/λ))
+        let scaled_ln = client.mul_scalar(&ln_x_over_lambda, self.shape)?;
+        let power_term = client.exp(&scaled_ln)?;
+        let neg_power = client.mul_scalar(&power_term, -1.0)?;
+
+        let constant = self.shape.ln() - self.scale.ln();
+        let result = client.add(&term1, &neg_power)?;
+        client.add_scalar(&result, constant)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = 1 - exp(-(x/λ)^k)
+        let x_over_lambda = client.mul_scalar(x, 1.0 / self.scale)?;
+        // (x/λ)^k = exp(k * ln(x/λ))
+        let ln_x_over_lambda = client.log(&x_over_lambda)?;
+        let scaled_ln = client.mul_scalar(&ln_x_over_lambda, self.shape)?;
+        let power_term = client.exp(&scaled_ln)?;
+        let neg_power = client.mul_scalar(&power_term, -1.0)?;
+        let exp_term = client.exp(&neg_power)?;
+        // 1 - exp_term = -1 * (exp_term - 1)
+        let exp_minus_one = client.add_scalar(&exp_term, -1.0)?;
+        client.mul_scalar(&exp_minus_one, -1.0)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = exp(-(x/λ)^k)
+        let x_over_lambda = client.mul_scalar(x, 1.0 / self.scale)?;
+        // (x/λ)^k = exp(k * ln(x/λ))
+        let ln_x_over_lambda = client.log(&x_over_lambda)?;
+        let scaled_ln = client.mul_scalar(&ln_x_over_lambda, self.shape)?;
+        let power_term = client.exp(&scaled_ln)?;
+        let neg_power = client.mul_scalar(&power_term, -1.0)?;
+        client.exp(&neg_power)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF) = log(1 - exp(-(x/λ)^k))
+        let cdf = self.cdf_tensor(x, client)?;
+        client.log(&cdf)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = λ * (-ln(1-p))^(1/k)
+        // 1 - p = -1 * (p - 1)
+        let p_minus_one = client.add_scalar(p, -1.0)?;
+        let one_minus_p = client.mul_scalar(&p_minus_one, -1.0)?;
+        let ln_term = client.log(&one_minus_p)?;
+        let neg_ln = client.mul_scalar(&ln_term, -1.0)?;
+        // x^(1/k) = exp((1/k) * ln(x))
+        let inv_k = 1.0 / self.shape;
+        let ln_neg_ln = client.log(&neg_ln)?;
+        let scaled_ln = client.mul_scalar(&ln_neg_ln, inv_k)?;
+        let power_term = client.exp(&scaled_ln)?;
+        client.mul_scalar(&power_term, self.scale)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = λ * (-ln(p))^(1/k)
+        let ln_p = client.log(p)?;
+        let neg_ln = client.mul_scalar(&ln_p, -1.0)?;
+        // x^(1/k) = exp((1/k) * ln(x))
+        let inv_k = 1.0 / self.shape;
+        let ln_neg_ln = client.log(&neg_ln)?;
+        let scaled_ln = client.mul_scalar(&ln_neg_ln, inv_k)?;
+        let power_term = client.exp(&scaled_ln)?;
+        client.mul_scalar(&power_term, self.scale)
     }
 }
 

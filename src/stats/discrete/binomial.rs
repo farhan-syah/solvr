@@ -4,6 +4,11 @@ use super::log_binom;
 use crate::stats::continuous::special;
 use crate::stats::distribution::{DiscreteDistribution, Distribution};
 use crate::stats::error::{StatsError, StatsResult};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Binomial distribution.
 ///
@@ -191,6 +196,154 @@ impl DiscreteDistribution for Binomial {
         }
 
         Ok(lo)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PMF(k) = C(n,k) * p^k * (1-p)^(n-k)
+        // Use log-space: log_pmf = log(C(n,k)) + k*log(p) + (n-k)*log(1-p)
+        let log_pmf = self.log_pmf_tensor(k, client)?;
+        client.exp(&log_pmf)
+    }
+
+    fn log_pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log_pmf(k) = log(C(n,k)) + k*log(p) + (n-k)*log(1-p)
+        // log(C(n,k)) = lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1)
+
+        let n_f = self.n as f64;
+        let ln_p = self.p.ln();
+        let ln_q = self.q.ln();
+
+        // floor(k) for integer semantics
+        let k_floor = client.floor(k)?;
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+
+        // n - k
+        let neg_k = client.mul_scalar(&k_floor, -1.0)?;
+        let n_minus_k = client.add_scalar(&neg_k, n_f)?;
+        let n_minus_k_plus_1 = client.add_scalar(&n_minus_k, 1.0)?;
+
+        // Compute log(C(n,k)) using scalar lgamma for n+1 part
+        let lgamma_n_plus_1 = special::lgamma(n_f + 1.0);
+        let lgamma_k_plus_1 = client.lgamma(&k_plus_1)?;
+        let lgamma_n_minus_k_plus_1 = client.lgamma(&n_minus_k_plus_1)?;
+
+        // log(C(n,k)) = lgamma(n+1) - lgamma(k+1) - lgamma(n-k+1)
+        let shape = k_floor.shape();
+        let lgamma_n_plus_1_tensor = client.fill(shape, lgamma_n_plus_1, k_floor.dtype())?;
+        let log_binom_coeff = client.sub(&lgamma_n_plus_1_tensor, &lgamma_k_plus_1)?;
+        let log_binom_coeff = client.sub(&log_binom_coeff, &lgamma_n_minus_k_plus_1)?;
+
+        // k * ln(p)
+        let k_times_ln_p = client.mul_scalar(&k_floor, ln_p)?;
+
+        // (n - k) * ln(q)
+        let n_minus_k_times_ln_q = client.mul_scalar(&n_minus_k, ln_q)?;
+
+        // Sum them all
+        let result = client.add(&log_binom_coeff, &k_times_ln_p)?;
+        client.add(&result, &n_minus_k_times_ln_q)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(k) = 1 - betainc(k+1, n-k, p)
+        let n_f = self.n as f64;
+        let k_floor = client.floor(k)?;
+
+        // k + 1
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+        // n - k
+        let neg_k = client.mul_scalar(&k_floor, -1.0)?;
+        let n_minus_k = client.add_scalar(&neg_k, n_f)?;
+
+        // p tensor
+        let shape = k_floor.shape();
+        let p_tensor = client.fill(shape, self.p, k_floor.dtype())?;
+
+        // betainc(k+1, n-k, p)
+        let betainc_val = client.betainc(&k_plus_1, &n_minus_k, &p_tensor)?;
+
+        // 1 - betainc
+        client.sub_scalar(&client.mul_scalar(&betainc_val, -1.0)?, -1.0)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(k) = betainc(k+1, n-k, p)
+        let n_f = self.n as f64;
+        let k_floor = client.floor(k)?;
+
+        // k + 1
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+        // n - k
+        let neg_k = client.mul_scalar(&k_floor, -1.0)?;
+        let n_minus_k = client.add_scalar(&neg_k, n_f)?;
+
+        // p tensor
+        let shape = k_floor.shape();
+        let p_tensor = client.fill(shape, self.p, k_floor.dtype())?;
+
+        // betainc(k+1, n-k, p)
+        client.betainc(&k_plus_1, &n_minus_k, &p_tensor)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF for binomial is complex to vectorize since it requires iterative search.
+        // For now, use normal approximation: Binomial(n,p) ≈ Normal(np, np(1-p))
+        // This is reasonable for large n or p close to 0.5
+        let n_f = self.n as f64;
+        let mean = n_f * self.p;
+        let var = n_f * self.p * self.q;
+        let std = var.sqrt();
+
+        // Use erfinv for normal approximation
+        let two_p_minus_1 = client.sub_scalar(&client.mul_scalar(p, 2.0)?, 1.0)?;
+        let erfinv_val = client.erfinv(&two_p_minus_1)?;
+        let z = client.mul_scalar(&erfinv_val, std::f64::consts::SQRT_2)?;
+
+        // x = mean + std * z
+        let scaled = client.mul_scalar(&z, std)?;
+        let result = client.add_scalar(&scaled, mean)?;
+
+        // Clamp to [0, n]
+        client.clamp(&result, 0.0, n_f)
     }
 }
 

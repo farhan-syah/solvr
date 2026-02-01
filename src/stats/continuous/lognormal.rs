@@ -3,6 +3,11 @@
 use super::special::{self, LN_SQRT_2PI};
 use crate::stats::distribution::{ContinuousDistribution, Distribution};
 use crate::stats::error::{StatsError, StatsResult};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Log-normal distribution.
 ///
@@ -188,6 +193,124 @@ impl ContinuousDistribution for LogNormal {
         }
         let z = special::norm_ppf(p);
         Ok((self.mu + self.sigma * z).exp())
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // f(x) = 1/(xσ√(2π)) exp(-(ln(x) - μ)² / (2σ²))
+        self.log_pdf_tensor(x, client).and_then(|log_pdf| client.exp(&log_pdf))
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(f(x)) = -ln(x) - ln(σ√(2π)) - (ln(x) - μ)² / (2σ²)
+        let ln_x = client.log(x)?;
+
+        let centered = client.sub_scalar(&ln_x, self.mu)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.sigma)?;
+        let z_sq = client.square(&z)?;
+        let neg_half_z_sq = client.mul_scalar(&z_sq, -0.5)?;
+
+        let log_const = -self.sigma.ln() - LN_SQRT_2PI;
+        let result = client.add_scalar(&neg_half_z_sq, log_const)?;
+        client.sub(&result, &ln_x)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = Φ((ln(x) - μ) / σ) where Φ is the standard normal CDF
+        let ln_x = client.log(x)?;
+        let centered = client.sub_scalar(&ln_x, self.mu)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.sigma)?;
+
+        // Use normal CDF formula: 0.5 * erfc(-z / sqrt(2))
+        let z_scaled = client.mul_scalar(&z, -std::f64::consts::FRAC_1_SQRT_2)?;
+        let erfc_val = client.erfc(&z_scaled)?;
+        client.mul_scalar(&erfc_val, 0.5)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = 1 - CDF(x) = Φ(-(ln(x) - μ) / σ)
+        let ln_x = client.log(x)?;
+        let centered = client.sub_scalar(&ln_x, self.mu)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.sigma)?;
+
+        // Use normal CDF formula for -z: 0.5 * erfc(z / sqrt(2))
+        let z_scaled = client.mul_scalar(&z, std::f64::consts::FRAC_1_SQRT_2)?;
+        let erfc_val = client.erfc(&z_scaled)?;
+        client.mul_scalar(&erfc_val, 0.5)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF) = log(normal_cdf(...))
+        let cdf = self.cdf_tensor(x, client)?;
+        client.log(&cdf)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = exp(μ + σ * Φ⁻¹(p))
+        let two_p_minus_1 = client.sub_scalar(&client.mul_scalar(p, 2.0)?, 1.0)?;
+        let erfinv_val = client.erfinv(&two_p_minus_1)?;
+        let z = client.mul_scalar(&erfinv_val, std::f64::consts::SQRT_2)?;
+
+        let log_result = client.add_scalar(&client.mul_scalar(&z, self.sigma)?, self.mu)?;
+        client.exp(&log_result)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = PPF(1 - p)
+        let one_minus_p = client.sub_scalar(p, -1.0)?;
+        self.ppf_tensor(&one_minus_p, client)
     }
 }
 

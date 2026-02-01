@@ -2,6 +2,11 @@
 
 use crate::stats::distribution::{DiscreteDistribution, Distribution};
 use crate::stats::error::{StatsError, StatsResult};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Geometric distribution.
 ///
@@ -145,6 +150,107 @@ impl DiscreteDistribution for Geometric {
         // => k >= ln(1-prob) / ln(1-p) - 1
         let k = ((1.0 - prob).ln() / self.q.ln()).ceil() - 1.0;
         Ok(k.max(0.0) as u64)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PMF(k) = p * (1-p)^k
+        // Take log: log_pmf = log(p) + k*log(1-p)
+        // Then exp
+        let log_pmf = self.log_pmf_tensor(k, client)?;
+        client.exp(&log_pmf)
+    }
+
+    fn log_pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log_pmf(k) = log(p) + k * log(1-p)
+        let log_p = self.p.ln();
+        let log_q = self.q.ln();
+
+        // k * log(q)
+        let k_times_log_q = client.mul_scalar(k, log_q)?;
+        // + log(p)
+        client.add_scalar(&k_times_log_q, log_p)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(k) = 1 - (1-p)^(k+1)
+        let k_floor = client.floor(k)?;
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+
+        // Compute (1-p)^(k+1) = q^(k+1) = exp((k+1)*log(q))
+        let log_q = self.q.ln();
+        let k_plus_1_log_q = client.mul_scalar(&k_plus_1, log_q)?;
+        let q_to_k_plus_1 = client.exp(&k_plus_1_log_q)?;
+
+        // 1 - q^(k+1)
+        client.sub_scalar(&client.mul_scalar(&q_to_k_plus_1, -1.0)?, -1.0)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(k) = (1-p)^(k+1) = q^(k+1) = exp((k+1)*log(q))
+        let k_floor = client.floor(k)?;
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+
+        let log_q = self.q.ln();
+        let k_plus_1_log_q = client.mul_scalar(&k_plus_1, log_q)?;
+        client.exp(&k_plus_1_log_q)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = ceil(ln(1-p_val) / ln(1-p)) - 1
+        // where p_val is the probability input
+        let log_q = self.q.ln();
+
+        // ln(1 - p)
+        let one_minus_p = client.mul_scalar(&client.mul_scalar(p, -1.0)?, -1.0)?; // Compute 1 - p
+        let ln_one_minus_p = client.log(&one_minus_p)?;
+
+        // ln(1 - p_val) / ln(1 - p)
+        let ratio = client.div_scalar(&ln_one_minus_p, log_q)?;
+        // ceil - 1
+        let ceiled = client.ceil(&ratio)?;
+        let result = client.sub_scalar(&ceiled, 1.0)?;
+
+        // max(result, 0)
+        client.clamp(&result, 0.0, f64::INFINITY)
     }
 }
 

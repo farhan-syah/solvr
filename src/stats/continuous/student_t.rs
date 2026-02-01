@@ -3,6 +3,11 @@
 use super::special;
 use crate::stats::distribution::{ContinuousDistribution, Distribution};
 use crate::stats::error::{StatsError, StatsResult};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 use std::f64::consts::PI;
 
 /// Student's t distribution.
@@ -178,6 +183,150 @@ impl ContinuousDistribution for StudentT {
         let x = sign * (self.nu * (1.0 / t - 1.0)).sqrt();
 
         Ok(x)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(PDF) = log_norm - ((ν+1)/2) * ln(1 + x²/ν)
+        // PDF = exp(log_pdf)
+        self.log_pdf_tensor(x, client).and_then(|log_pdf| client.exp(&log_pdf))
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(PDF) = log_norm - ((ν+1)/2) * ln(1 + x²/ν)
+        let x_sq = client.square(x)?;
+        let one_plus_t = client.add_scalar(&client.mul_scalar(&x_sq, 1.0 / self.nu)?, 1.0)?;
+        let ln_term = client.log(&one_plus_t)?;
+        let scaled = client.mul_scalar(&ln_term, -(self.nu + 1.0) / 2.0)?;
+        client.add_scalar(&scaled, self.log_norm)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = 1 - 0.5 * betainc(ν/2, 1/2, ν/(ν+x²)) for x > 0
+        // CDF(x) = 0.5 * betainc(ν/2, 1/2, ν/(ν+x²)) for x < 0
+        let x_sq = client.square(x)?;
+        let nu_plus_x_sq = client.add_scalar(&x_sq, self.nu)?;
+
+        // t = ν / (ν + x²)
+        let nu_tensor = Tensor::<R>::full_scalar(x.shape(), x.dtype(), self.nu, client.device());
+        let t = client.div(&nu_tensor, &nu_plus_x_sq)?;
+
+        let a = Tensor::<R>::full_scalar(x.shape(), x.dtype(), self.nu / 2.0, client.device());
+        let b = Tensor::<R>::full_scalar(x.shape(), x.dtype(), 0.5, client.device());
+        let betainc_val = client.betainc(&a, &b, &t)?;
+
+        // For positive x: 1 - 0.5 * betainc_val
+        // For negative x: 0.5 * betainc_val
+        // Use: CDF = 0.5 + sign(x) * (0.5 - 0.5*betainc)
+        // This computes correctly for both cases
+        let half_betainc = client.mul_scalar(&betainc_val, 0.5)?;
+        let sign_x = client.sign(x)?;
+        let half_minus_half_beta = client.mul_scalar(&half_betainc, -1.0)?;
+        let half_minus_half_beta = client.add_scalar(&half_minus_half_beta, 0.5)?;
+        let sign_term = client.mul(&sign_x, &half_minus_half_beta)?;
+        client.add_scalar(&sign_term, 0.5)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = CDF(-x)
+        let neg_x = client.mul_scalar(x, -1.0)?;
+        self.cdf_tensor(&neg_x, client)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF) = log(cdf(x))
+        let cdf = self.cdf_tensor(x, client)?;
+        client.log(&cdf)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // For p > 0.5: x = √(ν * (1/I⁻¹ - 1)) where I⁻¹ = betaincinv(ν/2, 1/2, 2*(1-p))
+        // For p <= 0.5: x = -√(ν * (1/I⁻¹ - 1)) where I⁻¹ = betaincinv(ν/2, 1/2, 2*p)
+
+        let a = Tensor::<R>::full_scalar(p.shape(), p.dtype(), self.nu / 2.0, client.device());
+        let b = Tensor::<R>::full_scalar(p.shape(), p.dtype(), 0.5, client.device());
+
+        // q = 2 * min(p, 1-p) = 2 * |p - 0.5| for the symmetric case
+        // Use: q = 2*(1-p) when p > 0.5, else q = 2*p
+        // For simplicity, compute q = 2 * min(p, 1-p) using abs:
+        let p_minus_half = client.sub_scalar(p, 0.5)?;
+        let abs_p_minus_half = client.abs(&p_minus_half)?;
+        let q = client.mul_scalar(&abs_p_minus_half, 2.0)?;
+        // Actually q should be 1 - 2*|p - 0.5| for the symmetric betainc
+        let one_minus_q = client.mul_scalar(&q, -1.0)?;
+        let q_adjusted = client.add_scalar(&one_minus_q, 1.0)?;
+
+        let t = client.betaincinv(&a, &b, &q_adjusted)?;
+
+        // x = sign(p - 0.5) * √(ν * (1/t - 1))
+        let one_tensor = Tensor::<R>::full_scalar(p.shape(), p.dtype(), 1.0, client.device());
+        let inv_t = client.div(&one_tensor, &t)?;
+        let inv_t_minus_1 = client.sub_scalar(&inv_t, 1.0)?;
+        let nu_term = client.mul_scalar(&inv_t_minus_1, self.nu)?;
+        let sqrt_term = client.sqrt(&nu_term)?;
+
+        // Multiply by sign(p - 0.5)
+        let sign_p = client.sign(&p_minus_half)?;
+        client.mul(&sign_p, &sqrt_term)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = PPF(1 - p)
+        let neg_p = client.mul_scalar(p, -1.0)?;
+        let one_minus_p = client.add_scalar(&neg_p, 1.0)?;
+        self.ppf_tensor(&one_minus_p, client)
     }
 }
 

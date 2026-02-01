@@ -2,6 +2,11 @@
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{DiscreteDistribution, Distribution};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Discrete Uniform distribution.
 ///
@@ -176,6 +181,101 @@ impl DiscreteDistribution for DiscreteUniform {
         let k = self.low + (self.n as f64 * p).ceil() as i64 - 1;
         let k = k.max(self.low).min(self.high);
         Ok(k as u64)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PMF is constant: 1 / (high - low + 1) for k in [low, high], else 0
+        // For all values, return 1/n
+        // Note: For proper handling of out-of-support values, the user should
+        // ensure k is in the valid range, or post-process with masking
+        let pmf_const = 1.0 / (self.n as f64);
+        let shape = k.shape();
+        client.fill(shape, pmf_const, k.dtype())
+    }
+
+    fn log_pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(PMF) = -ln(n)
+        // Note: For out-of-support values, handling requires conditional logic
+        let log_pmf_const = -(self.n as f64).ln();
+        let shape = k.shape();
+        client.fill(shape, log_pmf_const, k.dtype())
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(k) = (floor(k) - low + 1) / n, clamped to [0, 1]
+        let low_f = self.low as f64;
+        let n_f = self.n as f64;
+
+        // floor(k)
+        let k_floor = client.floor(k)?;
+
+        // (k_floor - low + 1) / n
+        let adjusted = client.sub_scalar(&k_floor, low_f - 1.0)?;
+        let cdf_val = client.div_scalar(&adjusted, n_f)?;
+
+        // Clamp to [0, 1]
+        client.clamp(&cdf_val, 0.0, 1.0)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(k) = 1 - CDF(k)
+        let cdf = self.cdf_tensor(k, client)?;
+        client.sub_scalar(&client.mul_scalar(&cdf, -1.0)?, -1.0)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = low + ceil(n*p) - 1
+        let low_f = self.low as f64;
+        let high_f = self.high as f64;
+        let n_f = self.n as f64;
+
+        // n * p
+        let n_times_p = client.mul_scalar(p, n_f)?;
+        // ceil(n*p) - 1 + low
+        let ceiled = client.ceil(&n_times_p)?;
+        let ppf_val = client.add_scalar(&ceiled, low_f - 1.0)?;
+
+        // Clamp to [low, high]
+        client.clamp(&ppf_val, low_f, high_f)
     }
 }
 

@@ -2,7 +2,11 @@
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{ContinuousDistribution, Distribution};
-
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 use std::f64::consts::PI;
 
 /// Cauchy (Lorentz) distribution.
@@ -160,6 +164,128 @@ impl ContinuousDistribution for Cauchy {
             });
         }
         self.ppf(1.0 - p)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // f(x) = 1 / (πγ * (1 + z²)) where z = (x - x₀) / γ
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let z_sq = client.square(&z)?;
+        let one_plus_z_sq = client.add_scalar(&z_sq, 1.0)?;
+
+        // f(x) = 1/(πγ) * 1/(1 + z²) = 1/(πγ(1 + z²))
+        // Use recip for 1/(1+z²)
+        let inv = client.recip(&one_plus_z_sq)?;
+        client.mul_scalar(&inv, 1.0 / (PI * self.scale))
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(f(x)) = -ln(πγ) - ln(1 + z²)
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let z_sq = client.square(&z)?;
+        let one_plus_z_sq = client.add_scalar(&z_sq, 1.0)?;
+        let ln_term = client.log(&one_plus_z_sq)?;
+
+        let constant = -(PI * self.scale).ln();
+        let result = client.add_scalar(&ln_term, constant)?;
+        client.mul_scalar(&result, -1.0)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = 0.5 + atan(z) / π where z = (x - x₀) / γ
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let atan_z = client.atan(&z)?;
+        let scaled = client.mul_scalar(&atan_z, 1.0 / PI)?;
+        client.add_scalar(&scaled, 0.5)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = 0.5 - atan(z) / π where z = (x - x₀) / γ
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let atan_z = client.atan(&z)?;
+        let scaled = client.mul_scalar(&atan_z, 1.0 / PI)?;
+        client.sub_scalar(&scaled, -0.5)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF) = log(0.5 + atan(z) / π)
+        let cdf = self.cdf_tensor(x, client)?;
+        client.log(&cdf)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = x₀ + γ * tan(π*(p - 0.5))
+        let p_minus_half = client.sub_scalar(p, -0.5)?;
+        let pi_term = client.mul_scalar(&p_minus_half, PI)?;
+        let tan_val = client.tan(&pi_term)?;
+        let scaled = client.mul_scalar(&tan_val, self.scale)?;
+        client.add_scalar(&scaled, self.loc)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = PPF(1 - p)
+        let one_minus_p = client.sub_scalar(p, -1.0)?;
+        self.ppf_tensor(&one_minus_p, client)
     }
 }
 

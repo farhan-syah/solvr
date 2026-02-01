@@ -2,6 +2,11 @@
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{DiscreteDistribution, Distribution};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Negative Binomial distribution.
 ///
@@ -193,6 +198,126 @@ impl DiscreteDistribution for NegativeBinomial {
         }
 
         Ok(low)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PMF(k) = C(k + r - 1, k) * p^r * (1-p)^k
+        // Use log-space: log_pmf = log(C(k+r-1,k)) + r*log(p) + k*log(1-p)
+        let log_pmf = self.log_pmf_tensor(k, client)?;
+        client.exp(&log_pmf)
+    }
+
+    fn log_pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log_pmf(k) = log(Γ(k+r)) - log(Γ(k+1)) - log(Γ(r)) + r*log(p) + k*log(1-p)
+        let ln_p = self.p.ln();
+        let ln_q = (1.0 - self.p).ln();
+        let lgamma_r = self.r.ln(); // Actually lgamma(r)
+
+        // floor(k) for integer semantics
+        let k_floor = client.floor(k)?;
+
+        // k + r
+        let k_plus_r = client.add_scalar(&k_floor, self.r)?;
+        // k + 1
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+
+        // lgamma(k + r)
+        let lgamma_k_plus_r = client.lgamma(&k_plus_r)?;
+        // lgamma(k + 1) = log(k!)
+        let lgamma_k_plus_1 = client.lgamma(&k_plus_1)?;
+
+        // log(C(k+r-1, k)) = lgamma(k+r) - lgamma(k+1) - lgamma(r)
+        let log_binom_coeff = client.sub(&lgamma_k_plus_r, &lgamma_k_plus_1)?;
+        let log_binom_coeff = client.sub_scalar(&log_binom_coeff, lgamma_r)?;
+
+        // r * log(p)
+        let r_times_ln_p = self.r * ln_p;
+
+        // k * log(1-p)
+        let k_times_ln_q = client.mul_scalar(&k_floor, ln_q)?;
+
+        // Sum: log_binom_coeff + r*log(p) + k*log(1-p)
+        let result = client.add_scalar(&log_binom_coeff, r_times_ln_p)?;
+        client.add(&result, &k_times_ln_q)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(k) = I_p(r, k+1) = regularized incomplete beta function
+        let k_floor = client.floor(k)?;
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+
+        // r tensor and p tensor
+        let shape = k_floor.shape();
+        let r_tensor = client.fill(shape, self.r, k_floor.dtype())?;
+        let p_tensor = client.fill(shape, self.p, k_floor.dtype())?;
+
+        // betainc(r, k+1, p)
+        client.betainc(&r_tensor, &k_plus_1, &p_tensor)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(k) = 1 - CDF(k)
+        let cdf = self.cdf_tensor(k, client)?;
+        client.sub_scalar(&client.mul_scalar(&cdf, -1.0)?, -1.0)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF for negative binomial is complex to vectorize (requires iterative search)
+        // Use normal approximation: NegBinom(r,p) ≈ Normal(r(1-p)/p, r(1-p)/p²)
+        let mean = self.r * (1.0 - self.p) / self.p;
+        let var = self.r * (1.0 - self.p) / (self.p * self.p);
+        let std = var.sqrt();
+
+        // Use erfinv for normal approximation
+        let two_p_minus_1 = client.sub_scalar(&client.mul_scalar(p, 2.0)?, 1.0)?;
+        let erfinv_val = client.erfinv(&two_p_minus_1)?;
+        let z = client.mul_scalar(&erfinv_val, std::f64::consts::SQRT_2)?;
+
+        // x = mean + std * z
+        let scaled = client.mul_scalar(&z, std)?;
+        let result = client.add_scalar(&scaled, mean)?;
+
+        // Clamp to [0, ∞)
+        client.clamp(&result, 0.0, f64::INFINITY)
     }
 }
 

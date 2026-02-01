@@ -3,6 +3,11 @@
 use crate::stats::continuous::special;
 use crate::stats::distribution::{DiscreteDistribution, Distribution};
 use crate::stats::error::{StatsError, StatsResult};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Poisson distribution.
 ///
@@ -142,6 +147,109 @@ impl DiscreteDistribution for Poisson {
         }
 
         Ok(k)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PMF(k) = λ^k * e^(-λ) / k!
+        // log_pmf = k*ln(λ) - λ - ln(k!)
+        // Then exp
+        let log_pmf = self.log_pmf_tensor(k, client)?;
+        client.exp(&log_pmf)
+    }
+
+    fn log_pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log_pmf(k) = k*ln(λ) - λ - lgamma(k+1)
+        let ln_lambda = self.lambda.ln();
+
+        // k * ln(λ)
+        let k_times_ln_lambda = client.mul_scalar(k, ln_lambda)?;
+
+        // k + 1 (for factorial)
+        let k_plus_1 = client.add_scalar(k, 1.0)?;
+
+        // lgamma(k+1) = log(k!)
+        let lgamma_k_plus_1 = client.lgamma(&k_plus_1)?;
+
+        // k*ln(λ) - λ - lgamma(k+1)
+        let result = client.sub_scalar(&k_times_ln_lambda, self.lambda)?;
+        client.sub(&result, &lgamma_k_plus_1)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(k) = P(X ≤ k) = gammaincc(k+1, λ)
+        let k_floor = client.floor(k)?;
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+
+        // Create lambda tensor using fill with shape of k_plus_1
+        let shape = k_plus_1.shape();
+        let lambda_tensor = client.fill(shape, self.lambda, k_plus_1.dtype())?;
+
+        // gammaincc(k+1, λ)
+        client.gammaincc(&k_plus_1, &lambda_tensor)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(k) = P(X > k) = gammainc(k+1, λ)
+        let k_floor = client.floor(k)?;
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+
+        // Create lambda tensor
+        let shape = k_plus_1.shape();
+        let lambda_tensor = client.fill(shape, self.lambda, k_plus_1.dtype())?;
+
+        // gammainc(k+1, λ)
+        client.gammainc(&k_plus_1, &lambda_tensor)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF uses inverse incomplete gamma: gammaincinv(λ, p)
+        let shape = p.shape();
+        let lambda_tensor = client.fill(shape, self.lambda, p.dtype())?;
+
+        // gammaincinv(λ, p) gives the initial estimate
+        let initial = client.gammaincinv(&lambda_tensor, p)?;
+
+        // For discrete distributions, we need to round down
+        client.floor(&initial)
     }
 }
 

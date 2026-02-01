@@ -2,6 +2,11 @@
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{ContinuousDistribution, Distribution};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Pareto distribution (Type I).
 ///
@@ -189,6 +194,117 @@ impl ContinuousDistribution for Pareto {
             return Ok(self.scale);
         }
         Ok(self.scale / p.powf(1.0 / self.shape))
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // f(x) = α * xₘ^α / x^(α+1) = α * xₘ^α * exp(-(α+1) * ln(x))
+        let scale_alpha = self.scale.powf(self.shape);
+        let ln_x = client.log(x)?;
+        let scaled_ln = client.mul_scalar(&ln_x, -(self.shape + 1.0))?;
+        let inv_power = client.exp(&scaled_ln)?;
+        client.mul_scalar(&inv_power, self.shape * scale_alpha)
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(f(x)) = ln(α) + α*ln(xₘ) - (α+1)*ln(x)
+        let ln_x = client.log(x)?;
+        let term1 = client.mul_scalar(&ln_x, -(self.shape + 1.0))?;
+        let constant = self.shape.ln() + self.shape * self.scale.ln();
+        client.add_scalar(&term1, constant)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = 1 - (xₘ/x)^α = 1 - exp(α * ln(xₘ/x)) = 1 - exp(α * (ln(xₘ) - ln(x)))
+        let ln_x = client.log(x)?;
+        let ln_scale_minus_ln_x = client.add_scalar(&client.mul_scalar(&ln_x, -1.0)?, self.scale.ln())?;
+        let power_term = client.exp(&client.mul_scalar(&ln_scale_minus_ln_x, self.shape)?)?;
+        // 1 - power_term = -(power_term - 1) = -power_term + 1
+        let neg_power = client.mul_scalar(&power_term, -1.0)?;
+        client.add_scalar(&neg_power, 1.0)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = (xₘ/x)^α = exp(α * (ln(xₘ) - ln(x)))
+        let ln_x = client.log(x)?;
+        let ln_scale_minus_ln_x = client.add_scalar(&client.mul_scalar(&ln_x, -1.0)?, self.scale.ln())?;
+        client.exp(&client.mul_scalar(&ln_scale_minus_ln_x, self.shape)?)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF) = log(1 - (xₘ/x)^α)
+        let cdf = self.cdf_tensor(x, client)?;
+        client.log(&cdf)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = xₘ / (1-p)^(1/α) = xₘ * exp(-(1/α) * ln(1-p))
+        let neg_p = client.mul_scalar(p, -1.0)?;
+        let one_minus_p = client.add_scalar(&neg_p, 1.0)?;
+        let ln_one_minus_p = client.log(&one_minus_p)?;
+        let scaled = client.mul_scalar(&ln_one_minus_p, -1.0 / self.shape)?;
+        let denom_inv = client.exp(&scaled)?;
+        client.mul_scalar(&denom_inv, self.scale)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = xₘ / p^(1/α) = xₘ * exp(-(1/α) * ln(p))
+        let ln_p = client.log(p)?;
+        let scaled = client.mul_scalar(&ln_p, -1.0 / self.shape)?;
+        let denom_inv = client.exp(&scaled)?;
+        client.mul_scalar(&denom_inv, self.scale)
     }
 }
 

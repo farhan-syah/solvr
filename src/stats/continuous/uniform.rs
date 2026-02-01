@@ -2,6 +2,11 @@
 
 use crate::stats::distribution::{ContinuousDistribution, Distribution};
 use crate::stats::error::{StatsError, StatsResult};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Continuous uniform distribution on [a, b].
 ///
@@ -157,6 +162,103 @@ impl ContinuousDistribution for Uniform {
             return Err(StatsError::InvalidProbability { value: p });
         }
         Ok(self.a + p * self.range)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // PDF = 1 / (b - a) = 1 / range (constant on support)
+        // Create tensor of zeros and add constant
+        let zeros = client.mul_scalar(x, 0.0)?;
+        client.add_scalar(&zeros, 1.0 / self.range)
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(PDF) = -ln(range)
+        let zeros = client.mul_scalar(x, 0.0)?;
+        client.add_scalar(&zeros, -self.range.ln())
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = (x - a) / (b - a)
+        let centered = client.sub_scalar(x, self.a)?;
+        client.mul_scalar(&centered, 1.0 / self.range)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = (b - x) / (b - a)
+        let b_minus_x = client.sub_scalar(x, -self.b)?;
+        client.mul_scalar(&b_minus_x, 1.0 / self.range)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF(x)) = log((x - a) / (b - a)) = log(x - a) - log(b - a)
+        let cdf = self.cdf_tensor(x, client)?;
+        client.log(&cdf)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = a + p * (b - a) = a + p * range
+        let scaled = client.mul_scalar(p, self.range)?;
+        client.add_scalar(&scaled, self.a)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = PPF(1 - p) = a + (1 - p) * range
+        let one_minus_p = client.sub_scalar(p, -1.0)?;
+        let scaled = client.mul_scalar(&one_minus_p, self.range)?;
+        client.add_scalar(&scaled, self.a)
     }
 }
 

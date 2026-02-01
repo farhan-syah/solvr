@@ -2,7 +2,11 @@
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{ContinuousDistribution, Distribution};
-
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 use std::f64::consts::PI;
 
 /// Gumbel distribution (Extreme Value Type I).
@@ -157,6 +161,117 @@ impl ContinuousDistribution for Gumbel {
     fn isf(&self, p: f64) -> StatsResult<f64> {
         self.ppf(1.0 - p)
     }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // f(x) = (1/β) * exp(-z) * exp(-exp(-z)) where z = (x - μ)/β
+        self.log_pdf_tensor(x, client).and_then(|log_pdf| client.exp(&log_pdf))
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(f(x)) = -ln(β) - z - exp(-z) where z = (x - μ)/β
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let neg_z = client.mul_scalar(&z, -1.0)?;
+        let exp_neg_z = client.exp(&neg_z)?;
+
+        let result = client.sub(&z, &exp_neg_z)?;
+        client.add_scalar(&result, -self.scale.ln())
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = exp(-exp(-(x-μ)/β))
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let neg_z = client.mul_scalar(&z, -1.0)?;
+        let exp_neg_z = client.exp(&neg_z)?;
+        let neg_exp_neg_z = client.mul_scalar(&exp_neg_z, -1.0)?;
+        client.exp(&neg_exp_neg_z)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = 1 - CDF(x)
+        let cdf = self.cdf_tensor(x, client)?;
+        client.sub_scalar(&cdf, -1.0)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF) = -exp(-(x-μ)/β)
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let neg_z = client.mul_scalar(&z, -1.0)?;
+        client.exp(&neg_z)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = μ - β * ln(-ln(p))
+        let ln_p = client.log(p)?;
+        let neg_ln_p = client.mul_scalar(&ln_p, -1.0)?;
+        let ln_neg_ln_p = client.log(&neg_ln_p)?;
+        let scaled = client.mul_scalar(&ln_neg_ln_p, -self.scale)?;
+        client.add_scalar(&scaled, self.loc)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = PPF(1 - p)
+        let one_minus_p = client.sub_scalar(p, -1.0)?;
+        self.ppf_tensor(&one_minus_p, client)
+    }
 }
 
 /// Left-skewed Gumbel distribution (for modeling minimums).
@@ -278,6 +393,117 @@ impl ContinuousDistribution for GumbelMin {
 
     fn isf(&self, p: f64) -> StatsResult<f64> {
         self.ppf(1.0 - p)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // f(x) = (1/β) * exp(z) * exp(-exp(z)) where z = (x - μ)/β
+        self.log_pdf_tensor(x, client).and_then(|log_pdf| client.exp(&log_pdf))
+    }
+
+    fn log_pdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    {
+        // log(f(x)) = -ln(β) + z - exp(z) where z = (x - μ)/β
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let exp_z = client.exp(&z)?;
+        let result = client.sub(&z, &exp_z)?;
+        client.add_scalar(&result, -self.scale.ln())
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF(x) = 1 - exp(-exp(z)) where z = (x - μ)/β
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let exp_z = client.exp(&z)?;
+        let neg_exp_z = client.mul_scalar(&exp_z, -1.0)?;
+        let exp_neg_exp_z = client.exp(&neg_exp_z)?;
+        client.sub_scalar(&exp_neg_exp_z, -1.0)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(x) = exp(-exp(z)) where z = (x - μ)/β
+        let centered = client.sub_scalar(x, self.loc)?;
+        let z = client.mul_scalar(&centered, 1.0 / self.scale)?;
+
+        let exp_z = client.exp(&z)?;
+        let neg_exp_z = client.mul_scalar(&exp_z, -1.0)?;
+        client.exp(&neg_exp_z)
+    }
+
+    fn log_cdf_tensor<R: Runtime, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log(CDF) = log(1 - exp(-exp(z)))
+        let cdf = self.cdf_tensor(x, client)?;
+        client.log(&cdf)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF(p) = μ + β * ln(-ln(1-p))
+        let one_minus_p = client.sub_scalar(p, -1.0)?;
+        let ln_term = client.log(&one_minus_p)?;
+        let neg_ln = client.mul_scalar(&ln_term, -1.0)?;
+        let ln_ln = client.log(&neg_ln)?;
+        let scaled = client.mul_scalar(&ln_ln, self.scale)?;
+        client.add_scalar(&scaled, self.loc)
+    }
+
+    fn isf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // ISF(p) = PPF(1 - p)
+        let one_minus_p = client.sub_scalar(p, -1.0)?;
+        self.ppf_tensor(&one_minus_p, client)
     }
 }
 

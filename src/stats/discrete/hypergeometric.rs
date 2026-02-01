@@ -3,6 +3,11 @@
 use crate::stats::discrete::log_binom;
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{DiscreteDistribution, Distribution};
+use numr::algorithm::special::SpecialFunctions;
+use numr::error::Result;
+use numr::ops::{ScalarOps, TensorOps};
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Hypergeometric distribution.
 ///
@@ -268,6 +273,152 @@ impl DiscreteDistribution for Hypergeometric {
         }
 
         Ok(max_k)
+    }
+
+    // ========================================================================
+    // Tensor Methods - All computation stays on device using numr ops
+    // ========================================================================
+
+    fn pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PMF(k) = C(K,k) * C(N-K, n-k) / C(N, n)
+        // Use log-space: log_pmf = log(C(K,k)) + log(C(N-K, n-k)) - log(C(N, n))
+        let log_pmf = self.log_pmf_tensor(k, client)?;
+        client.exp(&log_pmf)
+    }
+
+    fn log_pmf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // log_pmf(k) = log(C(K,k)) + log(C(N-K, n-k)) - log(C(N, n))
+        let n_f = self.num_draws as f64;
+        let k_f = self.num_success as f64;
+        let big_n_f = self.pop_size as f64;
+
+        // floor(k) for integer semantics
+        let k_floor = client.floor(k)?;
+
+        // Compute log(C(K, k)) = lgamma(K+1) - lgamma(k+1) - lgamma(K-k+1)
+        let k_plus_1 = client.add_scalar(&k_floor, 1.0)?;
+        let neg_k = client.mul_scalar(&k_floor, -1.0)?;
+        let k_f_minus_k = client.add_scalar(&neg_k, k_f)?;
+        let k_f_minus_k_plus_1 = client.add_scalar(&k_f_minus_k, 1.0)?;
+
+        let lgamma_k_plus_1 = client.lgamma(&k_plus_1)?;
+        let lgamma_k_f_minus_k_plus_1 = client.lgamma(&k_f_minus_k_plus_1)?;
+
+        let shape = k_floor.shape();
+        let lgamma_k_f_plus_1_tensor = client.fill(shape, k_f.ln(), k_floor.dtype())?;
+        let log_c_k_k = client.sub(&lgamma_k_f_plus_1_tensor, &lgamma_k_plus_1)?;
+        let log_c_k_k = client.sub(&log_c_k_k, &lgamma_k_f_minus_k_plus_1)?;
+
+        // Compute log(C(N-K, n-k)) = lgamma(N-K+1) - lgamma(n-k+1) - lgamma(N-K-n+k+1)
+        let n_minus_k = client.add_scalar(&neg_k, n_f)?;
+        let n_minus_k_plus_1 = client.add_scalar(&n_minus_k, 1.0)?;
+
+        let big_n_f_minus_k_f = big_n_f - k_f;
+        let big_n_f_minus_k_f_minus_n = big_n_f_minus_k_f - n_f;
+        let denom_const = client.add_scalar(&neg_k, big_n_f_minus_k_f_minus_n)?;
+        let denom_plus_1 = client.add_scalar(&denom_const, 1.0)?;
+
+        let lgamma_n_minus_k_plus_1 = client.lgamma(&n_minus_k_plus_1)?;
+        let lgamma_denom_plus_1 = client.lgamma(&denom_plus_1)?;
+
+        let lgamma_nk_f_plus_1_tensor = client.fill(shape, big_n_f_minus_k_f.ln(), k_floor.dtype())?;
+        let log_c_nk_nk = client.sub(&lgamma_nk_f_plus_1_tensor, &lgamma_n_minus_k_plus_1)?;
+        let log_c_nk_nk = client.sub(&log_c_nk_nk, &lgamma_denom_plus_1)?;
+
+        // log(C(N, n)) = lgamma(N+1) - lgamma(n+1) - lgamma(N-n+1)
+        let n_plus_1 = client.fill(shape, n_f + 1.0, k_floor.dtype())?;
+        let lgamma_n_plus_1 = client.lgamma(&n_plus_1)?;
+
+        let lgamma_big_n_minus_n_plus_1_tensor = client.fill(shape, (big_n_f - n_f + 1.0).ln(), k_floor.dtype())?;
+        let lgamma_big_n_plus_1_tensor = client.fill(shape, big_n_f.ln(), k_floor.dtype())?;
+
+        let log_c_n_n = client.sub(&lgamma_big_n_plus_1_tensor, &lgamma_n_plus_1)?;
+        let log_c_n_n = client.sub(&log_c_n_n, &lgamma_big_n_minus_n_plus_1_tensor)?;
+
+        // Combine: log(C(K,k)) + log(C(N-K, n-k)) - log(C(N, n))
+        let result = client.add(&log_c_k_k, &log_c_nk_nk)?;
+        client.sub(&result, &log_c_n_n)
+    }
+
+    fn cdf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // CDF is hard to vectorize for hypergeometric (requires summing PMFs)
+        // Use normal approximation for large N
+        let k_floor = client.floor(k)?;
+        let mean = self.mean();
+        let var = self.var();
+        let std = var.sqrt();
+
+        // Standardize: z = (k - mean) / std
+        let centered = client.sub_scalar(&k_floor, mean)?;
+        let z = client.div_scalar(&centered, std)?;
+
+        // Normal CDF: 0.5 * erfc(-z / sqrt(2))
+        let z_scaled = client.mul_scalar(&z, -std::f64::consts::FRAC_1_SQRT_2)?;
+        let erfc_val = client.erfc(&z_scaled)?;
+        client.mul_scalar(&erfc_val, 0.5)
+    }
+
+    fn sf_tensor<R: Runtime, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // SF(k) = 1 - CDF(k)
+        let cdf = self.cdf_tensor(k, client)?;
+        client.sub_scalar(&client.mul_scalar(&cdf, -1.0)?, -1.0)
+    }
+
+    fn ppf_tensor<R: Runtime, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
+    where
+        C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
+    {
+        // PPF is hard to vectorize for hypergeometric
+        // Use normal approximation like CDF
+        let mean = self.mean();
+        let var = self.var();
+        let std = var.sqrt();
+
+        // Inverse normal: x = mean + std * sqrt(2) * erfinv(2*p - 1)
+        let two_p_minus_1 = client.sub_scalar(&client.mul_scalar(p, 2.0)?, 1.0)?;
+        let erfinv_val = client.erfinv(&two_p_minus_1)?;
+        let z = client.mul_scalar(&erfinv_val, std::f64::consts::SQRT_2)?;
+
+        // x = mean + std * z
+        let scaled = client.mul_scalar(&z, std)?;
+        let result = client.add_scalar(&scaled, mean)?;
+
+        // Clamp to [min_k, max_k]
+        let min_k = self.min_val() as f64;
+        let max_k = self.max_val() as f64;
+        client.clamp(&result, min_k, max_k)
     }
 }
 
