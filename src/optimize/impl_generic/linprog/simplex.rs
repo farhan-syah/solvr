@@ -3,7 +3,7 @@
 //! The tableau is stored as a 2D Tensor<R> and pivot operations use
 //! tensor broadcasting for efficient row elimination.
 
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{CompareOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -27,7 +27,7 @@ pub fn simplex_impl<R, C>(
 ) -> OptimizeResult<TensorLinProgResult<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     let n_orig = c.shape()[0];
     if n_orig == 0 {
@@ -296,9 +296,8 @@ fn find_pivot_column_tensor<R, C>(
 ) -> OptimizeResult<Option<usize>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
-
     // Extract objective row (last row, excluding RHS)
     let obj_row = tableau
         .narrow(0, n_constraints, 1)
@@ -312,6 +311,7 @@ where
         })?
         .contiguous();
 
+    // Transfer single row to CPU for argmin (acceptable for control flow)
     let obj_data: Vec<f64> = obj_row.to_vec();
 
     // Find most negative value
@@ -338,7 +338,7 @@ fn find_pivot_row_tensor<R, C>(
 ) -> OptimizeResult<Option<usize>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     // Extract pivot column (constraint rows only)
     let col = tableau
@@ -366,6 +366,7 @@ where
         })?
         .contiguous();
 
+    // Transfer single column each to CPU for ratio test (acceptable for control flow)
     let col_data: Vec<f64> = col.to_vec();
     let rhs_data: Vec<f64> = rhs.to_vec();
 
@@ -393,7 +394,7 @@ fn pivot_tensor<R, C>(
     pivot_row: usize,
     pivot_col: usize,
     n_rows: usize,
-    n_cols: usize,
+    _n_cols: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
     R: Runtime,
@@ -466,15 +467,48 @@ where
     // The above subtraction zeroed it out. We need to put scaled_pivot_row back.
     // result[pivot_row, :] = scaled_pivot_row
 
-    // Extract result data, fix pivot row, rebuild tensor
-    let mut result_data: Vec<f64> = result.to_vec();
-    let scaled_data: Vec<f64> = scaled_pivot_row.to_vec();
+    // Replace pivot row using tensor slicing and concatenation
+    let before = if pivot_row > 0 {
+        Some(
+            result
+                .narrow(0, 0, pivot_row)
+                .map_err(|e| OptimizeError::NumericalError {
+                    message: format!("pivot: narrow before - {}", e),
+                })?
+                .contiguous(),
+        )
+    } else {
+        None
+    };
 
-    for j in 0..n_cols {
-        result_data[pivot_row * n_cols + j] = scaled_data[j];
+    let after = if pivot_row + 1 < n_rows {
+        Some(
+            result
+                .narrow(0, pivot_row + 1, n_rows - pivot_row - 1)
+                .map_err(|e| OptimizeError::NumericalError {
+                    message: format!("pivot: narrow after - {}", e),
+                })?
+                .contiguous(),
+        )
+    } else {
+        None
+    };
+
+    // Concatenate: before | scaled_pivot_row | after
+    let mut parts: Vec<&Tensor<R>> = Vec::new();
+    if let Some(ref b) = before {
+        parts.push(b);
+    }
+    parts.push(&scaled_pivot_row);
+    if let Some(ref a) = after {
+        parts.push(a);
     }
 
-    Ok(Tensor::<R>::from_slice(&result_data, &[n_rows, n_cols], client.device()))
+    client
+        .cat(&parts, 0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("pivot: cat rows - {}", e),
+        })
 }
 
 /// Check if solution is feasible (no artificial variables in basis with nonzero value).
