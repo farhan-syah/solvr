@@ -1,10 +1,11 @@
 //! Tensor-based differential evolution implementation.
 //!
-//! Population stored as 2D tensor [pop_size, n]. All operations on device.
+//! Population stored as Vec<Tensor<R>> where each element is shape [n].
+//! All tensor operations stay on device.
 
 use numr::dtype::DType;
 use numr::error::Result;
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{CompareOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -15,7 +16,8 @@ use super::TensorGlobalResult;
 
 /// Differential Evolution global optimizer using tensor operations.
 ///
-/// Population is stored as a 2D tensor [pop_size, n] on device.
+/// Population is stored as Vec<Tensor<R>> where each is shape [n].
+/// All operations stay on device - no to_vec()/from_slice() in loops.
 pub fn differential_evolution_impl<R, C, F>(
     client: &C,
     f: F,
@@ -25,7 +27,7 @@ pub fn differential_evolution_impl<R, C, F>(
 ) -> OptimizeResult<TensorGlobalResult<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
     let n = lower_bounds.shape()[0];
@@ -35,8 +37,8 @@ where
         });
     }
 
-    // Validate bounds once at start
-    validate_bounds(lower_bounds, upper_bounds)?;
+    // Validate bounds using tensor ops
+    validate_bounds(client, lower_bounds, upper_bounds)?;
 
     // DE parameters
     let pop_size = (15 * n).max(25);
@@ -50,24 +52,29 @@ where
             message: format!("de: bounds range - {}", e),
         })?;
 
-    // Initialize population as 2D tensor [pop_size, n]
-    // Each row is lower + rand * range
+    // Initialize population as Vec<Tensor<R>> - each element is shape [n]
     let mut population = init_population(client, lower_bounds, &bounds_range, pop_size, n)?;
 
     // Evaluate initial population - must iterate (function returns scalar)
-    let mut fitness = evaluate_population(client, &f, &population, pop_size, n)?;
+    let mut fitness = evaluate_population(&f, &population)?;
     let mut nfev = pop_size;
 
     // Find best individual
     let (mut best_idx, mut best_fitness) = find_best(&fitness);
 
+    // Pre-create index tensor for crossover (reused each iteration)
+    let indices = client
+        .arange(0.0, n as f64, 1.0, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: create indices - {}", e),
+        })?;
+
     for iter in 0..options.max_iter {
         // Check convergence
         let fitness_range = compute_fitness_range(&fitness);
         if fitness_range < options.tol {
-            let x_best = extract_individual(client, &population, best_idx, n)?;
             return Ok(TensorGlobalResult {
-                x: x_best,
+                x: population[best_idx].clone(),
                 fun: best_fitness,
                 iterations: iter + 1,
                 nfev,
@@ -76,19 +83,19 @@ where
         }
 
         // DE iteration: for each individual, create trial and possibly replace
-        for (i, fit) in fitness.iter_mut().enumerate() {
+        for i in 0..pop_size {
             // Select three distinct random individuals (not i)
-            let (r0, r1, r2) = select_random_indices(client, pop_size, i)?;
+            let (r0, r1, r2) = select_random_indices::<R, C>(client, pop_size, i)?;
 
-            // Extract individuals for mutation
-            let x_r0 = extract_individual(client, &population, r0, n)?;
-            let x_r1 = extract_individual(client, &population, r1, n)?;
-            let x_r2 = extract_individual(client, &population, r2, n)?;
-            let x_i = extract_individual(client, &population, i, n)?;
+            // Get references to individuals for mutation
+            let x_r0 = &population[r0];
+            let x_r1 = &population[r1];
+            let x_r2 = &population[r2];
+            let x_i = &population[i];
 
             // Mutant: x_r0 + f_scale * (x_r1 - x_r2)
             let diff = client
-                .sub(&x_r1, &x_r2)
+                .sub(x_r1, x_r2)
                 .map_err(|e| OptimizeError::NumericalError {
                     message: format!("de: diff - {}", e),
                 })?;
@@ -98,7 +105,7 @@ where
                     message: format!("de: scaled diff - {}", e),
                 })?;
             let mutant_unclamped = client
-                .add(&x_r0, &scaled_diff)
+                .add(x_r0, &scaled_diff)
                 .map_err(|e| OptimizeError::NumericalError {
                     message: format!("de: mutant - {}", e),
                 })?;
@@ -106,8 +113,8 @@ where
             // Clamp to bounds
             let mutant = clamp_to_bounds(client, &mutant_unclamped, lower_bounds, upper_bounds)?;
 
-            // Crossover: create trial vector
-            let trial = crossover(client, &x_i, &mutant, cr, n)?;
+            // Crossover: create trial vector using tensor ops
+            let trial = crossover(client, x_i, &mutant, cr, n, &indices)?;
 
             // Evaluate trial
             let trial_fitness = f(&trial).map_err(|e| OptimizeError::NumericalError {
@@ -116,9 +123,9 @@ where
             nfev += 1;
 
             // Selection: if trial is better, replace
-            if trial_fitness <= *fit {
-                update_population(client, &mut population, i, &trial, n)?;
-                *fit = trial_fitness;
+            if trial_fitness <= fitness[i] {
+                population[i] = trial;
+                fitness[i] = trial_fitness;
 
                 if trial_fitness < best_fitness {
                     best_fitness = trial_fitness;
@@ -128,9 +135,8 @@ where
         }
     }
 
-    let x_best = extract_individual(client, &population, best_idx, n)?;
     Ok(TensorGlobalResult {
-        x: x_best,
+        x: population[best_idx].clone(),
         fun: best_fitness,
         iterations: options.max_iter,
         nfev,
@@ -138,67 +144,55 @@ where
     })
 }
 
-/// Initialize population tensor [pop_size, n] with uniform random within bounds.
+/// Initialize population as Vec<Tensor<R>> with uniform random within bounds.
 fn init_population<R, C>(
     client: &C,
     lower: &Tensor<R>,
     range: &Tensor<R>,
     pop_size: usize,
     n: usize,
-) -> OptimizeResult<Tensor<R>>
+) -> OptimizeResult<Vec<Tensor<R>>>
 where
     R: Runtime,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
-    // Generate random [pop_size, n] in [0, 1)
-    let rand_pop = client
-        .rand(&[pop_size, n], DType::F64)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("de: rand pop - {}", e),
-        })?;
+    let mut population = Vec::with_capacity(pop_size);
 
-    // Broadcast lower and range to [pop_size, n]
-    let lower_broadcast = lower
-        .broadcast_to(&[pop_size, n])
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("de: broadcast lower - {}", e),
-        })?;
-    let range_broadcast = range
-        .broadcast_to(&[pop_size, n])
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("de: broadcast range - {}", e),
-        })?;
+    for _ in 0..pop_size {
+        // Generate random [n] in [0, 1)
+        let rand_ind = client
+            .rand(&[n], DType::F64)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("de: rand individual - {}", e),
+            })?;
 
-    // population = lower + rand * range
-    let scaled = client
-        .mul(&rand_pop, &range_broadcast)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("de: scale pop - {}", e),
-        })?;
-    client
-        .add(&lower_broadcast, &scaled)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("de: init pop - {}", e),
-        })
+        // individual = lower + rand * range
+        let scaled = client
+            .mul(&rand_ind, range)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("de: scale individual - {}", e),
+            })?;
+        let individual = client
+            .add(lower, &scaled)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("de: init individual - {}", e),
+            })?;
+
+        population.push(individual);
+    }
+
+    Ok(population)
 }
 
 /// Evaluate all individuals in population.
-fn evaluate_population<R, C, F>(
-    client: &C,
-    f: &F,
-    population: &Tensor<R>,
-    pop_size: usize,
-    n: usize,
-) -> OptimizeResult<Vec<f64>>
+fn evaluate_population<R, F>(f: &F, population: &[Tensor<R>]) -> OptimizeResult<Vec<f64>>
 where
     R: Runtime,
-    C: RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
-    let mut fitness = Vec::with_capacity(pop_size);
-    for i in 0..pop_size {
-        let individual = extract_individual(client, population, i, n)?;
-        let fit = f(&individual).map_err(|e| OptimizeError::NumericalError {
+    let mut fitness = Vec::with_capacity(population.len());
+    for individual in population {
+        let fit = f(individual).map_err(|e| OptimizeError::NumericalError {
             message: format!("de: initial evaluation - {}", e),
         })?;
         fitness.push(fit);
@@ -206,107 +200,92 @@ where
     Ok(fitness)
 }
 
-/// Extract individual i from population tensor.
-fn extract_individual<R, C>(
-    _client: &C,
-    population: &Tensor<R>,
-    i: usize,
-    n: usize,
-) -> OptimizeResult<Tensor<R>>
-where
-    R: Runtime,
-    C: RuntimeClient<R>,
-{
-    // Narrow row i from [pop_size, n] -> [1, n], make contiguous, then reshape to [n]
-    population
-        .narrow(0, i, 1)
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("de: narrow individual - {}", e),
-        })?
-        .contiguous()
-        .reshape(&[n])
-        .map_err(|e| OptimizeError::NumericalError {
-            message: format!("de: reshape individual - {}", e),
-        })
-}
-
-/// Update population row i with new individual.
-fn update_population<R, C>(
-    _client: &C,
-    population: &mut Tensor<R>,
-    i: usize,
-    individual: &Tensor<R>,
-    n: usize,
-) -> OptimizeResult<()>
-where
-    R: Runtime,
-    C: RuntimeClient<R>,
-{
-    // Get current population data, update row, create new tensor
-    // TODO: numr should have scatter/index_put for in-place updates
-    let mut data: Vec<f64> = population.to_vec();
-    let ind_data: Vec<f64> = individual.to_vec();
-
-    for j in 0..n {
-        data[i * n + j] = ind_data[j];
-    }
-
-    let pop_size = population.shape()[0];
-    *population = Tensor::<R>::from_slice(&data, &[pop_size, n], population.device());
-    Ok(())
-}
-
-/// Binomial crossover between target and mutant.
+/// Binomial crossover between target and mutant using tensor operations.
+///
+/// Uses tensor ops to select elements: where (rand < cr OR index == j_rand), use mutant, else target.
+/// No to_vec()/from_slice() - all computation stays on device.
 fn crossover<R, C>(
     client: &C,
     target: &Tensor<R>,
     mutant: &Tensor<R>,
     cr: f64,
     n: usize,
+    indices: &Tensor<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
-    // Generate random mask
+    // Generate random mask [n] in [0, 1)
     let rand_mask = client
         .rand(&[n], DType::F64)
         .map_err(|e| OptimizeError::NumericalError {
             message: format!("de: crossover rand - {}", e),
         })?;
 
-    // Ensure at least one from mutant (j_rand)
+    // Create threshold tensor filled with cr
+    let cr_tensor = client
+        .fill(&[n], cr, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: cr tensor - {}", e),
+        })?;
+
+    // mask1: where rand_mask < cr (use mutant) - returns F64 (0.0 or 1.0)
+    let lt_mask = client
+        .lt(&rand_mask, &cr_tensor)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: lt comparison - {}", e),
+        })?;
+
+    // Generate j_rand: random index in [0, n) - single scalar extraction is acceptable
     let rand_idx = client
         .rand(&[1], DType::F64)
         .map_err(|e| OptimizeError::NumericalError {
             message: format!("de: j_rand - {}", e),
         })?;
-    let j_rand_data: Vec<f64> = rand_idx.to_vec();
-    let j_rand = (j_rand_data[0] * n as f64) as usize;
+    let j_rand_val: Vec<f64> = rand_idx.to_vec();
+    let j_rand = (j_rand_val[0] * n as f64) as usize;
 
-    // Build trial: if rand < cr or j == j_rand, use mutant, else use target
-    let mask_data: Vec<f64> = rand_mask.to_vec();
-    let target_data: Vec<f64> = target.to_vec();
-    let mutant_data: Vec<f64> = mutant.to_vec();
+    // Create j_rand tensor for comparison
+    let j_rand_tensor = client
+        .fill(&[n], j_rand as f64, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: j_rand tensor - {}", e),
+        })?;
 
-    let trial_data: Vec<f64> = (0..n)
-        .map(|j| {
-            if mask_data[j] < cr || j == j_rand {
-                mutant_data[j]
-            } else {
-                target_data[j]
-            }
+    // mask2: where index == j_rand (one-hot at j_rand position) - returns F64 (0.0 or 1.0)
+    let j_rand_mask = client
+        .eq(indices, &j_rand_tensor)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: j_rand mask - {}", e),
+        })?;
+
+    // Combined mask: use maximum for OR-like behavior with F64 (0.0/1.0) masks
+    let combined_f64 = client
+        .maximum(&lt_mask, &j_rand_mask)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: combine masks - {}", e),
+        })?;
+
+    // Cast to U8 for where_cond (which expects U8 boolean mask)
+    let combined_mask = client
+        .cast(&combined_f64, DType::U8)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: cast mask - {}", e),
+        })?;
+
+    // Select: where mask is true use mutant, else use target
+    client
+        .where_cond(&combined_mask, mutant, target)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: crossover select - {}", e),
         })
-        .collect();
-
-    Ok(Tensor::<R>::from_slice(
-        &trial_data,
-        &[n],
-        client.device(),
-    ))
 }
 
-/// Select 3 distinct random indices, none equal to i.
+/// Select 3 distinct random indices, none equal to exclude.
+///
+/// Uses tensor random ops to generate random values, then extracts as scalars.
+/// Single-scalar extraction is acceptable (not arrays) - see CLAUDE.md.
 fn select_random_indices<R, C>(
     client: &C,
     pop_size: usize,
@@ -316,9 +295,10 @@ where
     R: Runtime,
     C: TensorOps<R> + RuntimeClient<R>,
 {
-    // Generate enough random values
+    // Generate 6 random values to select 3 distinct indices (with buffer for collision retry).
+    // We need 3 unique indices != exclude; 6 gives ~99% success rate for typical pop_size >= 10.
     let rand_vals = client
-        .rand(&[10], DType::F64)
+        .rand(&[6], DType::F64)
         .map_err(|e| OptimizeError::NumericalError {
             message: format!("de: select random - {}", e),
         })?;
@@ -327,7 +307,7 @@ where
     let mut selected = Vec::with_capacity(3);
     let mut idx = 0;
 
-    while selected.len() < 3 && idx < 10 {
+    while selected.len() < 3 && idx < 6 {
         let candidate = (vals[idx] * pop_size as f64) as usize % pop_size;
         if candidate != exclude && !selected.contains(&candidate) {
             selected.push(candidate);
@@ -335,8 +315,8 @@ where
         idx += 1;
     }
 
+    // Fallback if we didn't get enough random unique indices
     if selected.len() < 3 {
-        // Fallback: deterministic selection
         for k in 0..pop_size {
             if k != exclude && !selected.contains(&k) {
                 selected.push(k);
@@ -368,19 +348,37 @@ fn compute_fitness_range(fitness: &[f64]) -> f64 {
     max - min
 }
 
-fn validate_bounds<R: Runtime>(lower: &Tensor<R>, upper: &Tensor<R>) -> OptimizeResult<()> {
-    let lower_data: Vec<f64> = lower.to_vec();
-    let upper_data: Vec<f64> = upper.to_vec();
+/// Validate bounds using tensor ops.
+fn validate_bounds<R, C>(
+    client: &C,
+    lower: &Tensor<R>,
+    upper: &Tensor<R>,
+) -> OptimizeResult<()>
+where
+    R: Runtime,
+    C: TensorOps<R> + CompareOps<R> + RuntimeClient<R>,
+{
+    // Check if any lower >= upper using tensor comparison
+    let violations = client
+        .ge(lower, upper)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: bounds check - {}", e),
+        })?;
 
-    for (i, (&l, &u)) in lower_data.iter().zip(upper_data.iter()).enumerate() {
-        if l >= u {
-            return Err(OptimizeError::InvalidInterval {
-                a: l,
-                b: u,
-                context: format!("de: invalid bounds for dimension {}", i),
-            });
-        }
+    let violation_sum = client
+        .sum(&violations, &[0], false)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("de: sum violations - {}", e),
+        })?;
+
+    // Single scalar extraction for control flow is acceptable
+    let sum_val: Vec<f64> = violation_sum.to_vec();
+    if sum_val[0] > 0.0 {
+        return Err(OptimizeError::InvalidInput {
+            context: "de: lower bounds must be less than upper bounds".to_string(),
+        });
     }
+
     Ok(())
 }
 

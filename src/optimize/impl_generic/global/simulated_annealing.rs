@@ -4,7 +4,7 @@
 
 use numr::dtype::DType;
 use numr::error::Result;
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{CompareOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -25,7 +25,7 @@ pub fn simulated_annealing_impl<R, C, F>(
 ) -> OptimizeResult<TensorGlobalResult<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
     let shape = lower_bounds.shape();
@@ -36,8 +36,8 @@ where
         });
     }
 
-    // Validate bounds (only check needed at start)
-    validate_bounds(lower_bounds, upper_bounds)?;
+    // Validate bounds using tensor ops (only check needed at start)
+    validate_bounds(client, lower_bounds, upper_bounds)?;
 
     // Compute bounds range: range = upper - lower (stays on device)
     let bounds_range = client
@@ -171,20 +171,38 @@ where
     })
 }
 
-/// Validate that lower < upper for all dimensions.
-fn validate_bounds<R: Runtime>(lower: &Tensor<R>, upper: &Tensor<R>) -> OptimizeResult<()> {
-    let lower_data: Vec<f64> = lower.to_vec();
-    let upper_data: Vec<f64> = upper.to_vec();
+/// Validate that lower < upper for all dimensions using tensor ops.
+fn validate_bounds<R, C>(
+    client: &C,
+    lower: &Tensor<R>,
+    upper: &Tensor<R>,
+) -> OptimizeResult<()>
+where
+    R: Runtime,
+    C: TensorOps<R> + CompareOps<R> + RuntimeClient<R>,
+{
+    // Check if any lower >= upper using tensor comparison
+    // ge returns F64 (0.0 or 1.0), sum > 0 means at least one violation
+    let violations = client
+        .ge(lower, upper)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("simulated_annealing: bounds check - {}", e),
+        })?;
 
-    for (i, (&l, &u)) in lower_data.iter().zip(upper_data.iter()).enumerate() {
-        if l >= u {
-            return Err(OptimizeError::InvalidInterval {
-                a: l,
-                b: u,
-                context: format!("simulated_annealing: invalid bounds for dimension {}", i),
-            });
-        }
+    let violation_sum = client
+        .sum(&violations, &[0], false)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("simulated_annealing: sum violations - {}", e),
+        })?;
+
+    // Extract single scalar to check for violations (acceptable at validation time)
+    let sum_val: Vec<f64> = violation_sum.to_vec();
+    if sum_val[0] > 0.0 {
+        return Err(OptimizeError::InvalidInput {
+            context: "simulated_annealing: lower bounds must be less than upper bounds".to_string(),
+        });
     }
+
     Ok(())
 }
 
