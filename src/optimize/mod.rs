@@ -69,24 +69,22 @@ pub use scalar::{
     minimize_scalar_golden, newton, ridder, secant,
 };
 
-// TODO: These modules still use scalar &[f64] APIs and need tensor migration:
-// - global: differential_evolution, simulated_annealing, dual_annealing, basinhopping
-// - roots: newton_system, broyden1, levenberg_marquardt
-// - least_squares: leastsq, least_squares, curve_fit
-// - linprog: linprog, milp
-//
-// For now, re-export them but they should be rewritten with tensor operations.
-pub use global::{
-    GlobalOptions, GlobalResult, basinhopping, differential_evolution, dual_annealing,
-    simulated_annealing,
-};
-pub use least_squares::{
-    LeastSquaresOptions, LeastSquaresResult, curve_fit, least_squares, leastsq,
-};
+// All modules fully migrated to tensor operations
+
+// Global optimization
+pub use global::{GlobalOptimizationAlgorithms, GlobalOptions, GlobalTensorResult};
+
+// Root finding (systems of nonlinear equations)
+pub use roots::{RootFindingAlgorithms, RootOptions, RootTensorResult};
+
+// Least squares optimization
+pub use least_squares::{LeastSquaresAlgorithms, LeastSquaresOptions, LeastSquaresTensorResult};
+
+// Linear programming
 pub use linprog::{
-    LinProgOptions, LinProgResult, LinearConstraints, MilpOptions, MilpResult, linprog, milp,
+    LinProgAlgorithms, LinProgOptions, LinProgTensorConstraints, LinProgTensorResult,
+    MilpAlgorithms, MilpOptions, MilpTensorResult,
 };
-pub use roots::{MultiRootResult, RootOptions, broyden1, levenberg_marquardt, newton_system};
 
 /// Trait for optimization algorithms that work across all Runtime backends.
 ///
