@@ -4,7 +4,7 @@
 //! by delegating to the generic implementations in `impl_generic/`.
 
 use crate::signal::impl_generic::{
-    convolve2d_impl, convolve_impl, correlate2d_impl, correlate_impl, istft_impl, spectrogram_impl,
+    convolve_impl, convolve2d_impl, correlate_impl, correlate2d_impl, istft_impl, spectrogram_impl,
     stft_impl,
 };
 use crate::signal::{ConvMode, SignalProcessingAlgorithms};
@@ -160,9 +160,7 @@ mod tests {
         );
         let kernel = Tensor::<CpuRuntime>::from_slice(&[1.0f64, 0.0, 0.0, 1.0], &[2, 2], &device);
 
-        let result = client
-            .convolve2d(&signal, &kernel, ConvMode::Full)
-            .unwrap();
+        let result = client.convolve2d(&signal, &kernel, ConvMode::Full).unwrap();
 
         assert_eq!(result.shape(), &[4, 4]);
     }
