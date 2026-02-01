@@ -80,7 +80,7 @@ impl IntegrationAlgorithms<CpuRuntime> for CpuClient {
         options: &ODEOptions,
     ) -> IntegrateResult<ODEResultTensor<CpuRuntime>>
     where
-        F: Fn(f64, &Tensor<CpuRuntime>) -> Result<Tensor<CpuRuntime>>,
+        F: Fn(&Tensor<CpuRuntime>, &Tensor<CpuRuntime>) -> Result<Tensor<CpuRuntime>>,
     {
         solve_ivp_impl(self, f, t_span, y0, options)
     }
@@ -265,7 +265,7 @@ mod tests {
 
         let result = client
             .solve_ivp(
-                |_t, y| client.mul_scalar(y, -1.0),
+                |_t, y| client.mul_scalar(y, -1.0), // t is tensor [1], y is tensor [n]
                 [0.0, 5.0],
                 &y0,
                 &crate::integrate::ODEOptions::default(),
@@ -300,9 +300,8 @@ mod tests {
         let result = client
             .solve_ivp(
                 |_t, y| {
-                    // Using tensor ops throughout - data stays on device
-                    // For a real GPU implementation, this would use tensor indexing
-                    // For now, we use a simple approach
+                    // For harmonic oscillator: dy1/dt = y2, dy2/dt = -y1
+                    // Transfer to host for indexing (this test is about the solver, not tensor ops)
                     let y_data: Vec<f64> = y.to_vec();
                     Ok(Tensor::<CpuRuntime>::from_slice(
                         &[y_data[1], -y_data[0]],

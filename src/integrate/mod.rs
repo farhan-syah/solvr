@@ -64,7 +64,7 @@ pub use error::{IntegrateError, IntegrateResult};
 pub use ode::{ODEMethod, ODEOptions};
 
 // Re-export tensor-based ODE types and functions
-pub use impl_generic::ode::{ODEResultTensor, StepSizeController, solve_ivp_impl};
+pub use impl_generic::ode::{ODEResultTensor, solve_ivp_impl};
 
 /// Options for adaptive quadrature.
 #[derive(Debug, Clone)]
@@ -244,9 +244,10 @@ pub trait IntegrationAlgorithms<R: Runtime> {
     ///
     /// Solves the system dy/dt = f(t, y) with initial condition y(t0) = y0.
     /// All computation stays on device - no GPU→CPU→GPU roundtrips.
+    /// Time is passed as a scalar tensor (shape [1]) to enable device-resident computation.
     ///
     /// # Arguments
-    /// * `f` - Right-hand side function f(t, y) -> dy/dt, operating on tensors
+    /// * `f` - Right-hand side function f(t, y) -> dy/dt, where t is a scalar tensor [1]
     /// * `t_span` - Integration interval [t0, tf]
     /// * `y0` - Initial condition as a 1-D tensor
     /// * `options` - Solver options (method, tolerances, step bounds)
@@ -264,6 +265,7 @@ pub trait IntegrationAlgorithms<R: Runtime> {
     /// let client = CpuClient::new(device.clone());
     ///
     /// // Solve dy/dt = -y, y(0) = 1
+    /// // Note: t is a tensor [1], y is a tensor [n]
     /// let y0 = Tensor::from_slice(&[1.0], &[1], &device);
     /// let result = client.solve_ivp(
     ///     |_t, y| client.mul_scalar(y, -1.0),
@@ -280,5 +282,5 @@ pub trait IntegrationAlgorithms<R: Runtime> {
         options: &ODEOptions,
     ) -> error::IntegrateResult<ODEResultTensor<R>>
     where
-        F: Fn(f64, &Tensor<R>) -> Result<Tensor<R>>;
+        F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>;
 }

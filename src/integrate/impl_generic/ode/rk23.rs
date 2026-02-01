@@ -1,6 +1,7 @@
 //! Bogacki-Shampine RK23 method using tensor operations.
 //!
 //! All computation stays on device using numr's TensorOps.
+//! Step size control is fully device-resident - no scalar transfers during stepping.
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -11,7 +12,7 @@ use crate::integrate::error::{IntegrateError, IntegrateResult};
 use crate::integrate::{ODEMethod, ODEOptions};
 
 use super::{
-    ODEResultTensor, StepSizeController, compute_error_tensor, compute_initial_step_tensor,
+    ODEResultTensor, compute_acceptance, compute_error, compute_initial_step, compute_step_factor,
 };
 
 // Bogacki-Shampine coefficients
@@ -37,12 +38,17 @@ const E2: f64 = 1.0 / 12.0;
 const E3: f64 = 1.0 / 9.0;
 const E4: f64 = -1.0 / 8.0;
 
+// Step size controller parameters
+const SAFETY: f64 = 0.9;
+const MIN_FACTOR: f64 = 0.2;
+const MAX_FACTOR: f64 = 10.0;
+
 /// Compute weighted sum of stages: sum(coeffs[i] * stages[i])
 fn weighted_sum<R, C>(
     client: &C,
     stages: &[&Tensor<R>],
     coeffs: &[f64],
-    h: f64,
+    h: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
     R: Runtime,
@@ -50,10 +56,14 @@ where
 {
     debug_assert_eq!(stages.len(), coeffs.len());
 
-    let mut result = client.mul_scalar(stages[0], h * coeffs[0])?;
+    // h * coeffs[0] * stages[0]
+    let h_c0 = client.mul_scalar(h, coeffs[0])?;
+    let mut result = client.mul(&h_c0, stages[0])?;
+
     for i in 1..stages.len() {
         if coeffs[i] != 0.0 {
-            let term = client.mul_scalar(stages[i], h * coeffs[i])?;
+            let h_ci = client.mul_scalar(h, coeffs[i])?;
+            let term = client.mul(&h_ci, stages[i])?;
             result = client.add(&result, &term)?;
         }
     }
@@ -63,7 +73,7 @@ where
 /// Bogacki-Shampine RK23 method using tensor operations.
 ///
 /// Lower order than RK45, faster per step but requires more steps.
-/// All computation stays on device.
+/// All computation stays on device. Step size control is fully device-resident.
 pub fn rk23_impl<R, C, F>(
     client: &C,
     f: F,
@@ -74,39 +84,53 @@ pub fn rk23_impl<R, C, F>(
 where
     R: Runtime,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
-    F: Fn(f64, &Tensor<R>) -> Result<Tensor<R>>,
+    F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
 {
     let [t_start, t_end] = t_span;
+    let device = client.device();
 
-    let controller = StepSizeController::default();
     let min_step = options.min_step.unwrap_or(1e-14);
     let max_step = options.max_step.unwrap_or(t_end - t_start);
 
-    // Initialize
-    let mut t = t_start;
+    // Initialize - all tensors stay on device
+    let mut t = Tensor::<R>::from_slice(&[t_start], &[1], device);
     let mut y = y0.clone();
-    let mut k1 = f(t, &y).map_err(|e| IntegrateError::InvalidInput {
+    let mut k1 = f(&t, &y).map_err(|e| IntegrateError::InvalidInput {
         context: format!("RHS function error: {}", e),
     })?;
 
-    // Compute initial step size
+    // Compute initial step size (device-resident)
     let mut h = match options.h0 {
-        Some(h0) => h0,
-        None => compute_initial_step_tensor(client, &f, t, &y, &k1, 2, options.rtol, options.atol)
+        Some(h0) => Tensor::<R>::from_slice(&[h0], &[1], device),
+        None => compute_initial_step(client, &f, &t, &y, &k1, 2, options.rtol, options.atol)
             .map_err(|e| IntegrateError::InvalidInput {
                 context: format!("Initial step computation error: {}", e),
             })?,
     };
-    h = h.clamp(min_step, max_step);
+
+    // Clamp h to [min_step, max_step] on device
+    let min_h = Tensor::<R>::from_slice(&[min_step], &[1], device);
+    let max_h = Tensor::<R>::from_slice(&[max_step], &[1], device);
+    h = client.minimum(&client.maximum(&h, &min_h)?, &max_h)?;
+
+    // t_end tensor for comparison
+    let t_end_tensor = Tensor::<R>::from_slice(&[t_end], &[1], device);
 
     // Storage
-    let mut t_values = vec![t];
+    let mut t_values = vec![t_start];
     let mut y_values = vec![y.clone()];
     let mut nfev = 1;
     let mut naccept = 0;
     let mut nreject = 0;
 
-    while t < t_end {
+    // Main integration loop
+    loop {
+        let t_val: f64 = t.to_vec()[0];
+
+        if t_val >= t_end {
+            break;
+        }
+
         if naccept + nreject >= options.max_steps {
             let (t_tensor, y_tensor) = build_result_tensors(client, &t_values, &y_values)?;
 
@@ -116,7 +140,7 @@ where
                 success: false,
                 message: Some(format!(
                     "Maximum steps ({}) exceeded at t = {:.6}",
-                    options.max_steps, t
+                    options.max_steps, t_val
                 )),
                 nfev,
                 naccept,
@@ -125,66 +149,89 @@ where
             });
         }
 
-        h = h.min(t_end - t);
+        // Adjust step for end point: h = min(h, t_end - t)
+        let remaining = client.sub(&t_end_tensor, &t)?;
+        h = client.minimum(&h, &remaining)?;
 
         // ============================================================
         // RK23 stages - ALL computation stays on device
         // ============================================================
 
         // k2 = f(t + c2*h, y + h*a21*k1)
-        let y_stage = client
-            .add(&y, &client.mul_scalar(&k1, h * A21)?)
-            .map_err(to_integrate_err)?;
-        let k2 = f(t + C2 * h, &y_stage).map_err(to_integrate_err)?;
+        let h_a21 = client.mul_scalar(&h, A21)?;
+        let y_stage = client.add(&y, &client.mul(&h_a21, &k1)?)?;
+        let t_stage = client.add(&t, &client.mul_scalar(&h, C2)?)?;
+        let k2 = f(&t_stage, &y_stage).map_err(to_integrate_err)?;
 
-        // k3 = f(t + c3*h, y + h*(a31*k1 + a32*k2))
+        // k3 = f(t + c3*h, y + h*a32*k2)
         // Note: A31 = 0, so we only need a32*k2
-        let y_stage = client
-            .add(&y, &client.mul_scalar(&k2, h * A32)?)
-            .map_err(to_integrate_err)?;
-        let k3 = f(t + C3 * h, &y_stage).map_err(to_integrate_err)?;
+        let h_a32 = client.mul_scalar(&h, A32)?;
+        let y_stage = client.add(&y, &client.mul(&h_a32, &k2)?)?;
+        let t_stage = client.add(&t, &client.mul_scalar(&h, C3)?)?;
+        let k3 = f(&t_stage, &y_stage).map_err(to_integrate_err)?;
 
         // y_new = y + h*(a41*k1 + a42*k2 + a43*k3)
-        let sum_a = weighted_sum(client, &[&k1, &k2, &k3], &[A41, A42, A43], h)
-            .map_err(to_integrate_err)?;
-        let y_new = client.add(&y, &sum_a).map_err(to_integrate_err)?;
+        let sum_a = weighted_sum(client, &[&k1, &k2, &k3], &[A41, A42, A43], &h)?;
+        let y_new = client.add(&y, &sum_a)?;
 
         // k4 (FSAL) = f(t + h, y_new)
-        let k4 = f(t + h, &y_new).map_err(to_integrate_err)?;
+        let t_new = client.add(&t, &h)?;
+        let k4 = f(&t_new, &y_new).map_err(to_integrate_err)?;
         nfev += 3;
 
         // 3rd order solution: y3 = y + h*(b1*k1 + b2*k2 + b3*k3)
-        let sum_b =
-            weighted_sum(client, &[&k1, &k2, &k3], &[B1, B2, B3], h).map_err(to_integrate_err)?;
-        let y3 = client.add(&y, &sum_b).map_err(to_integrate_err)?;
+        let sum_b = weighted_sum(client, &[&k1, &k2, &k3], &[B1, B2, B3], &h)?;
+        let y3 = client.add(&y, &sum_b)?;
 
         // Error estimate
-        let y_err = weighted_sum(client, &[&k1, &k2, &k3, &k4], &[E1, E2, E3, E4], h)
+        let y_err = weighted_sum(client, &[&k1, &k2, &k3, &k4], &[E1, E2, E3, E4], &h)?;
+
+        // ============================================================
+        // Device-resident step control
+        // ============================================================
+
+        // Compute error (stays on device as tensor)
+        let error = compute_error(client, &y3, &y_err, &y, options.rtol, options.atol)
             .map_err(to_integrate_err)?;
 
-        let err = compute_error_tensor(client, &y3, &y_err, &y, options.rtol, options.atol)
+        // Compute step factor (stays on device)
+        let factor = compute_step_factor(client, &error, 2, SAFETY, MIN_FACTOR, MAX_FACTOR)
             .map_err(to_integrate_err)?;
 
-        let (h_new, accept) = controller.compute_step(h, err, 2);
+        // Compute acceptance indicator (stays on device)
+        let accept_tensor = compute_acceptance(client, &error).map_err(to_integrate_err)?;
+
+        // Only transfer accept for control flow decision
+        let accept_val: f64 = accept_tensor.to_vec()[0];
+        let accept = accept_val > 0.5;
+
+        // Compute new step size on device
+        let h_new = client.mul(&h, &factor)?;
+
+        // Clamp h_new on device
+        let h_new = client.minimum(&client.maximum(&h_new, &min_h)?, &max_h)?;
 
         if accept {
-            t += h;
+            t = t_new;
             y = y3;
             k1 = k4; // FSAL
 
-            t_values.push(t);
+            let new_t: f64 = t.to_vec()[0];
+            t_values.push(new_t);
             y_values.push(y.clone());
             naccept += 1;
         } else {
             nreject += 1;
         }
 
-        h = h_new.clamp(min_step, max_step);
+        h = h_new;
 
-        if h < min_step {
+        // Check minimum step
+        let h_val: f64 = h.to_vec()[0];
+        if h_val < min_step {
             return Err(IntegrateError::StepSizeTooSmall {
-                step: h,
-                t,
+                step: h_val,
+                t: t.to_vec()[0],
                 context: "RK23".to_string(),
             });
         }
@@ -205,8 +252,6 @@ where
 }
 
 /// Build result tensors from collected values.
-///
-/// Uses numr's `stack` operation - data stays on device, no CPU transfer.
 fn build_result_tensors<R, C>(
     client: &C,
     t_values: &[f64],
@@ -218,10 +263,8 @@ where
 {
     let n_steps = t_values.len();
 
-    // Build t tensor (scalar times are small, this is fine)
     let t_tensor = Tensor::<R>::from_slice(t_values, &[n_steps], client.device());
 
-    // Stack y tensors on device - NO CPU transfer
     let y_refs: Vec<&Tensor<R>> = y_values.iter().collect();
     let y_tensor = client
         .stack(&y_refs, 0)

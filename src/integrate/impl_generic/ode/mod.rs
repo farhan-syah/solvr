@@ -3,15 +3,18 @@
 //! All implementations use numr's `TensorOps` and `ScalarOps` for computation,
 //! keeping data on device (GPU/CPU with SIMD) throughout the algorithm.
 
+mod dop853;
 mod rk23;
 mod rk45;
+mod step_control;
 
+pub use dop853::dop853_impl;
 pub use rk23::rk23_impl;
 pub use rk45::rk45_impl;
+pub use step_control::*;
 
 use numr::error::Result;
-use numr::ops::{ScalarOps, TensorOps};
-use numr::runtime::{Runtime, RuntimeClient};
+use numr::runtime::Runtime;
 use numr::tensor::Tensor;
 
 use crate::integrate::error::{IntegrateError, IntegrateResult};
@@ -90,155 +93,15 @@ impl<R: Runtime> ODEResultTensor<R> {
     }
 }
 
-/// Step size controller for adaptive methods.
-#[derive(Debug, Clone)]
-pub struct StepSizeController {
-    /// Safety factor (default: 0.9)
-    pub safety: f64,
-    /// Minimum scale factor (default: 0.2)
-    pub min_factor: f64,
-    /// Maximum scale factor (default: 10.0)
-    pub max_factor: f64,
-}
-
-impl Default for StepSizeController {
-    fn default() -> Self {
-        Self {
-            safety: 0.9,
-            min_factor: 0.2,
-            max_factor: 10.0,
-        }
-    }
-}
-
-impl StepSizeController {
-    /// Compute the new step size based on error estimate.
-    pub fn compute_step(&self, h: f64, err: f64, order: usize) -> (f64, bool) {
-        let accept = err <= 1.0;
-
-        let exponent = 1.0 / (order as f64 + 1.0);
-        let factor = if err == 0.0 {
-            self.max_factor
-        } else {
-            self.safety * (1.0 / err).powf(exponent)
-        };
-
-        let factor = factor.clamp(self.min_factor, self.max_factor);
-        let factor = if accept { factor } else { factor.min(1.0) };
-
-        (h * factor, accept)
-    }
-}
-
-/// Compute initial step size using the algorithm from Hairer & Wanner.
-///
-/// Uses tensor operations - data stays on device.
-#[allow(clippy::too_many_arguments)]
-pub fn compute_initial_step_tensor<R, C, F>(
-    client: &C,
-    f: &F,
-    t0: f64,
-    y0: &Tensor<R>,
-    f0: &Tensor<R>,
-    order: usize,
-    rtol: f64,
-    atol: f64,
-) -> Result<f64>
-where
-    R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
-    F: Fn(f64, &Tensor<R>) -> Result<Tensor<R>>,
-{
-    let n = y0.shape()[0] as f64;
-
-    // Compute scaling: sc = atol + rtol * |y0|
-    let y0_abs = client.abs(y0)?;
-    let sc = client.add_scalar(&client.mul_scalar(&y0_abs, rtol)?, atol)?;
-
-    // d0 = ||y0 / sc|| / sqrt(n)
-    let y0_scaled = client.div(y0, &sc)?;
-    let y0_scaled_sq = client.mul(&y0_scaled, &y0_scaled)?;
-    let d0_sq = client.sum(&y0_scaled_sq, &[0], false)?;
-    let d0_val: f64 = d0_sq.to_vec()[0];
-    let d0 = (d0_val / n).sqrt();
-
-    // d1 = ||f0 / sc|| / sqrt(n)
-    let f0_scaled = client.div(f0, &sc)?;
-    let f0_scaled_sq = client.mul(&f0_scaled, &f0_scaled)?;
-    let d1_sq = client.sum(&f0_scaled_sq, &[0], false)?;
-    let d1_val: f64 = d1_sq.to_vec()[0];
-    let d1 = (d1_val / n).sqrt();
-
-    // First guess
-    let h0 = if d0 < 1e-5 || d1 < 1e-5 {
-        1e-6
-    } else {
-        0.01 * d0 / d1
-    };
-
-    // Explicit Euler step: y1 = y0 + h0 * f0
-    let h0_f0 = client.mul_scalar(f0, h0)?;
-    let y1 = client.add(y0, &h0_f0)?;
-    let f1 = f(t0 + h0, &y1)?;
-
-    // d2 = ||f1 - f0|| / (h0 * sc)
-    let df = client.sub(&f1, f0)?;
-    let df_scaled = client.div(&df, &sc)?;
-    let df_scaled_sq = client.mul(&df_scaled, &df_scaled)?;
-    let d2_sq = client.sum(&df_scaled_sq, &[0], false)?;
-    let d2_val: f64 = d2_sq.to_vec()[0];
-    let d2 = (d2_val / n).sqrt() / h0;
-
-    // Compute h1
-    let h1 = if d1.max(d2) <= 1e-15 {
-        (h0 * 1e-3).max(1e-6)
-    } else {
-        (0.01 / d1.max(d2)).powf(1.0 / (order as f64 + 1.0))
-    };
-
-    Ok(h0.min(100.0 * h0).min(h1))
-}
-
-/// Compute normalized error using tensor operations.
-///
-/// Returns a scalar error value. Data stays on device for the computation.
-pub fn compute_error_tensor<R, C>(
-    client: &C,
-    y_new: &Tensor<R>,
-    y_err: &Tensor<R>,
-    y_old: &Tensor<R>,
-    rtol: f64,
-    atol: f64,
-) -> Result<f64>
-where
-    R: Runtime,
-    C: TensorOps<R> + ScalarOps<R>,
-{
-    let n = y_new.shape()[0] as f64;
-
-    // sc = atol + rtol * max(|y_old|, |y_new|)
-    let y_old_abs = client.abs(y_old)?;
-    let y_new_abs = client.abs(y_new)?;
-    let y_max = client.maximum(&y_old_abs, &y_new_abs)?;
-    let sc = client.add_scalar(&client.mul_scalar(&y_max, rtol)?, atol)?;
-
-    // err = sqrt(sum((y_err / sc)^2) / n)
-    let err_scaled = client.div(y_err, &sc)?;
-    let err_sq = client.mul(&err_scaled, &err_scaled)?;
-    let sum_sq = client.sum(&err_sq, &[0], false)?;
-    let sum_val: f64 = sum_sq.to_vec()[0];
-
-    Ok((sum_val / n).sqrt())
-}
-
 /// Solve an initial value problem using tensor operations.
 ///
 /// All computation stays on device. The RHS function `f` receives and returns tensors.
+/// Time is passed as a scalar tensor (shape [1]) to enable device-resident computation.
 ///
 /// # Arguments
 ///
 /// * `client` - Runtime client for tensor operations
-/// * `f` - Right-hand side function f(t, y) -> dy/dt, operating on tensors
+/// * `f` - Right-hand side function f(t, y) -> dy/dt, where t is a scalar tensor [1]
 /// * `t_span` - Integration interval [t0, tf]
 /// * `y0` - Initial condition as a 1-D tensor
 /// * `options` - Solver options
@@ -255,7 +118,7 @@ where
 /// // Solve dy/dt = -y, y(0) = 1
 /// let y0 = Tensor::from_slice(&[1.0], &[1], &device);
 /// let result = client.solve_ivp(
-///     |_t, y| client.mul_scalar(y, -1.0),
+///     |_t, y| client.mul_scalar(y, -1.0),  // t is a tensor [1], y is a tensor [n]
 ///     [0.0, 5.0],
 ///     &y0,
 ///     &ODEOptions::default(),
@@ -270,8 +133,8 @@ pub fn solve_ivp_impl<R, C, F>(
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
-    F: Fn(f64, &Tensor<R>) -> Result<Tensor<R>>,
+    C: numr::ops::TensorOps<R> + numr::ops::ScalarOps<R> + numr::runtime::RuntimeClient<R>,
+    F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
 {
     let [t_start, t_end] = t_span;
 
@@ -292,10 +155,6 @@ where
     match options.method {
         ODEMethod::RK23 => rk23_impl(client, f, t_span, y0, options),
         ODEMethod::RK45 => rk45_impl(client, f, t_span, y0, options),
-        ODEMethod::DOP853 => {
-            // For now, fall back to RK45 for DOP853
-            // TODO: Implement DOP853 with tensor ops
-            rk45_impl(client, f, t_span, y0, options)
-        }
+        ODEMethod::DOP853 => dop853_impl(client, f, t_span, y0, options),
     }
 }

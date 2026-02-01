@@ -86,7 +86,7 @@ impl IntegrationAlgorithms<CudaRuntime> for CudaClient {
         options: &ODEOptions,
     ) -> IntegrateResult<ODEResultTensor<CudaRuntime>>
     where
-        F: Fn(f64, &Tensor<CudaRuntime>) -> Result<Tensor<CudaRuntime>>,
+        F: Fn(&Tensor<CudaRuntime>, &Tensor<CudaRuntime>) -> Result<Tensor<CudaRuntime>>,
     {
         solve_ivp_impl(self, f, t_span, y0, options)
     }

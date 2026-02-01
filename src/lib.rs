@@ -101,7 +101,7 @@ pub mod window;
 // Re-export main types for convenience
 pub use integrate::{
     IntegrateError, IntegrateResult, IntegrationAlgorithms, ODEMethod, ODEOptions, ODEResultTensor,
-    QuadOptions, QuadResult, RombergOptions, StepSizeController, solve_ivp_impl,
+    QuadOptions, QuadResult, RombergOptions, solve_ivp_impl,
 };
 pub use interpolate::{
     Akima1DInterpolator, CubicSpline, ExtrapolateMode, Interp1d, InterpMethod, InterpNdMethod,

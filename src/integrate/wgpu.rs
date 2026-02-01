@@ -86,7 +86,7 @@ impl IntegrationAlgorithms<WgpuRuntime> for WgpuClient {
         options: &ODEOptions,
     ) -> IntegrateResult<ODEResultTensor<WgpuRuntime>>
     where
-        F: Fn(f64, &Tensor<WgpuRuntime>) -> Result<Tensor<WgpuRuntime>>,
+        F: Fn(&Tensor<WgpuRuntime>, &Tensor<WgpuRuntime>) -> Result<Tensor<WgpuRuntime>>,
     {
         solve_ivp_impl(self, f, t_span, y0, options)
     }
