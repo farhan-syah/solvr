@@ -1,6 +1,19 @@
 //! Distribution traits defining the common interface.
+//!
+//! All distributions support both scalar and batch (tensor) operations.
+//! The tensor methods work on all numr backends (CPU, CUDA, WebGPU).
+//!
+//! # Performance Note
+//!
+//! The current tensor methods use scalar evaluation loops as a workaround.
+//! For true GPU acceleration, vectorized distribution kernels need to be
+//! added to numr (tracked in numr's kernel roadmap). On CPU, performance
+//! is acceptable since there's no GPU→CPU→GPU transfer overhead.
 
 use crate::stats::StatsResult;
+use numr::error::Result;
+use numr::runtime::{Runtime, RuntimeClient};
+use numr::tensor::Tensor;
 
 /// Common interface for all probability distributions.
 pub trait Distribution {
@@ -32,6 +45,37 @@ pub trait Distribution {
 }
 
 /// Interface for continuous probability distributions.
+///
+/// Provides both scalar methods (for single values) and tensor methods
+/// (for batch GPU-accelerated computation).
+///
+/// # Scalar Methods
+/// - `pdf(x)` - Probability density at x
+/// - `cdf(x)` - Cumulative probability P(X ≤ x)
+/// - `ppf(p)` - Quantile function (inverse CDF)
+///
+/// # Tensor Methods (Batch)
+/// - `pdf_tensor(&x, &client)` - PDF for all elements in tensor
+/// - `cdf_tensor(&x, &client)` - CDF for all elements in tensor
+/// - `ppf_tensor(&p, &client)` - PPF for all elements in tensor
+///
+/// # Example
+///
+/// ```ignore
+/// use solvr::stats::{Normal, ContinuousDistribution};
+/// use numr::runtime::cpu::{CpuClient, CpuDevice};
+///
+/// let device = CpuDevice::new();
+/// let client = CpuClient::new(device.clone());
+/// let n = Normal::standard();
+///
+/// // Scalar
+/// let p = n.pdf(0.0);
+///
+/// // Batch (tensor)
+/// let x = Tensor::from_slice(&[0.0, 1.0, 2.0], &[3], &device);
+/// let p_batch = n.pdf_tensor(&x, &client).unwrap();
+/// ```
 pub trait ContinuousDistribution: Distribution {
     /// Probability density function.
     ///
@@ -84,9 +128,141 @@ pub trait ContinuousDistribution: Distribution {
         let upper = self.ppf(1.0 - q)?;
         Ok((lower, upper))
     }
+
+    // ========================================================================
+    // Tensor (Batch) Methods
+    //
+    // NOTE: These methods use scalar evaluation loops as a temporary workaround.
+    // For true GPU acceleration, vectorized distribution kernels should be
+    // implemented in numr. The pattern below is acceptable because:
+    // 1. Distribution evaluation is typically not the bottleneck
+    // 2. On CPU there's no transfer overhead
+    // 3. The API is correct and will benefit from future numr kernels
+    // ========================================================================
+
+    /// Batch probability density function.
+    ///
+    /// Computes PDF for all elements in the input tensor.
+    /// Works on all backends (CPU, CUDA, WebGPU).
+    // TODO(numr): Replace with vectorized kernel when available
+    fn pdf_tensor<R: Runtime>(
+        &self,
+        x: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let x_data: Vec<f64> = x.contiguous().to_vec();
+        let result: Vec<f64> = x_data.iter().map(|&xi| self.pdf(xi)).collect();
+        Ok(Tensor::<R>::from_slice(&result, x.shape(), client.device()))
+    }
+
+    /// Batch log probability density function.
+    fn log_pdf_tensor<R: Runtime>(
+        &self,
+        x: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let x_data: Vec<f64> = x.contiguous().to_vec();
+        let result: Vec<f64> = x_data.iter().map(|&xi| self.log_pdf(xi)).collect();
+        Ok(Tensor::<R>::from_slice(&result, x.shape(), client.device()))
+    }
+
+    /// Batch cumulative distribution function.
+    ///
+    /// Computes CDF for all elements in the input tensor.
+    fn cdf_tensor<R: Runtime>(
+        &self,
+        x: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let x_data: Vec<f64> = x.contiguous().to_vec();
+        let result: Vec<f64> = x_data.iter().map(|&xi| self.cdf(xi)).collect();
+        Ok(Tensor::<R>::from_slice(&result, x.shape(), client.device()))
+    }
+
+    /// Batch survival function.
+    fn sf_tensor<R: Runtime>(
+        &self,
+        x: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let x_data: Vec<f64> = x.contiguous().to_vec();
+        let result: Vec<f64> = x_data.iter().map(|&xi| self.sf(xi)).collect();
+        Ok(Tensor::<R>::from_slice(&result, x.shape(), client.device()))
+    }
+
+    /// Batch log cumulative distribution function.
+    fn log_cdf_tensor<R: Runtime>(
+        &self,
+        x: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let x_data: Vec<f64> = x.contiguous().to_vec();
+        let result: Vec<f64> = x_data.iter().map(|&xi| self.log_cdf(xi)).collect();
+        Ok(Tensor::<R>::from_slice(&result, x.shape(), client.device()))
+    }
+
+    /// Batch percent point function (quantile function).
+    ///
+    /// Computes PPF for all probability values in the input tensor.
+    /// Returns error if any probability is outside [0, 1].
+    fn ppf_tensor<R: Runtime>(
+        &self,
+        p: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let p_data: Vec<f64> = p.contiguous().to_vec();
+        let mut result = Vec::with_capacity(p_data.len());
+        for &pi in &p_data {
+            match self.ppf(pi) {
+                Ok(x) => result.push(x),
+                Err(e) => {
+                    return Err(numr::error::Error::InvalidArgument {
+                        arg: "p",
+                        reason: format!("ppf_tensor: {}", e),
+                    });
+                }
+            }
+        }
+        Ok(Tensor::<R>::from_slice(&result, p.shape(), client.device()))
+    }
+
+    /// Batch inverse survival function.
+    fn isf_tensor<R: Runtime>(
+        &self,
+        p: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let p_data: Vec<f64> = p.contiguous().to_vec();
+        let mut result = Vec::with_capacity(p_data.len());
+        for &pi in &p_data {
+            match self.isf(pi) {
+                Ok(x) => result.push(x),
+                Err(e) => {
+                    return Err(numr::error::Error::InvalidArgument {
+                        arg: "p",
+                        reason: format!("isf_tensor: {}", e),
+                    });
+                }
+            }
+        }
+        Ok(Tensor::<R>::from_slice(&result, p.shape(), client.device()))
+    }
 }
 
 /// Interface for discrete probability distributions.
+///
+/// Provides both scalar methods (for single values) and tensor methods
+/// (for batch GPU-accelerated computation).
+///
+/// # Scalar Methods
+/// - `pmf(k)` - Probability mass P(X = k)
+/// - `cdf(k)` - Cumulative probability P(X ≤ k)
+/// - `ppf(p)` - Quantile function (smallest k with CDF(k) ≥ p)
+///
+/// # Tensor Methods (Batch)
+/// - `pmf_tensor(&k, &client)` - PMF for all elements in tensor
+/// - `cdf_tensor(&k, &client)` - CDF for all elements in tensor
+/// - `ppf_tensor(&p, &client)` - PPF for all elements in tensor
 pub trait DiscreteDistribution: Distribution {
     /// Probability mass function.
     ///
@@ -118,6 +294,84 @@ pub trait DiscreteDistribution: Distribution {
     /// Inverse survival function.
     fn isf(&self, p: f64) -> StatsResult<u64> {
         self.ppf(1.0 - p)
+    }
+
+    // ========================================================================
+    // Tensor (Batch) Methods
+    // ========================================================================
+
+    /// Batch probability mass function.
+    ///
+    /// Computes PMF for all elements in the input tensor.
+    /// The tensor should contain u64-compatible values (non-negative integers).
+    fn pmf_tensor<R: Runtime>(
+        &self,
+        k: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let k_data: Vec<f64> = k.contiguous().to_vec();
+        let result: Vec<f64> = k_data.iter().map(|&ki| self.pmf(ki as u64)).collect();
+        Ok(Tensor::<R>::from_slice(&result, k.shape(), client.device()))
+    }
+
+    /// Batch log probability mass function.
+    fn log_pmf_tensor<R: Runtime>(
+        &self,
+        k: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let k_data: Vec<f64> = k.contiguous().to_vec();
+        let result: Vec<f64> = k_data.iter().map(|&ki| self.log_pmf(ki as u64)).collect();
+        Ok(Tensor::<R>::from_slice(&result, k.shape(), client.device()))
+    }
+
+    /// Batch cumulative distribution function.
+    ///
+    /// Computes CDF for all elements in the input tensor.
+    fn cdf_tensor<R: Runtime>(
+        &self,
+        k: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let k_data: Vec<f64> = k.contiguous().to_vec();
+        let result: Vec<f64> = k_data.iter().map(|&ki| self.cdf(ki as u64)).collect();
+        Ok(Tensor::<R>::from_slice(&result, k.shape(), client.device()))
+    }
+
+    /// Batch survival function.
+    fn sf_tensor<R: Runtime>(
+        &self,
+        k: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let k_data: Vec<f64> = k.contiguous().to_vec();
+        let result: Vec<f64> = k_data.iter().map(|&ki| self.sf(ki as u64)).collect();
+        Ok(Tensor::<R>::from_slice(&result, k.shape(), client.device()))
+    }
+
+    /// Batch percent point function (quantile function).
+    ///
+    /// Computes PPF for all probability values in the input tensor.
+    /// Returns error if any probability is outside [0, 1].
+    fn ppf_tensor<R: Runtime>(
+        &self,
+        p: &Tensor<R>,
+        client: &impl RuntimeClient<R>,
+    ) -> Result<Tensor<R>> {
+        let p_data: Vec<f64> = p.contiguous().to_vec();
+        let mut result = Vec::with_capacity(p_data.len());
+        for &pi in &p_data {
+            match self.ppf(pi) {
+                Ok(k) => result.push(k as f64),
+                Err(e) => {
+                    return Err(numr::error::Error::InvalidArgument {
+                        arg: "p",
+                        reason: format!("ppf_tensor: {}", e),
+                    });
+                }
+            }
+        }
+        Ok(Tensor::<R>::from_slice(&result, p.shape(), client.device()))
     }
 }
 
