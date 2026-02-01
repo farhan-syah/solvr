@@ -153,11 +153,7 @@ impl DiscreteDistribution for Poisson {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pmf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -168,11 +164,7 @@ impl DiscreteDistribution for Poisson {
         client.exp(&log_pmf)
     }
 
-    fn log_pmf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -193,11 +185,7 @@ impl DiscreteDistribution for Poisson {
         client.sub(&result, &lgamma_k_plus_1)
     }
 
-    fn cdf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -213,11 +201,7 @@ impl DiscreteDistribution for Poisson {
         client.gammaincc(&k_plus_1, &lambda_tensor)
     }
 
-    fn sf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -233,11 +217,7 @@ impl DiscreteDistribution for Poisson {
         client.gammainc(&k_plus_1, &lambda_tensor)
     }
 
-    fn ppf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

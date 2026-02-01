@@ -215,24 +215,17 @@ impl ContinuousDistribution for FDistribution {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
         // log(PDF) = log_norm + (d1/2 - 1)*ln(x) - (d1/2 + d2/2)*ln(d1*x + d2)
         // PDF = exp(log_pdf)
-        self.log_pdf_tensor(x, client).and_then(|log_pdf| client.exp(&log_pdf))
+        self.log_pdf_tensor(x, client)
+            .and_then(|log_pdf| client.exp(&log_pdf))
     }
 
-    fn log_pdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -249,11 +242,7 @@ impl ContinuousDistribution for FDistribution {
         client.add_scalar(&result, self.log_norm)
     }
 
-    fn cdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -267,11 +256,7 @@ impl ContinuousDistribution for FDistribution {
         client.betainc(&a, &b, &t)
     }
 
-    fn sf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -286,11 +271,7 @@ impl ContinuousDistribution for FDistribution {
         client.betainc(&a, &b, &t)
     }
 
-    fn log_cdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -299,11 +280,7 @@ impl ContinuousDistribution for FDistribution {
         client.log(&cdf)
     }
 
-    fn ppf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -321,11 +298,7 @@ impl ContinuousDistribution for FDistribution {
         client.div(&numerator, &denominator)
     }
 
-    fn isf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn isf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

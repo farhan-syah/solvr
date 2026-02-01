@@ -279,11 +279,7 @@ impl DiscreteDistribution for Hypergeometric {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pmf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -293,11 +289,7 @@ impl DiscreteDistribution for Hypergeometric {
         client.exp(&log_pmf)
     }
 
-    fn log_pmf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -335,7 +327,8 @@ impl DiscreteDistribution for Hypergeometric {
         let lgamma_n_minus_k_plus_1 = client.lgamma(&n_minus_k_plus_1)?;
         let lgamma_denom_plus_1 = client.lgamma(&denom_plus_1)?;
 
-        let lgamma_nk_f_plus_1_tensor = client.fill(shape, big_n_f_minus_k_f.ln(), k_floor.dtype())?;
+        let lgamma_nk_f_plus_1_tensor =
+            client.fill(shape, big_n_f_minus_k_f.ln(), k_floor.dtype())?;
         let log_c_nk_nk = client.sub(&lgamma_nk_f_plus_1_tensor, &lgamma_n_minus_k_plus_1)?;
         let log_c_nk_nk = client.sub(&log_c_nk_nk, &lgamma_denom_plus_1)?;
 
@@ -343,7 +336,8 @@ impl DiscreteDistribution for Hypergeometric {
         let n_plus_1 = client.fill(shape, n_f + 1.0, k_floor.dtype())?;
         let lgamma_n_plus_1 = client.lgamma(&n_plus_1)?;
 
-        let lgamma_big_n_minus_n_plus_1_tensor = client.fill(shape, (big_n_f - n_f + 1.0).ln(), k_floor.dtype())?;
+        let lgamma_big_n_minus_n_plus_1_tensor =
+            client.fill(shape, (big_n_f - n_f + 1.0).ln(), k_floor.dtype())?;
         let lgamma_big_n_plus_1_tensor = client.fill(shape, big_n_f.ln(), k_floor.dtype())?;
 
         let log_c_n_n = client.sub(&lgamma_big_n_plus_1_tensor, &lgamma_n_plus_1)?;
@@ -354,11 +348,7 @@ impl DiscreteDistribution for Hypergeometric {
         client.sub(&result, &log_c_n_n)
     }
 
-    fn cdf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -379,11 +369,7 @@ impl DiscreteDistribution for Hypergeometric {
         client.mul_scalar(&erfc_val, 0.5)
     }
 
-    fn sf_tensor<R: Runtime, C>(
-        &self,
-        k: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -392,11 +378,7 @@ impl DiscreteDistribution for Hypergeometric {
         client.sub_scalar(&client.mul_scalar(&cdf, -1.0)?, -1.0)
     }
 
-    fn ppf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

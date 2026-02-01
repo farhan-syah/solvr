@@ -167,11 +167,7 @@ impl ContinuousDistribution for Laplace {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -183,11 +179,7 @@ impl ContinuousDistribution for Laplace {
         client.mul_scalar(&exp_term, 1.0 / (2.0 * self.scale))
     }
 
-    fn log_pdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -199,11 +191,7 @@ impl ContinuousDistribution for Laplace {
         client.add_scalar(&z, constant)
     }
 
-    fn cdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -246,11 +234,7 @@ impl ContinuousDistribution for Laplace {
         client.add_scalar(&half_signed, 0.5)
     }
 
-    fn sf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -263,11 +247,7 @@ impl ContinuousDistribution for Laplace {
         client.mul_scalar(&exp_neg_abs, 0.5)
     }
 
-    fn log_cdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -276,11 +256,7 @@ impl ContinuousDistribution for Laplace {
         client.log(&cdf)
     }
 
-    fn ppf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -309,11 +285,7 @@ impl ContinuousDistribution for Laplace {
         client.add_scalar(&neg_scaled, self.loc)
     }
 
-    fn isf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn isf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

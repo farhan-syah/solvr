@@ -1,5 +1,6 @@
 //! Weibull distribution.
 
+use super::special::lgamma;
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{ContinuousDistribution, Distribution};
 use numr::algorithm::special::SpecialFunctions;
@@ -7,7 +8,6 @@ use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
-use super::special::lgamma;
 
 /// Weibull distribution.
 ///
@@ -233,23 +233,16 @@ impl ContinuousDistribution for Weibull {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
         // f(x) = (k/λ) * (x/λ)^(k-1) * exp(-(x/λ)^k)
-        self.log_pdf_tensor(x, client).and_then(|log_pdf| client.exp(&log_pdf))
+        self.log_pdf_tensor(x, client)
+            .and_then(|log_pdf| client.exp(&log_pdf))
     }
 
-    fn log_pdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -268,11 +261,7 @@ impl ContinuousDistribution for Weibull {
         client.add_scalar(&result, constant)
     }
 
-    fn cdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -289,11 +278,7 @@ impl ContinuousDistribution for Weibull {
         client.mul_scalar(&exp_minus_one, -1.0)
     }
 
-    fn sf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -307,11 +292,7 @@ impl ContinuousDistribution for Weibull {
         client.exp(&neg_power)
     }
 
-    fn log_cdf_tensor<R: Runtime, C>(
-        &self,
-        x: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -320,11 +301,7 @@ impl ContinuousDistribution for Weibull {
         client.log(&cdf)
     }
 
-    fn ppf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -342,11 +319,7 @@ impl ContinuousDistribution for Weibull {
         client.mul_scalar(&power_term, self.scale)
     }
 
-    fn isf_tensor<R: Runtime, C>(
-        &self,
-        p: &Tensor<R>,
-        client: &C,
-    ) -> Result<Tensor<R>>
+    fn isf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
