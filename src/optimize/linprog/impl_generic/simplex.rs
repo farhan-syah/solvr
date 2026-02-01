@@ -31,7 +31,24 @@ use numr::tensor::Tensor;
 use crate::optimize::error::{OptimizeError, OptimizeResult};
 use crate::optimize::linprog::LinProgOptions;
 
-use super::{TensorLinProgResult, TensorLinearConstraints};
+use super::TensorLinearConstraints;
+
+/// Result from tensor-based linear programming.
+#[derive(Debug, Clone)]
+pub struct TensorLinProgResult<R: Runtime> {
+    /// Optimal solution vector
+    pub x: Tensor<R>,
+    /// Optimal objective value
+    pub fun: f64,
+    /// Whether optimization succeeded
+    pub success: bool,
+    /// Number of iterations performed
+    pub nit: usize,
+    /// Status message
+    pub message: String,
+    /// Slack variables for inequality constraints
+    pub slack: Tensor<R>,
+}
 
 /// Simplex method for linear programming using tensor operations.
 ///

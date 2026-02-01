@@ -1,30 +1,13 @@
-//! Tensor-based linear programming implementations.
-//!
-//! Provides simplex method for linear programming using tensor operations.
+//! Generic implementations for linear programming algorithms.
 
 mod simplex;
+mod milp;
 
-pub use simplex::simplex_impl;
+pub use simplex::{simplex_impl, TensorLinProgResult};
+pub use milp::{milp_impl, MilpOptionsInternal};
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
-
-/// Result from tensor-based linear programming.
-#[derive(Debug, Clone)]
-pub struct TensorLinProgResult<R: Runtime> {
-    /// Optimal solution vector
-    pub x: Tensor<R>,
-    /// Optimal objective value
-    pub fun: f64,
-    /// Whether optimization succeeded
-    pub success: bool,
-    /// Number of iterations performed
-    pub nit: usize,
-    /// Status message
-    pub message: String,
-    /// Slack variables for inequality constraints
-    pub slack: Tensor<R>,
-}
 
 /// Tensor-based linear constraints.
 #[derive(Debug, Clone)]
