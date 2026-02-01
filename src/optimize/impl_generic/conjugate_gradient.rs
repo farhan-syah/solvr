@@ -1,7 +1,7 @@
 //! Conjugate gradient method for multivariate minimization.
 
 use numr::error::Result;
-use numr::ops::TensorOps;
+use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -12,6 +12,8 @@ use super::helpers::{TensorMinimizeResult, backtracking_line_search_tensor};
 use super::utils::{SINGULAR_THRESHOLD, finite_difference_gradient, tensor_dot, tensor_norm};
 
 /// Conjugate gradient method for minimization using tensors.
+///
+/// All operations use tensor ops to stay on device (CPU/GPU).
 pub fn conjugate_gradient_impl<R, C, F>(
     client: &C,
     f: F,
@@ -20,7 +22,7 @@ pub fn conjugate_gradient_impl<R, C, F>(
 ) -> OptimizeResult<TensorMinimizeResult<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
     let n = x0.shape()[0];
@@ -43,10 +45,12 @@ where
     })?;
     nfev += n;
 
-    // Initial search direction is negative gradient
-    let grad_vec: Vec<f64> = grad.to_vec();
-    let mut p_data: Vec<f64> = grad_vec.iter().map(|g| -g).collect();
-    let mut p = Tensor::<R>::from_slice(&p_data, &[n], client.device());
+    // Initial search direction is negative gradient: p = -grad
+    let mut p = client
+        .mul_scalar(&grad, -1.0)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("cg: initial direction - {}", e),
+        })?;
 
     for iter in 0..options.max_iter {
         let grad_norm = tensor_norm(client, &grad).map_err(|e| OptimizeError::NumericalError {
@@ -95,7 +99,7 @@ where
             })?;
         nfev += n;
 
-        // Polak-Ribiere beta
+        // Polak-Ribiere beta = grad_new.T @ (grad_new - grad) / (grad.T @ grad)
         let grad_old_norm_sq =
             tensor_dot(client, &grad, &grad).map_err(|e| OptimizeError::NumericalError {
                 message: format!("cg: grad norm sq - {}", e),
@@ -119,14 +123,22 @@ where
             0.0
         };
 
-        // New search direction
-        let grad_new_data: Vec<f64> = grad_new.to_vec();
-        p_data = grad_new_data
-            .iter()
-            .zip(p_data.iter())
-            .map(|(g, p_old)| -g + beta * p_old)
-            .collect();
-        p = Tensor::<R>::from_slice(&p_data, &[n], client.device());
+        // New search direction: p = -grad_new + beta * p
+        let neg_grad_new = client
+            .mul_scalar(&grad_new, -1.0)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("cg: neg grad new - {}", e),
+            })?;
+        let beta_p = client
+            .mul_scalar(&p, beta)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("cg: beta * p - {}", e),
+            })?;
+        p = client
+            .add(&neg_grad_new, &beta_p)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("cg: new direction - {}", e),
+            })?;
 
         x = x_new;
         fx = fx_new;
