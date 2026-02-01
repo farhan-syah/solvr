@@ -14,16 +14,16 @@
 //!
 //! ```text
 //! signal/
-//! ├── mod.rs          # Trait definition + validation
+//! ├── mod.rs          # Trait definition + validation (exports only)
 //! ├── impl_generic/   # Generic implementations (written once)
 //! │   ├── convolution.rs
 //! │   ├── stft.rs
 //! │   ├── helpers.rs
 //! │   ├── padding.rs
 //! │   └── slice.rs
-//! ├── cpu/mod.rs      # Pure delegation (< 100 lines)
-//! ├── cuda.rs         # Pure delegation (< 100 lines)
-//! └── wgpu.rs         # Pure delegation (< 100 lines)
+//! ├── cpu.rs          # CPU impl (pure delegation)
+//! ├── cuda.rs         # CUDA impl (pure delegation)
+//! └── wgpu.rs         # WebGPU impl (pure delegation)
 //! ```
 //!
 //! # Backend Support
