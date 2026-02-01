@@ -2,7 +2,9 @@
 
 use super::{RootResult, ScalarOptions};
 use crate::optimize::error::{OptimizeError, OptimizeResult};
-use crate::optimize::utils::SINGULAR_THRESHOLD;
+
+/// Numerical threshold for detecting singular matrices.
+const SINGULAR_THRESHOLD: f64 = 1e-14;
 
 /// Bisection method for root finding.
 ///

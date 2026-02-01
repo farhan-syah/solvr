@@ -46,7 +46,6 @@ pub mod linprog;
 pub mod minimize;
 pub mod roots;
 pub mod scalar;
-pub(crate) mod utils;
 #[cfg(feature = "wgpu")]
 mod wgpu;
 
