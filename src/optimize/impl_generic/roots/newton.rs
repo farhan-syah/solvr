@@ -1,6 +1,7 @@
 //! Newton's method for systems of nonlinear equations using tensor operations.
 
 use numr::algorithm::linalg::LinearAlgebraAlgorithms;
+use numr::dtype::DType;
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -140,9 +141,7 @@ where
 /// Compute Jacobian matrix using finite differences.
 /// Returns [n, n] tensor where J[i,j] = df_i/dx_j.
 ///
-/// Note: This function necessarily uses to_vec() because we need to perturb
-/// individual elements. This is acceptable since finite differences require
-/// n function evaluations anyway, so the overhead is minimal.
+/// All operations stay on device - no to_vec()/from_slice().
 pub fn finite_difference_jacobian_tensor<R, C, F>(
     client: &C,
     f: &F,
@@ -157,29 +156,72 @@ where
 {
     let n = x.shape()[0];
 
-    // We need to perturb each element individually, which requires accessing values.
-    // This is inherent to finite difference Jacobian computation.
-    let x_data: Vec<f64> = x.to_vec();
-    let fx_data: Vec<f64> = fx.to_vec();
+    // Create identity matrix scaled by eps - each column is eps * e_j
+    let identity = client
+        .eye(n, None, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("jacobian: eye - {}", e),
+        })?;
+    let eps_identity = client
+        .mul_scalar(&identity, eps)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("jacobian: scale identity - {}", e),
+        })?;
 
-    let mut jacobian_data = vec![0.0; n * n];
+    // Compute each column of the Jacobian
+    let mut jac_columns: Vec<Tensor<R>> = Vec::with_capacity(n);
 
     for j in 0..n {
-        // Create perturbed x: x + eps * e_j
-        let mut x_plus_data = x_data.clone();
-        x_plus_data[j] += eps;
-        let x_plus = Tensor::<R>::from_slice(&x_plus_data, &[n], client.device());
+        // Extract column j as delta vector (transpose row j)
+        let delta = eps_identity
+            .narrow(0, j, 1)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: narrow row - {}", e),
+            })?
+            .contiguous()
+            .reshape(&[n])
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: reshape delta - {}", e),
+            })?;
 
+        // x_plus = x + delta
+        let x_plus = client
+            .add(x, &delta)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: x + delta - {}", e),
+            })?;
+
+        // f(x_plus)
         let fx_plus = f(&x_plus).map_err(|e| OptimizeError::NumericalError {
             message: format!("jacobian: f(x+delta) - {}", e),
         })?;
-        let fx_plus_data: Vec<f64> = fx_plus.to_vec();
 
-        // J[i, j] = (f_i(x + eps*e_j) - f_i(x)) / eps
-        for i in 0..n {
-            jacobian_data[i * n + j] = (fx_plus_data[i] - fx_data[i]) / eps;
-        }
+        // jac_col = (fx_plus - fx) / eps
+        let diff = client
+            .sub(&fx_plus, fx)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: fx_plus - fx - {}", e),
+            })?;
+        let jac_col = client
+            .mul_scalar(&diff, 1.0 / eps)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: scale diff - {}", e),
+            })?;
+
+        // Reshape to [n, 1] for stacking
+        let jac_col_2d = jac_col
+            .unsqueeze(1)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: unsqueeze col - {}", e),
+            })?;
+        jac_columns.push(jac_col_2d);
     }
 
-    Ok(Tensor::<R>::from_slice(&jacobian_data, &[n, n], client.device()))
+    // Concatenate columns: [n, 1] * n -> [n, n]
+    let refs: Vec<&Tensor<R>> = jac_columns.iter().collect();
+    client
+        .cat(&refs, 1)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("jacobian: cat columns - {}", e),
+        })
 }

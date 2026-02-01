@@ -1,6 +1,7 @@
 //! Levenberg-Marquardt algorithm for systems of nonlinear equations using tensors.
 
 use numr::algorithm::linalg::LinearAlgebraAlgorithms;
+use numr::dtype::DType;
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -181,7 +182,8 @@ where
     })
 }
 
-/// Add lambda * I to matrix A using numr's diagflat.
+/// Add lambda * I to matrix A using tensor ops.
+/// No from_slice - uses fill() to create lambda vector.
 fn add_lambda_identity<R, C>(client: &C, a: &Tensor<R>, lambda: f64) -> OptimizeResult<Tensor<R>>
 where
     R: Runtime,
@@ -189,9 +191,12 @@ where
 {
     let n = a.shape()[0];
 
-    // Create vector of ones, then scale by lambda, then diagflat
-    let ones_data = vec![lambda; n];
-    let lambda_vec = Tensor::<R>::from_slice(&ones_data, &[n], client.device());
+    // Create vector filled with lambda
+    let lambda_vec = client
+        .fill(&[n], lambda, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("add_lambda_identity: fill - {}", e),
+        })?;
 
     // Use numr's diagflat to create lambda * I
     let lambda_i = TensorOps::diagflat(client, &lambda_vec)
