@@ -1,6 +1,7 @@
 //! Bounded Levenberg-Marquardt algorithm for nonlinear least squares using tensors.
 
 use numr::algorithm::linalg::LinearAlgebraAlgorithms;
+use numr::dtype::DType;
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -266,12 +267,13 @@ where
 }
 
 /// Compute Jacobian matrix using forward finite differences.
+/// All operations stay on device - no to_vec()/from_slice().
 fn finite_difference_jacobian<R, C, F>(
     client: &C,
     f: &F,
     x: &Tensor<R>,
     fx: &Tensor<R>,
-    m: usize,
+    _m: usize,
     n: usize,
     eps: f64,
 ) -> OptimizeResult<Tensor<R>>
@@ -280,30 +282,78 @@ where
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
-    let x_data: Vec<f64> = x.to_vec();
-    let fx_data: Vec<f64> = fx.to_vec();
+    // Create identity matrix [n, n] scaled by eps
+    let identity = client
+        .eye(n, None, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("jacobian: eye - {}", e),
+        })?;
+    let eps_identity = client
+        .mul_scalar(&identity, eps)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("jacobian: scale identity - {}", e),
+        })?;
 
-    let mut jacobian_data = vec![0.0; m * n];
+    // Compute each column of the Jacobian
+    let mut jac_columns: Vec<Tensor<R>> = Vec::with_capacity(n);
 
     for j in 0..n {
-        let mut x_plus_data = x_data.clone();
-        x_plus_data[j] += eps;
-        let x_plus = Tensor::<R>::from_slice(&x_plus_data, &[n], client.device());
+        // Extract row j as delta vector
+        let delta = eps_identity
+            .narrow(0, j, 1)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: narrow row - {}", e),
+            })?
+            .contiguous()
+            .reshape(&[n])
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: reshape delta - {}", e),
+            })?;
 
+        // x_plus = x + delta
+        let x_plus = client
+            .add(x, &delta)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: x + delta - {}", e),
+            })?;
+
+        // f(x_plus)
         let fx_plus = f(&x_plus).map_err(|e| OptimizeError::NumericalError {
             message: format!("jacobian: f(x+delta) - {}", e),
         })?;
-        let fx_plus_data: Vec<f64> = fx_plus.to_vec();
 
-        for i in 0..m {
-            jacobian_data[i * n + j] = (fx_plus_data[i] - fx_data[i]) / eps;
-        }
+        // jac_col = (fx_plus - fx) / eps, shape [m]
+        let diff = client
+            .sub(&fx_plus, fx)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: fx_plus - fx - {}", e),
+            })?;
+        let jac_col = client
+            .mul_scalar(&diff, 1.0 / eps)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: scale diff - {}", e),
+            })?;
+
+        // Reshape to [m, 1] for concatenation
+        let jac_col_2d = jac_col
+            .unsqueeze(1)
+            .map_err(|e| OptimizeError::NumericalError {
+                message: format!("jacobian: unsqueeze col - {}", e),
+            })?;
+        jac_columns.push(jac_col_2d);
     }
 
-    Ok(Tensor::<R>::from_slice(&jacobian_data, &[m, n], client.device()))
+    // Concatenate columns: [m, 1] * n -> [m, n]
+    let refs: Vec<&Tensor<R>> = jac_columns.iter().collect();
+    client
+        .cat(&refs, 1)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("jacobian: cat columns - {}", e),
+        })
 }
 
-/// Add lambda * diag(A) to A using numr's diag and diagflat.
+/// Add lambda * max(|diag(A)|, threshold) to diagonal of A.
+/// Uses tensor ops throughout - no to_vec()/from_slice().
 fn add_scaled_diagonal<R, C>(
     client: &C,
     a: &Tensor<R>,
@@ -314,18 +364,41 @@ where
     R: Runtime,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
+    // Extract diagonal using numr's diag
     let diag_vec = TensorOps::diag(client, a)
         .map_err(|e| OptimizeError::NumericalError {
             message: format!("add_scaled_diagonal: diag - {}", e),
         })?;
 
-    let diag_data: Vec<f64> = diag_vec.to_vec();
-    let scaled_data: Vec<f64> = diag_data
-        .iter()
-        .map(|&d| lambda * d.abs().max(SINGULAR_THRESHOLD))
-        .collect();
-    let scaled_diag = Tensor::<R>::from_slice(&scaled_data, &[n], client.device());
+    // Compute abs(diag)
+    let abs_diag = client
+        .abs(&diag_vec)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("add_scaled_diagonal: abs - {}", e),
+        })?;
 
+    // Create threshold tensor
+    let threshold = client
+        .fill(&[n], SINGULAR_THRESHOLD, DType::F64)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("add_scaled_diagonal: threshold - {}", e),
+        })?;
+
+    // max(|diag|, threshold)
+    let clamped_diag = client
+        .maximum(&abs_diag, &threshold)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("add_scaled_diagonal: max - {}", e),
+        })?;
+
+    // Scale by lambda
+    let scaled_diag = client
+        .mul_scalar(&clamped_diag, lambda)
+        .map_err(|e| OptimizeError::NumericalError {
+            message: format!("add_scaled_diagonal: scale - {}", e),
+        })?;
+
+    // Create diagonal matrix using numr's diagflat
     let diag_matrix = TensorOps::diagflat(client, &scaled_diag)
         .map_err(|e| OptimizeError::NumericalError {
             message: format!("add_scaled_diagonal: diagflat - {}", e),
