@@ -9,7 +9,7 @@
 // Allow this module to use extensive precision coefficients from the reference implementation
 
 use numr::error::Result;
-use numr::ops::{BinaryOps, ScalarOps, TensorOps};
+use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -531,6 +531,7 @@ fn to_integrate_err(e: numr::error::Error) -> IntegrateError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use numr::ops::BinaryOps;
     use numr::runtime::cpu::{CpuClient, CpuDevice, CpuRuntime};
 
     fn setup() -> (CpuDevice, CpuClient) {

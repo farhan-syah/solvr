@@ -15,6 +15,7 @@
 //! - **Control flow** (per iteration): Extracting single row/column for pivot selection
 //!   - argmin over objective row → O(n_vars) extract
 //!   - ratio test over pivot column → O(n_constraints) extract
+//!
 //!   These are small extracts for branching decisions, not bulk computation.
 //!
 //! ## Completed Optimizations:

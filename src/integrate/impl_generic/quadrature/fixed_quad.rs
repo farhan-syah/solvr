@@ -4,7 +4,7 @@
 //! but the function evaluation and weighted sum use tensor ops for GPU acceleration.
 
 use numr::error::{Error, Result};
-use numr::ops::{BinaryOps, ScalarOps, TensorOps};
+use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -117,6 +117,7 @@ fn legendre_p_and_dp(n: usize, x: f64) -> (f64, f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use numr::ops::BinaryOps;
     use numr::runtime::cpu::{CpuClient, CpuDevice};
 
     fn get_client() -> CpuClient {

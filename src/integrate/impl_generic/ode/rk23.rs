@@ -4,7 +4,7 @@
 //! Step size control is fully device-resident - no scalar transfers during stepping.
 
 use numr::error::Result;
-use numr::ops::{BinaryOps, ScalarOps, TensorOps};
+use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 

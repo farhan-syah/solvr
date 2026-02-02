@@ -49,8 +49,6 @@ pub trait StftAlgorithms<R: Runtime> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_stft_num_frames() {
         let signal_len = 256;
