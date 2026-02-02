@@ -4,7 +4,7 @@
 //! that arises in cubic spline interpolation.
 
 use crate::interpolate::error::{InterpolateError, InterpolateResult};
-use crate::interpolate::traits::cubic_spline::SplineBoundary;
+use crate::interpolate::traits::cubic_spline::{SplineBoundary, SplineCoefficients};
 use numr::ops::ScalarOps;
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
@@ -15,7 +15,7 @@ pub fn cubic_spline_coefficients<R, C>(
     x: &Tensor<R>,
     y: &Tensor<R>,
     boundary: &SplineBoundary,
-) -> InterpolateResult<(Tensor<R>, Tensor<R>, Tensor<R>, Tensor<R>)>
+) -> InterpolateResult<SplineCoefficients<R>>
 where
     R: Runtime,
     C: ScalarOps<R> + RuntimeClient<R>,
@@ -166,13 +166,6 @@ fn solve_tridiagonal(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use numr::runtime::cpu::{CpuClient, CpuDevice};
-
-    fn setup() -> (CpuDevice, CpuClient) {
-        let device = CpuDevice::new();
-        let client = CpuClient::new(device.clone());
-        (device, client)
-    }
 
     #[test]
     fn test_tridiagonal_solver() {

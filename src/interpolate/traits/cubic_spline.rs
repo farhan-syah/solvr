@@ -16,6 +16,9 @@ pub enum SplineBoundary {
     NotAKnot,
 }
 
+/// Cubic spline coefficient tensors (a, b, c, d) for polynomial segments.
+pub type SplineCoefficients<R> = (Tensor<R>, Tensor<R>, Tensor<R>, Tensor<R>);
+
 /// Cubic spline interpolation algorithm.
 ///
 /// Cubic splines provide C2 (continuous second derivative) interpolation
@@ -37,5 +40,5 @@ pub trait CubicSplineAlgorithms<R: Runtime> {
         x: &Tensor<R>,
         y: &Tensor<R>,
         boundary: &SplineBoundary,
-    ) -> InterpolateResult<(Tensor<R>, Tensor<R>, Tensor<R>, Tensor<R>)>;
+    ) -> InterpolateResult<SplineCoefficients<R>>;
 }

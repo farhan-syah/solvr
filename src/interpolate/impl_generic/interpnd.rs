@@ -119,6 +119,7 @@ where
     }
 }
 
+#[allow(clippy::too_many_arguments)] // All parameters necessary for N-D interpolation
 fn evaluate_nearest_tensor<R, C>(
     client: &C,
     points: &[&Tensor<R>],
@@ -266,6 +267,7 @@ where
     Ok(result)
 }
 
+#[allow(clippy::too_many_arguments)] // All parameters necessary for N-D interpolation
 fn evaluate_linear_tensor<R, C>(
     client: &C,
     points: &[&Tensor<R>],
@@ -335,6 +337,7 @@ where
 
     // Create per-dimension range tensors for I64→F64 conversion
     let mut dim_ranges: Vec<Tensor<R>> = Vec::with_capacity(n_dims);
+    #[allow(clippy::needless_range_loop)] // Need index to access shape[d]
     for d in 0..n_dims {
         let range: Vec<f64> = (0..shape[d]).map(|i| i as f64).collect();
         dim_ranges.push(Tensor::<R>::from_slice(&range, &[shape[d]], device));

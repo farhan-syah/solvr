@@ -19,6 +19,10 @@
 //! h11(t) = t³ - t²
 //! ```
 
+// NOTE: This module contains shared Hermite primitives for potential future use.
+// PCHIP and Akima are already implemented in their own modules.
+#![allow(dead_code)]
+
 use crate::interpolate::error::{InterpolateError, InterpolateResult};
 use numr::ops::{CompareOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
