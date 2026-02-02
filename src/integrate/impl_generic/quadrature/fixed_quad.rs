@@ -4,7 +4,7 @@
 //! but the function evaluation and weighted sum use tensor ops for GPU acceleration.
 
 use numr::error::{Error, Result};
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{BinaryOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 

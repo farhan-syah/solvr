@@ -3,7 +3,7 @@
 use crate::stats::helpers::extract_scalar;
 use crate::stats::{TensorDescriptiveStats, validate_stats_dtype};
 use numr::error::{Error, Result};
-use numr::ops::TensorOps;
+use numr::ops::{StatisticalOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -82,7 +82,7 @@ where
 pub fn percentile_impl<R, C>(client: &C, x: &Tensor<R>, p: f64) -> Result<Tensor<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + StatisticalOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
 
@@ -93,7 +93,7 @@ where
         });
     }
 
-    TensorOps::percentile(client, x, p, None, false)
+    client.percentile(x, p, None, false)
 }
 
 /// Generic implementation of `iqr` for any Runtime.

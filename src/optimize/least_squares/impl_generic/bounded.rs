@@ -144,7 +144,7 @@ where
                 message: format!("least_squares: negate jtf - {}", e),
             })?;
 
-        let dx_col = match TensorOps::solve(client, &jtj_damped, &neg_jtf) {
+        let dx_col = match LinearAlgebraAlgorithms::solve(client, &jtj_damped, &neg_jtf) {
             Ok(dx) => dx,
             Err(_) => {
                 lambda *= lambda_up;
@@ -295,9 +295,10 @@ where
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     // Extract diagonal using numr's diag
-    let diag_vec = TensorOps::diag(client, a).map_err(|e| OptimizeError::NumericalError {
-        message: format!("add_scaled_diagonal: diag - {}", e),
-    })?;
+    let diag_vec =
+        LinearAlgebraAlgorithms::diag(client, a).map_err(|e| OptimizeError::NumericalError {
+            message: format!("add_scaled_diagonal: diag - {}", e),
+        })?;
 
     // Compute abs(diag)
     let abs_diag = client
@@ -330,10 +331,11 @@ where
             })?;
 
     // Create diagonal matrix using numr's diagflat
-    let diag_matrix =
-        TensorOps::diagflat(client, &scaled_diag).map_err(|e| OptimizeError::NumericalError {
+    let diag_matrix = LinearAlgebraAlgorithms::diagflat(client, &scaled_diag).map_err(|e| {
+        OptimizeError::NumericalError {
             message: format!("add_scaled_diagonal: diagflat - {}", e),
-        })?;
+        }
+    })?;
 
     client
         .add(a, &diag_matrix)

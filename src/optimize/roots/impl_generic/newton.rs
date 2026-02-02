@@ -81,11 +81,12 @@ where
                 message: format!("newton_system: reshape neg_fx - {}", e),
             })?;
 
-        let dx_col = TensorOps::solve(client, &jacobian, &neg_fx_col).map_err(|e| {
-            OptimizeError::NumericalError {
-                message: format!("newton_system: solve - {}", e),
-            }
-        })?;
+        let dx_col =
+            LinearAlgebraAlgorithms::solve(client, &jacobian, &neg_fx_col).map_err(|e| {
+                OptimizeError::NumericalError {
+                    message: format!("newton_system: solve - {}", e),
+                }
+            })?;
 
         let dx = dx_col
             .reshape(&[n])

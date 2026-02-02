@@ -110,7 +110,7 @@ where
                 message: format!("levenberg_marquardt: negate jtf - {}", e),
             })?;
 
-        let dx_col = match TensorOps::solve(client, &jtj_damped, &neg_jtf) {
+        let dx_col = match LinearAlgebraAlgorithms::solve(client, &jtj_damped, &neg_jtf) {
             Ok(dx) => dx,
             Err(_) => {
                 lambda *= lambda_up;
@@ -199,10 +199,11 @@ where
             })?;
 
     // Use numr's diagflat to create lambda * I
-    let lambda_i =
-        TensorOps::diagflat(client, &lambda_vec).map_err(|e| OptimizeError::NumericalError {
+    let lambda_i = LinearAlgebraAlgorithms::diagflat(client, &lambda_vec).map_err(|e| {
+        OptimizeError::NumericalError {
             message: format!("add_lambda_identity: diagflat - {}", e),
-        })?;
+        }
+    })?;
 
     client
         .add(a, &lambda_i)

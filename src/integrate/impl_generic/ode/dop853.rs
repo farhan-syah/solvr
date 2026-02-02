@@ -9,7 +9,7 @@
 // Allow this module to use extensive precision coefficients from the reference implementation
 
 use numr::error::Result;
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{BinaryOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 

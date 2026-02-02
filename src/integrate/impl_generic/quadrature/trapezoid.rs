@@ -3,7 +3,7 @@
 //! All implementations use numr tensor ops - no scalar loops.
 
 use numr::error::{Error, Result};
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{BinaryOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 

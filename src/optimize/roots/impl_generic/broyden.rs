@@ -1,5 +1,6 @@
 //! Broyden's method for systems of nonlinear equations using tensor operations.
 
+use numr::algorithm::linalg::LinearAlgebraAlgorithms;
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -23,7 +24,7 @@ pub fn broyden1_impl<R, C, F>(
 ) -> OptimizeResult<TensorRootResult<R>>
 where
     R: Runtime,
-    C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
+    C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
     let n = x0.shape()[0];
@@ -80,7 +81,7 @@ where
                 message: format!("broyden1: reshape neg_fx - {}", e),
             })?;
 
-        let dx = match TensorOps::solve(client, &jacobian, &neg_fx_col) {
+        let dx = match LinearAlgebraAlgorithms::solve(client, &jacobian, &neg_fx_col) {
             Ok(dx_col) => dx_col
                 .reshape(&[n])
                 .map_err(|e| OptimizeError::NumericalError {
@@ -89,7 +90,7 @@ where
             Err(_) => {
                 // Reset Jacobian if singular
                 jacobian = finite_difference_jacobian_tensor(client, &f, &x, &fx, options.eps)?;
-                match TensorOps::solve(client, &jacobian, &neg_fx_col) {
+                match LinearAlgebraAlgorithms::solve(client, &jacobian, &neg_fx_col) {
                     Ok(dx_col) => {
                         dx_col
                             .reshape(&[n])
