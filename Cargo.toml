@@ -1,6 +1,6 @@
 [package]
 name = "solvr"
-version = "0.0.0"
+version = "0.0.0-beta.1"
 edition = "2024"
 description = "Advanced computing library for real-world problem solving - optimization, differential equations, interpolation, statistics, and more"
 license = "Apache-2.0"
@@ -9,7 +9,7 @@ keywords = ["solver", "optimization", "ode", "interpolation", "statistics"]
 categories = ["algorithms", "mathematics", "science"]
 
 [dependencies]
-numr = { path = "../numr" }
+numr = { version = "0.0.0-beta.1" }
 
 [dev-dependencies]
 
