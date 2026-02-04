@@ -220,3 +220,109 @@ impl<R: Runtime> AnalogPrototype<R> {
         }
     }
 }
+
+/// State-space representation of a linear time-invariant system.
+///
+/// Represents a system in state-space form:
+/// ```text
+/// ẋ(t) = A·x(t) + B·u(t)
+/// y(t) = C·x(t) + D·u(t)
+/// ```
+///
+/// For discrete-time systems:
+/// ```text
+/// x[k+1] = A·x[k] + B·u[k]
+/// y[k]   = C·x[k] + D·u[k]
+/// ```
+///
+/// # Matrix Dimensions
+///
+/// For a system with n states, m inputs, and p outputs:
+/// - A: n × n (state matrix)
+/// - B: n × m (input matrix)
+/// - C: p × n (output matrix)
+/// - D: p × m (feedthrough matrix)
+#[derive(Debug, Clone)]
+pub struct StateSpace<R: Runtime> {
+    /// State matrix (n × n).
+    pub a: Tensor<R>,
+    /// Input matrix (n × m).
+    pub b: Tensor<R>,
+    /// Output matrix (p × n).
+    pub c: Tensor<R>,
+    /// Feedthrough matrix (p × m).
+    pub d: Tensor<R>,
+}
+
+impl<R: Runtime> StateSpace<R> {
+    /// Create a new state-space system.
+    ///
+    /// # Arguments
+    ///
+    /// * `a` - State matrix (n × n)
+    /// * `b` - Input matrix (n × m)
+    /// * `c` - Output matrix (p × n)
+    /// * `d` - Feedthrough matrix (p × m)
+    pub fn new(a: Tensor<R>, b: Tensor<R>, c: Tensor<R>, d: Tensor<R>) -> Self {
+        Self { a, b, c, d }
+    }
+
+    /// Get the number of states.
+    pub fn num_states(&self) -> usize {
+        self.a.shape()[0]
+    }
+
+    /// Get the number of inputs.
+    pub fn num_inputs(&self) -> usize {
+        if self.b.ndim() == 1 {
+            1
+        } else {
+            self.b.shape()[1]
+        }
+    }
+
+    /// Get the number of outputs.
+    pub fn num_outputs(&self) -> usize {
+        if self.c.ndim() == 1 {
+            1
+        } else {
+            self.c.shape()[0]
+        }
+    }
+}
+
+/// Discrete-time linear time-invariant system.
+///
+/// Wraps a system representation with a sampling time for discrete-time analysis.
+#[derive(Debug, Clone)]
+pub struct DiscreteTimeSystem<R: Runtime> {
+    /// System representation.
+    pub system: SystemRepresentation<R>,
+    /// Sampling time (seconds). None for continuous-time.
+    pub dt: Option<f64>,
+}
+
+impl<R: Runtime> DiscreteTimeSystem<R> {
+    /// Create a new discrete-time system.
+    pub fn new(system: SystemRepresentation<R>, dt: Option<f64>) -> Self {
+        Self { system, dt }
+    }
+
+    /// Check if this is a discrete-time system.
+    pub fn is_discrete(&self) -> bool {
+        self.dt.is_some()
+    }
+}
+
+/// System representation enum.
+///
+/// Allows a system to be represented in any of the standard forms.
+#[derive(Debug, Clone)]
+pub enum SystemRepresentation<R: Runtime> {
+    /// Transfer function (numerator, denominator polynomials).
+    TransferFunction(TransferFunction<R>),
+    /// Zero-pole-gain representation.
+    ZeroPoleGain(ZpkFilter<R>),
+    /// State-space representation.
+    StateSpace(StateSpace<R>),
+}
