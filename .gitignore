@@ -45,6 +45,7 @@ desktop.ini
 *.log
 AGENTS.md
 CLAUDE.md
+.cargo
 
 # Documentation build
 /book
