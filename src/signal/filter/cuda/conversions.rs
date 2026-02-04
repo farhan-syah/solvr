@@ -1,11 +1,15 @@
 //! CUDA implementation of filter conversions.
+//!
+//! Note: Some conversions (sos2tf, zpk2sos, sos2zpk) involve inherently sequential
+//! algorithms with tiny data sizes. These are NOT implemented for CUDA because:
+//! 1. GPU transfer overhead exceeds computation time
+//! 2. Design-time operations that only run once
+//! 3. Users should use CpuClient for filter design, then transfer to GPU for filtering
 
-use crate::signal::filter::impl_generic::{
-    sos2tf_impl, sos2zpk_impl, tf2sos_impl, tf2zpk_impl, zpk2sos_impl, zpk2tf_impl,
-};
+use crate::signal::filter::impl_generic::{tf2zpk_impl, zpk2tf_impl};
 use crate::signal::filter::traits::conversions::{FilterConversions, SosPairing};
 use crate::signal::filter::types::{SosFilter, TransferFunction, ZpkFilter};
-use numr::error::Result;
+use numr::error::{Error, Result};
 use numr::runtime::cuda::{CudaClient, CudaRuntime};
 
 impl FilterConversions<CudaRuntime> for CudaClient {
@@ -19,25 +23,34 @@ impl FilterConversions<CudaRuntime> for CudaClient {
 
     fn tf2sos(
         &self,
-        tf: &TransferFunction<CudaRuntime>,
-        pairing: Option<SosPairing>,
+        _tf: &TransferFunction<CudaRuntime>,
+        _pairing: Option<SosPairing>,
     ) -> Result<SosFilter<CudaRuntime>> {
-        tf2sos_impl(self, tf, pairing)
+        Err(Error::UnsupportedOperation {
+            operation: "tf2sos is CPU-only. Use CpuClient for filter design, then transfer to GPU."
+                .to_string(),
+        })
     }
 
-    fn sos2tf(&self, sos: &SosFilter<CudaRuntime>) -> Result<TransferFunction<CudaRuntime>> {
-        sos2tf_impl(self, sos)
+    fn sos2tf(&self, _sos: &SosFilter<CudaRuntime>) -> Result<TransferFunction<CudaRuntime>> {
+        Err(Error::UnsupportedOperation {
+            operation: "sos2tf is CPU-only. Use CpuClient for filter design.".to_string(),
+        })
     }
 
     fn zpk2sos(
         &self,
-        zpk: &ZpkFilter<CudaRuntime>,
-        pairing: Option<SosPairing>,
+        _zpk: &ZpkFilter<CudaRuntime>,
+        _pairing: Option<SosPairing>,
     ) -> Result<SosFilter<CudaRuntime>> {
-        zpk2sos_impl(self, zpk, pairing)
+        Err(Error::UnsupportedOperation {
+            operation: "zpk2sos is CPU-only. Use CpuClient for filter design.".to_string(),
+        })
     }
 
-    fn sos2zpk(&self, sos: &SosFilter<CudaRuntime>) -> Result<ZpkFilter<CudaRuntime>> {
-        sos2zpk_impl(self, sos)
+    fn sos2zpk(&self, _sos: &SosFilter<CudaRuntime>) -> Result<ZpkFilter<CudaRuntime>> {
+        Err(Error::UnsupportedOperation {
+            operation: "sos2zpk is CPU-only. Use CpuClient for filter design.".to_string(),
+        })
     }
 }

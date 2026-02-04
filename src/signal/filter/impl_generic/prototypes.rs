@@ -13,9 +13,9 @@
 #![allow(clippy::too_many_arguments)]
 
 use super::bilinear::{bilinear_zpk_impl, prewarp};
-use super::conversions::{tf2sos_impl, zpk2tf_impl};
+use super::conversions::zpk2tf_impl;
 use super::freq_transform::{lp2bp_zpk_impl, lp2bs_zpk_impl, lp2hp_zpk_impl, lp2lp_zpk_impl};
-use crate::signal::filter::traits::conversions::SosPairing;
+use crate::signal::filter::traits::conversions::{FilterConversions, SosPairing};
 use crate::signal::filter::traits::iir_design::{BesselNorm, IirDesignResult};
 use crate::signal::filter::types::{AnalogPrototype, FilterOutput, FilterType};
 use numr::algorithm::polynomial::PolynomialAlgorithms;
@@ -82,7 +82,11 @@ pub fn butter_impl<R, C>(
 ) -> Result<IirDesignResult<R>>
 where
     R: Runtime,
-    C: PolynomialAlgorithms<R> + ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
+    C: FilterConversions<R>
+        + PolynomialAlgorithms<R>
+        + ScalarOps<R>
+        + TensorOps<R>
+        + RuntimeClient<R>,
 {
     // Validate inputs
     validate_wn(wn, filter_type)?;
@@ -182,7 +186,11 @@ pub fn cheby1_impl<R, C>(
 ) -> Result<IirDesignResult<R>>
 where
     R: Runtime,
-    C: PolynomialAlgorithms<R> + ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
+    C: FilterConversions<R>
+        + PolynomialAlgorithms<R>
+        + ScalarOps<R>
+        + TensorOps<R>
+        + RuntimeClient<R>,
 {
     validate_wn(wn, filter_type)?;
 
@@ -290,7 +298,11 @@ pub fn cheby2_impl<R, C>(
 ) -> Result<IirDesignResult<R>>
 where
     R: Runtime,
-    C: PolynomialAlgorithms<R> + ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
+    C: FilterConversions<R>
+        + PolynomialAlgorithms<R>
+        + ScalarOps<R>
+        + TensorOps<R>
+        + RuntimeClient<R>,
 {
     validate_wn(wn, filter_type)?;
 
@@ -412,7 +424,11 @@ pub fn ellip_impl<R, C>(
 ) -> Result<IirDesignResult<R>>
 where
     R: Runtime,
-    C: PolynomialAlgorithms<R> + ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
+    C: FilterConversions<R>
+        + PolynomialAlgorithms<R>
+        + ScalarOps<R>
+        + TensorOps<R>
+        + RuntimeClient<R>,
 {
     validate_wn(wn, filter_type)?;
 
@@ -553,7 +569,11 @@ pub fn design_iir_filter<R, C>(
 ) -> Result<IirDesignResult<R>>
 where
     R: Runtime,
-    C: PolynomialAlgorithms<R> + ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
+    C: FilterConversions<R>
+        + PolynomialAlgorithms<R>
+        + ScalarOps<R>
+        + TensorOps<R>
+        + RuntimeClient<R>,
 {
     // Sample rate for bilinear transform (normalized to Nyquist = 1)
     let fs = 2.0;
@@ -595,7 +615,7 @@ where
         }
         FilterOutput::Sos => {
             let tf = zpk2tf_impl(client, &digital)?;
-            let sos = tf2sos_impl(client, &tf, Some(SosPairing::Nearest))?;
+            let sos = client.tf2sos(&tf, Some(SosPairing::Nearest))?;
             Ok(IirDesignResult::Sos(sos))
         }
     }

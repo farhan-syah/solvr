@@ -6,6 +6,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use super::prototypes::{butter_impl, cheby1_impl, cheby2_impl, design_iir_filter, ellip_impl};
+use crate::signal::filter::traits::conversions::FilterConversions;
 use crate::signal::filter::traits::iir_design::{BesselNorm, IirDesignResult};
 use crate::signal::filter::traits::iir_wrapper::IirDesignType;
 use crate::signal::filter::types::{FilterOutput, FilterType};
@@ -32,7 +33,11 @@ pub fn iirfilter_impl<R, C>(
 ) -> Result<IirDesignResult<R>>
 where
     R: Runtime,
-    C: PolynomialAlgorithms<R> + ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
+    C: FilterConversions<R>
+        + PolynomialAlgorithms<R>
+        + ScalarOps<R>
+        + TensorOps<R>
+        + RuntimeClient<R>,
 {
     match design_type {
         IirDesignType::Butterworth => butter_impl(client, order, wn, filter_type, output, device),

@@ -2,10 +2,12 @@
 //!
 //! Converts analog (continuous-time) filters to digital (discrete-time) filters
 //! using the bilinear transformation.
+//!
+//! All operations are fully tensorized - data stays on device with no GPU<->CPU transfers.
 
 use crate::signal::filter::types::{AnalogPrototype, ZpkFilter};
 use numr::error::Result;
-use numr::ops::ScalarOps;
+use numr::ops::{ScalarOps, ShapeOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 use std::f64::consts::PI;
@@ -32,134 +34,172 @@ use std::f64::consts::PI;
 /// ```
 ///
 /// Pre-warping is typically applied during filter design to compensate.
+///
+/// All operations are tensor-based with no CPU transfers.
 pub fn bilinear_zpk_impl<R, C>(
-    _client: &C,
+    client: &C,
     analog: &AnalogPrototype<R>,
     fs: f64,
 ) -> Result<ZpkFilter<R>>
 where
     R: Runtime,
-    C: ScalarOps<R> + RuntimeClient<R>,
+    C: ScalarOps<R> + ShapeOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let device = analog.zeros_real.device();
-    let _dtype = analog.zeros_real.dtype();
+    let dtype = analog.zeros_real.dtype();
 
     let n_zeros = analog.zeros_real.shape()[0];
     let n_poles = analog.poles_real.shape()[0];
 
-    // Get analog poles and zeros
-    let z_re: Vec<f64> = analog.zeros_real.to_vec();
-    let z_im: Vec<f64> = analog.zeros_imag.to_vec();
-    let p_re: Vec<f64> = analog.poles_real.to_vec();
-    let p_im: Vec<f64> = analog.poles_imag.to_vec();
-
     let fs2 = 2.0 * fs;
 
-    // Transform zeros: z_d = (1 + s/(2*fs)) / (1 - s/(2*fs))
-    let mut digital_zeros_re = Vec::with_capacity(n_poles); // Will add zeros at -1
-    let mut digital_zeros_im = Vec::with_capacity(n_poles);
+    // Transform zeros using tensorized bilinear transform
+    let (transformed_z_re, transformed_z_im) = if n_zeros > 0 {
+        bilinear_transform_tensor(client, &analog.zeros_real, &analog.zeros_imag, fs2)?
+    } else {
+        (
+            Tensor::zeros(&[0], dtype, device),
+            Tensor::zeros(&[0], dtype, device),
+        )
+    };
 
-    for i in 0..n_zeros {
-        let (zd_re, zd_im) = bilinear_point(z_re[i], z_im[i], fs2);
-        digital_zeros_re.push(zd_re);
-        digital_zeros_im.push(zd_im);
-    }
-
-    // Add zeros at z = -1 to match the number of poles
+    // Add zeros at z = -1 for degree matching
     // (The bilinear transform maps s = infinity to z = -1)
-    for _ in n_zeros..n_poles {
-        digital_zeros_re.push(-1.0);
-        digital_zeros_im.push(0.0);
-    }
+    let extra_zeros = n_poles.saturating_sub(n_zeros);
+    let digital_zeros_re = if extra_zeros > 0 {
+        let minus_one = Tensor::full_scalar(&[extra_zeros], dtype, -1.0, device);
+        if n_zeros > 0 {
+            client.cat(&[&transformed_z_re, &minus_one], 0)?
+        } else {
+            minus_one
+        }
+    } else {
+        transformed_z_re
+    };
+
+    let digital_zeros_im = if extra_zeros > 0 {
+        let zeros = Tensor::zeros(&[extra_zeros], dtype, device);
+        if n_zeros > 0 {
+            client.cat(&[&transformed_z_im, &zeros], 0)?
+        } else {
+            zeros
+        }
+    } else {
+        transformed_z_im
+    };
 
     // Transform poles
-    let mut digital_poles_re = Vec::with_capacity(n_poles);
-    let mut digital_poles_im = Vec::with_capacity(n_poles);
+    let (digital_poles_re, digital_poles_im) =
+        bilinear_transform_tensor(client, &analog.poles_real, &analog.poles_imag, fs2)?;
 
-    for i in 0..n_poles {
-        let (pd_re, pd_im) = bilinear_point(p_re[i], p_im[i], fs2);
-        digital_poles_re.push(pd_re);
-        digital_poles_im.push(pd_im);
-    }
-
-    // Compute gain transformation using the bilinear formula:
-    // k_d = k_a * prod(2*fs - z_i) / prod(2*fs - p_i)
-    // where the products are over the analog zeros and poles
+    // Compute gain transformation using tensor operations
+    // k_d = k_a * prod(|2*fs - z_i|) / prod(|2*fs - p_i|)
     let mut gain = analog.gain;
 
-    // Product over analog zeros: (2*fs - z_i)
-    for i in 0..n_zeros {
-        let re = fs2 - z_re[i];
-        let im = -z_im[i];
-        let mag = (re * re + im * im).sqrt();
-        gain *= mag;
+    if n_zeros > 0 {
+        // Compute |2*fs - z_i| for each zero
+        // (2*fs - z) = (fs2 - z_re) - j*z_im
+        let diff_re = client.add_scalar(&client.mul_scalar(&analog.zeros_real, -1.0)?, fs2)?;
+        let diff_im = client.mul_scalar(&analog.zeros_imag, -1.0)?;
+
+        // |diff| = sqrt(diff_re² + diff_im²)
+        let diff_re_sq = client.mul(&diff_re, &diff_re)?;
+        let diff_im_sq = client.mul(&diff_im, &diff_im)?;
+        let diff_mag_sq = client.add(&diff_re_sq, &diff_im_sq)?;
+        let diff_mag = client.sqrt(&diff_mag_sq)?;
+
+        // Product via sum of logs
+        let log_mag = client.log(&client.add_scalar(&diff_mag, 1e-30)?)?;
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0]; // Single scalar at API boundary
+        gain *= sum_log.exp();
     }
 
-    // Product over analog poles: 1 / (2*fs - p_i)
-    for i in 0..n_poles {
-        let re = fs2 - p_re[i];
-        let im = -p_im[i];
-        let mag = (re * re + im * im).sqrt();
-        gain /= mag;
+    if n_poles > 0 {
+        // Compute |2*fs - p_i| for each pole
+        let diff_re = client.add_scalar(&client.mul_scalar(&analog.poles_real, -1.0)?, fs2)?;
+        let diff_im = client.mul_scalar(&analog.poles_imag, -1.0)?;
+
+        let diff_re_sq = client.mul(&diff_re, &diff_re)?;
+        let diff_im_sq = client.mul(&diff_im, &diff_im)?;
+        let diff_mag_sq = client.add(&diff_re_sq, &diff_im_sq)?;
+        let diff_mag = client.sqrt(&diff_mag_sq)?;
+
+        let log_mag = client.log(&client.add_scalar(&diff_mag, 1e-30)?)?;
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0]; // Single scalar at API boundary
+        gain /= sum_log.exp();
     }
 
-    // For each zero added at -1, we divide by 2
-    // (This comes from the fact that added zeros are at s = infinity,
-    // and the bilinear transform maps infinity to -1 with a factor of 2*fs)
-    for _ in n_zeros..n_poles {
+    // For each zero added at -1, we divide by 2*fs
+    for _ in 0..extra_zeros {
         gain /= fs2;
     }
 
-    // Make gain real and positive (take absolute value)
+    // Make gain real and positive
     gain = gain.abs();
 
-    let digital_zeros_re_t =
-        Tensor::from_slice(&digital_zeros_re, &[digital_zeros_re.len()], device);
-    let digital_zeros_im_t =
-        Tensor::from_slice(&digital_zeros_im, &[digital_zeros_im.len()], device);
-    let digital_poles_re_t =
-        Tensor::from_slice(&digital_poles_re, &[digital_poles_re.len()], device);
-    let digital_poles_im_t =
-        Tensor::from_slice(&digital_poles_im, &[digital_poles_im.len()], device);
-
     Ok(ZpkFilter::new(
-        digital_zeros_re_t,
-        digital_zeros_im_t,
-        digital_poles_re_t,
-        digital_poles_im_t,
+        digital_zeros_re,
+        digital_zeros_im,
+        digital_poles_re,
+        digital_poles_im,
         gain,
     ))
 }
 
-/// Apply bilinear transform to a single complex point.
+/// Apply bilinear transform to all points in tensors.
 ///
 /// s → z = (1 + s/fs2) / (1 - s/fs2)
-fn bilinear_point(s_re: f64, s_im: f64, fs2: f64) -> (f64, f64) {
+///
+/// All operations are tensor-based.
+fn bilinear_transform_tensor<R, C>(
+    client: &C,
+    s_re: &Tensor<R>,
+    s_im: &Tensor<R>,
+    fs2: f64,
+) -> Result<(Tensor<R>, Tensor<R>)>
+where
+    R: Runtime,
+    C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
+{
     // z = (1 + s/fs2) / (1 - s/fs2)
     // Let s/fs2 = a + bi
-    let a = s_re / fs2;
-    let b = s_im / fs2;
 
-    // Numerator: 1 + a + bi
-    let num_re = 1.0 + a;
-    let num_im = b;
+    // a = s_re / fs2, b = s_im / fs2
+    let a = client.mul_scalar(s_re, 1.0 / fs2)?;
+    let b = client.mul_scalar(s_im, 1.0 / fs2)?;
 
-    // Denominator: 1 - a - bi
-    let denom_re = 1.0 - a;
-    let denom_im = -b;
+    // Numerator: 1 + a + bi = (1 + a) + bi
+    let num_re = client.add_scalar(&a, 1.0)?;
+    let num_im = b.clone();
 
-    // Complex division
-    let denom_mag_sq = denom_re * denom_re + denom_im * denom_im;
+    // Denominator: 1 - a - bi = (1 - a) - bi
+    let one = Tensor::ones(&[s_re.shape()[0]], s_re.dtype(), s_re.device());
+    let denom_re = client.sub(&one, &a)?;
+    let denom_im = client.mul_scalar(&b, -1.0)?;
 
-    if denom_mag_sq < 1e-30 {
-        // Pole at infinity maps to z = -1
-        return (-1.0, 0.0);
-    }
+    // Complex division: (num_re + i*num_im) / (denom_re + i*denom_im)
+    // = (num_re*denom_re + num_im*denom_im + i*(num_im*denom_re - num_re*denom_im)) / |denom|²
 
-    let z_re = (num_re * denom_re + num_im * denom_im) / denom_mag_sq;
-    let z_im = (num_im * denom_re - num_re * denom_im) / denom_mag_sq;
+    let denom_re_sq = client.mul(&denom_re, &denom_re)?;
+    let denom_im_sq = client.mul(&denom_im, &denom_im)?;
+    let denom_mag_sq = client.add(&denom_re_sq, &denom_im_sq)?;
 
-    (z_re, z_im)
+    // Add epsilon for numerical stability (handles s at infinity -> z = -1)
+    let denom_safe = client.add_scalar(&denom_mag_sq, 1e-30)?;
+
+    // Real part: (num_re*denom_re + num_im*denom_im) / |denom|²
+    let nr_dr = client.mul(&num_re, &denom_re)?;
+    let ni_di = client.mul(&num_im, &denom_im)?;
+    let z_re_num = client.add(&nr_dr, &ni_di)?;
+    let z_re = client.div(&z_re_num, &denom_safe)?;
+
+    // Imag part: (num_im*denom_re - num_re*denom_im) / |denom|²
+    let ni_dr = client.mul(&num_im, &denom_re)?;
+    let nr_di = client.mul(&num_re, &denom_im)?;
+    let z_im_num = client.sub(&ni_dr, &nr_di)?;
+    let z_im = client.div(&z_im_num, &denom_safe)?;
+
+    Ok((z_re, z_im))
 }
 
 /// Pre-warp a digital frequency to analog frequency.

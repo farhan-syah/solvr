@@ -1,38 +1,50 @@
 //! WebGPU implementation of FIR filter design.
+//!
+//! Note: FIR filter design functions are NOT implemented for WebGPU because:
+//! 1. These are design-time operations (run once), not runtime (per-sample)
+//! 2. FIR tap counts are typically 31-255 (tiny data)
+//! 3. GPU transfer overhead far exceeds computation time
+//!
+//! Users should use CpuClient for filter design, then transfer the coefficients to GPU.
 
-use crate::signal::filter::impl_generic::{firwin_impl, firwin2_impl, minimum_phase_impl};
 use crate::signal::filter::traits::fir_design::{FirDesignAlgorithms, FirWindow};
 use crate::signal::filter::types::FilterType;
-use numr::error::Result;
+use numr::error::{Error, Result};
 use numr::runtime::wgpu::{WgpuClient, WgpuRuntime};
 use numr::tensor::Tensor;
 
 impl FirDesignAlgorithms<WgpuRuntime> for WgpuClient {
     fn firwin(
         &self,
-        numtaps: usize,
-        cutoff: &[f64],
-        filter_type: FilterType,
-        window: FirWindow,
-        scale: bool,
-        device: &<WgpuRuntime as numr::runtime::Runtime>::Device,
+        _numtaps: usize,
+        _cutoff: &[f64],
+        _filter_type: FilterType,
+        _window: FirWindow,
+        _scale: bool,
+        _device: &<WgpuRuntime as numr::runtime::Runtime>::Device,
     ) -> Result<Tensor<WgpuRuntime>> {
-        firwin_impl(self, numtaps, cutoff, filter_type, window, scale, device)
+        Err(Error::UnsupportedOperation {
+            operation: "firwin is CPU-only. Use CpuClient for filter design, then transfer coefficients to GPU.".to_string(),
+        })
     }
 
     fn firwin2(
         &self,
-        numtaps: usize,
-        freq: &[f64],
-        gain: &[f64],
-        antisymmetric: bool,
-        window: FirWindow,
-        device: &<WgpuRuntime as numr::runtime::Runtime>::Device,
+        _numtaps: usize,
+        _freq: &[f64],
+        _gain: &[f64],
+        _antisymmetric: bool,
+        _window: FirWindow,
+        _device: &<WgpuRuntime as numr::runtime::Runtime>::Device,
     ) -> Result<Tensor<WgpuRuntime>> {
-        firwin2_impl(self, numtaps, freq, gain, antisymmetric, window, device)
+        Err(Error::UnsupportedOperation {
+            operation: "firwin2 is CPU-only. Use CpuClient for filter design, then transfer coefficients to GPU.".to_string(),
+        })
     }
 
-    fn minimum_phase(&self, h: &Tensor<WgpuRuntime>) -> Result<Tensor<WgpuRuntime>> {
-        minimum_phase_impl(self, h)
+    fn minimum_phase(&self, _h: &Tensor<WgpuRuntime>) -> Result<Tensor<WgpuRuntime>> {
+        Err(Error::UnsupportedOperation {
+            operation: "minimum_phase is CPU-only. Use CpuClient for filter design.".to_string(),
+        })
     }
 }
