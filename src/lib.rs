@@ -91,6 +91,7 @@
 //! let result = client.convolve(&signal, &kernel, ConvMode::Same).unwrap();
 //! ```
 
+pub mod common;
 pub mod integrate;
 pub mod interpolate;
 pub mod optimize;
