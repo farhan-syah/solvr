@@ -57,10 +57,16 @@ mod wgpu;
 
 // Re-export types
 pub use types::{
-    AnalogPrototype, FilterOutput, FilterType, SosFilter, TransferFunction, ZpkFilter,
+    AnalogPrototype, DiscreteTimeSystem, FilterOutput, FilterType, SosFilter, StateSpace,
+    SystemRepresentation, TransferFunction, ZpkFilter,
 };
 
 // Re-export traits
+pub use traits::analog_response::{AnalogResponseAlgorithms, FreqsResult};
 pub use traits::conversions::{FilterConversions, SosPairing};
 pub use traits::fir_design::{FirDesignAlgorithms, FirWindow};
 pub use traits::iir_design::{BesselNorm, IirDesignAlgorithms, IirDesignResult};
+pub use traits::iir_wrapper::{IirDesignType, IirFilterAlgorithms};
+pub use traits::lti_system::{DiscreteTimeLtiAlgorithms, DlsimResult};
+pub use traits::state_space::StateSpaceConversions;
+pub use traits::system_response::{ImpulseResponse, StepResponse, SystemResponseAlgorithms};
