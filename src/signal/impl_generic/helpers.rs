@@ -5,7 +5,7 @@
 
 use numr::dtype::DType;
 use numr::error::{Error, Result};
-use numr::ops::{ScalarOps, TensorOps};
+use numr::ops::{ComplexOps, ReduceOps, ScalarOps, ShapeOps, TensorOps, UtilityOps};
 use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
@@ -85,6 +85,153 @@ where
     client.mul(a, b)
 }
 
+/// Element-wise complex division: a / b for complex tensors.
+///
+/// Computes (a_re + a_im*i) / (b_re + b_im*i) using the formula:
+/// result_re = (a_re*b_re + a_im*b_im) / (b_re^2 + b_im^2)
+/// result_im = (a_im*b_re - a_re*b_im) / (b_re^2 + b_im^2)
+pub fn complex_divide_impl<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<Tensor<R>>
+where
+    R: Runtime,
+    C: TensorOps<R> + ComplexOps<R> + RuntimeClient<R>,
+{
+    let dtype = a.dtype();
+
+    if !dtype.is_complex() {
+        return Err(Error::UnsupportedDType {
+            dtype,
+            op: "complex_divide",
+        });
+    }
+
+    if a.dtype() != b.dtype() {
+        return Err(Error::DTypeMismatch {
+            lhs: a.dtype(),
+            rhs: b.dtype(),
+        });
+    }
+
+    // For complex division: a/b = a * conj(b) / |b|^2
+    // conj(b) = b_re - b_im*i
+    // |b|^2 = b_re^2 + b_im^2
+
+    // Get conjugate of b
+    let b_conj = client.conj(b)?;
+
+    // Compute a * conj(b) (complex multiplication)
+    let numerator = client.mul(a, &b_conj)?;
+
+    // Compute |b|^2 = b_re^2 + b_im^2
+    let b_re = client.real(b)?;
+    let b_im = client.imag(b)?;
+    let b_re_sq = client.mul(&b_re, &b_re)?;
+    let b_im_sq = client.mul(&b_im, &b_im)?;
+    let denom = client.add(&b_re_sq, &b_im_sq)?;
+
+    // Divide complex numerator by real denominator
+    client.complex_div_real(&numerator, &denom)
+}
+
+/// Detrend a tensor by removing mean (constant) or linear trend.
+///
+/// This operates on the last dimension of the tensor, allowing batch processing.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DetrendMode {
+    /// No detrending
+    #[default]
+    None,
+    /// Remove mean (constant detrend)
+    Constant,
+    /// Remove linear trend
+    Linear,
+}
+
+/// Detrend a 1D or 2D tensor along the last dimension.
+///
+/// For batched inputs (2D), detrends each row independently.
+pub fn detrend_tensor_impl<R, C>(
+    client: &C,
+    tensor: &Tensor<R>,
+    mode: DetrendMode,
+) -> Result<Tensor<R>>
+where
+    R: Runtime,
+    C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + UtilityOps<R> + RuntimeClient<R>,
+{
+    match mode {
+        DetrendMode::None => Ok(tensor.clone()),
+        DetrendMode::Constant => {
+            // Remove mean along last dimension
+            let ndim = tensor.ndim();
+            let last_dim = ndim - 1;
+
+            // Compute mean along last dimension, keeping dims for broadcasting
+            let mean = client.mean(tensor, &[last_dim], true)?;
+
+            // Subtract mean
+            client.sub(tensor, &mean)
+        }
+        DetrendMode::Linear => {
+            // Linear detrend: y - (a + b*x) where a and b are least squares fit
+            let ndim = tensor.ndim();
+            let last_dim = ndim - 1;
+            let n = tensor.shape()[last_dim];
+            let device = tensor.device();
+            let dtype = tensor.dtype();
+
+            if n < 2 {
+                return Ok(tensor.clone());
+            }
+
+            // Create x indices: [0, 1, 2, ..., n-1]
+            let x = client.arange(0.0, n as f64, 1.0, dtype)?;
+
+            // Compute means
+            let x_mean = (n - 1) as f64 / 2.0;
+            let y_mean = client.mean(tensor, &[last_dim], true)?;
+
+            // Center the data
+            let y_centered = client.sub(tensor, &y_mean)?;
+            let x_centered = client.add_scalar(&x, -x_mean)?;
+
+            // For linear regression: b = sum((x - x_mean)(y - y_mean)) / sum((x - x_mean)^2)
+            // Broadcast x_centered to match tensor shape for multiplication
+
+            // Compute numerator: sum of (x - x_mean) * (y - y_mean) along last dim
+            let x_centered_broadcast = if ndim == 1 {
+                x_centered.clone()
+            } else {
+                // Reshape x_centered to broadcast with tensor
+                let mut shape = vec![1usize; ndim];
+                shape[last_dim] = n;
+                x_centered.reshape(&shape)?
+            };
+
+            let xy_product = client.mul(&x_centered_broadcast, &y_centered)?;
+            let numerator = client.sum(&xy_product, &[last_dim], true)?;
+
+            // Compute denominator: sum of (x - x_mean)^2
+            // This is a constant for a given n, computed analytically:
+            // sum_{i=0}^{n-1} (i - (n-1)/2)^2 = n(n^2-1)/12
+            let denom_val = (n as f64) * ((n * n - 1) as f64) / 12.0;
+
+            // Compute slope b
+            let b = client.div_scalar(&numerator, denom_val)?;
+
+            // Compute intercept a = y_mean - b * x_mean
+            let b_x_mean = client.mul_scalar(&b, x_mean)?;
+            let a = client.sub(&y_mean, &b_x_mean)?;
+
+            // Compute trend: a + b * x
+            let trend_bx = client.mul(&b, &x_centered_broadcast)?;
+            let trend = client.add(&a, &trend_bx)?;
+
+            // Subtract trend from original
+            client.sub(tensor, &trend)
+        }
+    }
+}
+
 /// Compute |complex|^power for spectrogram using tensor operations.
 ///
 /// Computes (re^2 + im^2)^(power/2) for complex tensors.
@@ -136,4 +283,76 @@ where
     } else {
         Ok(result)
     }
+}
+
+/// Extract overlapping segments from a 1D signal as a 2D tensor.
+///
+/// Returns a tensor of shape [num_segments, nperseg] where each row is a segment.
+pub fn extract_segments_impl<R, C>(
+    client: &C,
+    signal: &Tensor<R>,
+    nperseg: usize,
+    noverlap: usize,
+) -> Result<Tensor<R>>
+where
+    R: Runtime,
+    C: ShapeOps<R> + RuntimeClient<R>,
+{
+    if signal.ndim() != 1 {
+        return Err(Error::InvalidArgument {
+            arg: "signal",
+            reason: "Signal must be 1D".to_string(),
+        });
+    }
+
+    let n = signal.shape()[0];
+    let step = nperseg - noverlap;
+
+    if step == 0 {
+        return Err(Error::InvalidArgument {
+            arg: "noverlap",
+            reason: "noverlap must be less than nperseg".to_string(),
+        });
+    }
+
+    let num_segments = if n >= nperseg {
+        (n - nperseg) / step + 1
+    } else {
+        0
+    };
+
+    if num_segments == 0 {
+        return Err(Error::InvalidArgument {
+            arg: "signal",
+            reason: "Signal too short for given segment parameters".to_string(),
+        });
+    }
+
+    // Extract each segment using narrow and stack them
+    let mut segments: Vec<Tensor<R>> = Vec::with_capacity(num_segments);
+    for i in 0..num_segments {
+        let start = i * step;
+        let segment = signal.narrow(0, start, nperseg)?;
+        segments.push(segment);
+    }
+
+    // Stack into [num_segments, nperseg]
+    let segment_refs: Vec<&Tensor<R>> = segments.iter().collect();
+    client.stack(&segment_refs, 0)
+}
+
+/// Compute power spectrum from complex FFT result: |FFT|^2.
+///
+/// Uses conj(fft) * fft to get the power spectrum, extracting the real part.
+pub fn power_spectrum_impl<R, C>(client: &C, fft_result: &Tensor<R>) -> Result<Tensor<R>>
+where
+    R: Runtime,
+    C: TensorOps<R> + ComplexOps<R> + RuntimeClient<R>,
+{
+    // Power = conj(fft) * fft = |fft|^2
+    let conj = client.conj(fft_result)?;
+    let power_complex = client.mul(&conj, fft_result)?;
+
+    // Extract real part (imaginary should be ~0)
+    client.real(&power_complex)
 }
