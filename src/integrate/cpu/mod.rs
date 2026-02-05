@@ -5,7 +5,8 @@ use numr::tensor::Tensor;
 
 use crate::integrate::error::IntegrateResult;
 use crate::integrate::impl_generic::ode::{
-    bdf_impl, bvp_impl, leapfrog_impl, lsoda_impl, radau_impl, solve_ivp_impl, verlet_impl,
+    bdf_impl, bvp_impl, dae_impl, leapfrog_impl, lsoda_impl, radau_impl, solve_ivp_impl,
+    verlet_impl,
 };
 use crate::integrate::impl_generic::quadrature::{
     cumulative_trapezoid_impl, dblquad_impl, fixed_quad_impl, monte_carlo_impl, nquad_impl,
@@ -13,7 +14,8 @@ use crate::integrate::impl_generic::quadrature::{
     trapezoid_uniform_impl,
 };
 use crate::integrate::ode::{
-    BDFOptions, BVPOptions, LSODAOptions, RadauOptions, SymplecticOptions,
+    BDFOptions, BVPOptions, DAEOptions, DAEResultTensor, LSODAOptions, RadauOptions,
+    SymplecticOptions,
 };
 use crate::integrate::{
     BVPResult, IntegrationAlgorithms, MonteCarloOptions, MonteCarloResult, NQuadOptions,
@@ -268,6 +270,28 @@ impl IntegrationAlgorithms<CpuRuntime> for CpuClient {
         F: Fn(&Tensor<CpuRuntime>) -> Result<Tensor<CpuRuntime>>,
     {
         leapfrog_impl(self, force, t_span, q0, p0, options)
+    }
+
+    // DAE solver
+
+    fn solve_dae<F>(
+        &self,
+        f: F,
+        t_span: [f64; 2],
+        y0: &Tensor<CpuRuntime>,
+        yp0: &Tensor<CpuRuntime>,
+        options: &ODEOptions,
+        dae_options: &DAEOptions<CpuRuntime>,
+    ) -> IntegrateResult<DAEResultTensor<CpuRuntime>>
+    where
+        F: Fn(
+            &DualTensor<CpuRuntime>,
+            &DualTensor<CpuRuntime>,
+            &DualTensor<CpuRuntime>,
+            &Self,
+        ) -> Result<DualTensor<CpuRuntime>>,
+    {
+        dae_impl(self, f, t_span, y0, yp0, options, dae_options)
     }
 }
 

@@ -5,7 +5,8 @@ use numr::tensor::Tensor;
 
 use crate::integrate::error::IntegrateResult;
 use crate::integrate::ode::{
-    BDFOptions, BVPOptions, LSODAOptions, RadauOptions, SymplecticOptions,
+    BDFOptions, BVPOptions, DAEOptions, DAEResultTensor, LSODAOptions, RadauOptions,
+    SymplecticOptions,
 };
 use crate::integrate::{ODEOptions, ODEResultTensor};
 
@@ -451,4 +452,64 @@ pub trait IntegrationAlgorithms<R: Runtime> {
     ) -> IntegrateResult<SymplecticResult<R>>
     where
         F: Fn(&Tensor<R>) -> Result<Tensor<R>>;
+
+    // ========================================================================
+    // DAE (Differential-Algebraic Equation) Solver
+    // ========================================================================
+
+    /// Solve a DAE (Differential-Algebraic Equation) in implicit form.
+    ///
+    /// Solves the system F(t, y, y') = 0 using a BDF-based implicit method
+    /// with automatic Jacobian computation via autograd.
+    ///
+    /// # DAE Forms Supported
+    ///
+    /// The fully implicit form F(t, y, y') = 0 can represent:
+    /// - **Semi-explicit**: x' = f(x, z, t), 0 = g(x, z, t)
+    /// - **Mass matrix**: M(t)·y' = f(t, y) with possibly singular M
+    /// - **Index-1 DAEs**: Most common in practice (chemical kinetics, circuits)
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - Residual function F(t, y, y') using DualTensor ops for autograd
+    /// * `t_span` - Integration interval [t0, tf]
+    /// * `y0` - Initial state (may be refined for consistency)
+    /// * `yp0` - Initial derivative (may be refined for consistency)
+    /// * `options` - General ODE options (tolerances, step bounds)
+    /// * `dae_options` - DAE-specific options (variable types, IC refinement)
+    ///
+    /// # Returns
+    ///
+    /// A [`DAEResultTensor`] with solution trajectory and optional derivatives.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use numr::autograd::dual_ops::{dual_sub, dual_mul_scalar};
+    ///
+    /// // Simple DAE: y' = z, y - sin(t) = 0
+    /// // F(t, y, y') = [y' - z, y - sin(t)]
+    /// let f = |t: &DualTensor<R>, y: &DualTensor<R>, yp: &DualTensor<R>, c: &C| {
+    ///     // ... compute residual using dual operations
+    /// };
+    ///
+    /// let result = client.solve_dae(
+    ///     f,
+    ///     [0.0, 10.0],
+    ///     &y0, &yp0,
+    ///     &ODEOptions::with_tolerances(1e-6, 1e-9),
+    ///     &DAEOptions::default(),
+    /// )?;
+    /// ```
+    fn solve_dae<F>(
+        &self,
+        f: F,
+        t_span: [f64; 2],
+        y0: &Tensor<R>,
+        yp0: &Tensor<R>,
+        options: &ODEOptions,
+        dae_options: &DAEOptions<R>,
+    ) -> IntegrateResult<DAEResultTensor<R>>
+    where
+        F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &Self) -> Result<DualTensor<R>>;
 }
