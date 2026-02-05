@@ -62,8 +62,8 @@ where
     let sum_tensor = client.sum(&f_values, &[0], false)?;
     let mean_tensor = client.div_scalar(&sum_tensor, n_samples as f64)?;
 
-    // Get scalar mean (one transfer)
-    let mean_scalar: f64 = mean_tensor.to_vec()[0];
+    // Get scalar mean
+    let mean_scalar: f64 = mean_tensor.item()?;
 
     // Integral = volume * mean
     let integral = volume * mean_scalar;
@@ -75,7 +75,7 @@ where
         let f_half = f_values.narrow(0, 0, half_n)?;
         let sum_half = client.sum(&f_half, &[0], false)?;
         let mean_half_tensor = client.div_scalar(&sum_half, half_n as f64)?;
-        let mean_half: f64 = mean_half_tensor.to_vec()[0];
+        let mean_half: f64 = mean_half_tensor.item()?;
         let integral_half = volume * mean_half;
         (integral - integral_half).abs()
     } else {

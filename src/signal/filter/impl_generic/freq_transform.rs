@@ -228,7 +228,7 @@ where
         // Compute product of zero magnitudes
         let zero_mag = complex_mag(client, &proto.zeros_real, &proto.zeros_imag)?;
         let log_mag = client.log(&client.add_scalar(&zero_mag, 1e-30)?)?;
-        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0]; // Single scalar at API boundary
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.item()?;
         gain *= sum_log.exp();
     }
 
@@ -236,7 +236,7 @@ where
         // Compute product of pole magnitudes
         let pole_mag = complex_mag(client, &proto.poles_real, &proto.poles_imag)?;
         let log_mag = client.log(&client.add_scalar(&pole_mag, 1e-30)?)?;
-        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0]; // Single scalar at API boundary
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.item()?;
         gain /= sum_log.exp();
     }
 
@@ -433,7 +433,7 @@ where
         // Divide by product of zero magnitudes
         let zero_mag = complex_mag(client, &proto.zeros_real, &proto.zeros_imag)?;
         let log_mag = client.log(&client.add_scalar(&zero_mag, 1e-30)?)?;
-        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0];
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.item()?;
         gain /= sum_log.exp();
     }
 
@@ -441,7 +441,7 @@ where
         // Multiply by product of pole magnitudes
         let pole_mag = complex_mag(client, &proto.poles_real, &proto.poles_imag)?;
         let log_mag = client.log(&client.add_scalar(&pole_mag, 1e-30)?)?;
-        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0];
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.item()?;
         gain *= sum_log.exp();
     }
 

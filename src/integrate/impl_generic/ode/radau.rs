@@ -214,7 +214,7 @@ where
         let y_err = compute_radau_error(client, &k1, &k2, &k3, h)?;
         let error = compute_error(client, &y_new, &y_err, &y, options.rtol, options.atol)
             .map_err(to_integrate_err)?;
-        let error_val: f64 = error.to_vec()[0];
+        let error_val: f64 = error.item().map_err(to_integrate_err)?;
 
         // Accept/reject
         if error_val <= 1.0 {
@@ -236,7 +236,7 @@ where
         // Step size control
         let factor = compute_step_factor(client, &error, 5, SAFETY, MIN_FACTOR, MAX_FACTOR)
             .map_err(to_integrate_err)?;
-        let factor_val: f64 = factor.to_vec()[0];
+        let factor_val: f64 = factor.item().map_err(to_integrate_err)?;
         h = (h * factor_val).clamp(min_step, max_step);
     }
 

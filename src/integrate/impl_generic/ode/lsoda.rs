@@ -278,7 +278,7 @@ where
         let factor =
             compute_step_factor(client, &error_tensor, order, SAFETY, MIN_FACTOR, MAX_FACTOR)
                 .map_err(to_integrate_err)?;
-        let factor_val: f64 = factor.to_vec()[0];
+        let factor_val: f64 = factor.item().map_err(to_integrate_err)?;
         h = (h * factor_val).clamp(min_step, max_step);
     }
 
@@ -361,7 +361,7 @@ where
     let y_err = client.sub(&y_corr, &y_pred).map_err(to_integrate_err)?;
     let error_tensor = compute_error(client, &y_corr, &y_err, y, options.rtol, options.atol)
         .map_err(to_integrate_err)?;
-    let error_val: f64 = error_tensor.to_vec()[0];
+    let error_val: f64 = error_tensor.item().map_err(to_integrate_err)?;
 
     Ok((y_corr, f_corr, error_val, 2)) // 2 function evaluations
 }
@@ -452,7 +452,7 @@ where
                 options.atol,
             )
             .map_err(to_integrate_err)?;
-            let error_val: f64 = error_tensor.to_vec()[0];
+            let error_val: f64 = error_tensor.item().map_err(to_integrate_err)?;
 
             // Final function evaluation using primal evaluation
             let f_final = eval_primal(client, f, &t_new, &y_iter).map_err(to_integrate_err)?;

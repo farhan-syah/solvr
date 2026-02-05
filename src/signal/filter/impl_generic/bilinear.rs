@@ -110,7 +110,7 @@ where
 
         // Product via sum of logs
         let log_mag = client.log(&client.add_scalar(&diff_mag, 1e-30)?)?;
-        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0]; // Single scalar at API boundary
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.item()?;
         gain *= sum_log.exp();
     }
 
@@ -125,7 +125,7 @@ where
         let diff_mag = client.sqrt(&diff_mag_sq)?;
 
         let log_mag = client.log(&client.add_scalar(&diff_mag, 1e-30)?)?;
-        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.to_vec()[0]; // Single scalar at API boundary
+        let sum_log: f64 = client.sum(&log_mag, &[0], false)?.item()?;
         gain /= sum_log.exp();
     }
 

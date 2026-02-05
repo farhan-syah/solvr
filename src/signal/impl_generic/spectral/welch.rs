@@ -66,8 +66,7 @@ where
     // Compute window sum of squares for normalization
     let win_sq = client.mul(&window, &window)?;
     let win_sum_sq_tensor = client.sum(&win_sq, &[0], false)?;
-    // Single scalar extraction is acceptable for normalization factor
-    let win_sum_sq: f64 = win_sum_sq_tensor.to_vec()[0];
+    let win_sum_sq: f64 = win_sum_sq_tensor.item()?;
 
     // Extract overlapping segments as 2D tensor [num_segments, nperseg]
     let segments = extract_segments_impl(client, x, nperseg, noverlap)?;

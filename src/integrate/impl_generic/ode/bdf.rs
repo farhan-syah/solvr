@@ -221,7 +221,7 @@ where
             options.atol,
         )
         .map_err(to_integrate_err)?;
-        let error_val: f64 = error.to_vec()[0];
+        let error_val: f64 = error.item().map_err(to_integrate_err)?;
 
         if error_val <= 1.0 {
             // Accept step
@@ -251,7 +251,7 @@ where
         // Step size control
         let factor = compute_step_factor(client, &error, order, SAFETY, MIN_FACTOR, MAX_FACTOR)
             .map_err(to_integrate_err)?;
-        let factor_val: f64 = factor.to_vec()[0];
+        let factor_val: f64 = factor.item().map_err(to_integrate_err)?;
         h = (h * factor_val).clamp(min_step, max_step);
     }
 

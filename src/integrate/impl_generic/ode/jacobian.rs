@@ -98,7 +98,7 @@ where
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let norm_tensor = compute_norm(client, x, p)?;
-    Ok(norm_tensor.to_vec()[0])
+    norm_tensor.item()
 }
 
 /// Evaluate the ODE function with primal values only (no differentiation).

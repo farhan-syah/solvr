@@ -54,10 +54,10 @@ where
     let x_mean = client.mean(x, &[0], false)?;
     let x_centered = client.sub(x, &x_mean)?;
 
-    // Compute variance for normalization (single scalar extraction acceptable)
+    // Compute variance for normalization
     // ddof=0 for population variance
     let x_var_tensor = client.var(&x_centered, &[0], false, 0)?;
-    let x_var: f64 = x_var_tensor.to_vec()[0];
+    let x_var: f64 = x_var_tensor.item()?;
 
     // Get frequency values for iteration
     // Note: Lomb-Scargle requires per-frequency tau computation which involves
@@ -81,8 +81,8 @@ where
         // Sum to compute tau
         let sin_sum = client.sum(&sin_2wt, &[0], false)?;
         let cos_sum = client.sum(&cos_2wt, &[0], false)?;
-        let sin_val: f64 = sin_sum.to_vec()[0];
-        let cos_val: f64 = cos_sum.to_vec()[0];
+        let sin_val: f64 = sin_sum.item()?;
+        let cos_val: f64 = cos_sum.item()?;
         let tau = sin_val.atan2(cos_val) / (2.0 * omega);
 
         // Compute omega*(t - tau) = omega*t - omega*tau
@@ -104,10 +104,10 @@ where
         let cos2_sum_tensor = client.sum(&cos_sq, &[0], false)?;
         let sin2_sum_tensor = client.sum(&sin_sq, &[0], false)?;
 
-        let cos_sum_val: f64 = cos_sum_tensor.to_vec()[0];
-        let sin_sum_val: f64 = sin_sum_tensor.to_vec()[0];
-        let cos2_val: f64 = cos2_sum_tensor.to_vec()[0];
-        let sin2_val: f64 = sin2_sum_tensor.to_vec()[0];
+        let cos_sum_val: f64 = cos_sum_tensor.item()?;
+        let sin_sum_val: f64 = sin_sum_tensor.item()?;
+        let cos2_val: f64 = cos2_sum_tensor.item()?;
+        let sin2_val: f64 = sin2_sum_tensor.item()?;
 
         // Compute power
         let p = if cos2_val.abs() < 1e-30 || sin2_val.abs() < 1e-30 {

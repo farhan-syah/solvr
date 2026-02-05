@@ -70,9 +70,8 @@ where
     };
 
     // Compute gain: ratio of leading coefficients (highest power = index 0)
-    // These are single scalars at API boundary - acceptable
-    let b0: f64 = b.narrow(0, 0, 1)?.to_vec()[0];
-    let a0: f64 = a.narrow(0, 0, 1)?.to_vec()[0];
+    let b0: f64 = b.narrow(0, 0, 1)?.item()?;
+    let a0: f64 = a.narrow(0, 0, 1)?.item()?;
     let gain = b0 / a0;
 
     Ok(ZpkFilter::new(

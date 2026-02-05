@@ -365,8 +365,8 @@ where
     let sum_tensor = client.sum(values, &[0], false)?;
     let mean_tensor = client.div_scalar(&sum_tensor, n as f64)?;
 
-    // Get scalar mean (one transfer)
-    let mean_scalar: f64 = mean_tensor.to_vec()[0];
+    // Get scalar mean
+    let mean_scalar: f64 = mean_tensor.item()?;
 
     if n == 1 {
         return Ok((mean_scalar, 0.0));
@@ -382,8 +382,8 @@ where
     let sum_sq = client.sum(&squared, &[0], false)?;
     let variance_tensor = client.div_scalar(&sum_sq, (n - 1) as f64)?;
 
-    // Get scalar variance (one more transfer)
-    let variance_scalar: f64 = variance_tensor.to_vec()[0];
+    // Get scalar variance
+    let variance_scalar: f64 = variance_tensor.item()?;
 
     Ok((mean_scalar, variance_scalar))
 }

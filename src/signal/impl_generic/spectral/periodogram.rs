@@ -46,10 +46,10 @@ where
     // Generate window tensor
     let window = generate_window(&params.window, n, &params.device);
 
-    // Compute window sum of squares for normalization (single scalar extraction is acceptable)
+    // Compute window sum of squares for normalization
     let win_sq = client.mul(&window, &window)?;
     let win_sum_sq_tensor = client.sum(&win_sq, &[0], false)?;
-    let win_sum_sq: f64 = win_sum_sq_tensor.to_vec()[0];
+    let win_sum_sq: f64 = win_sum_sq_tensor.item()?;
 
     // Apply detrending
     let x_detrended = match params.detrend {

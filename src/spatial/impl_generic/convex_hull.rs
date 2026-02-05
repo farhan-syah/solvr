@@ -79,7 +79,7 @@ where
     let start_idx_tensor = client.argmin(&x_coords, 0, false)?;
 
     // Extract start index (single scalar transfer - unavoidable for loop control)
-    let start_idx: i64 = start_idx_tensor.to_vec::<i64>()[0];
+    let start_idx: i64 = start_idx_tensor.item::<i64>()?;
 
     // Gift wrapping: iterate to find hull vertices
     let mut hull_indices: Vec<i64> = vec![start_idx];
@@ -158,7 +158,7 @@ where
         let next_idx_tensor = client.argmax(&score, 0, false)?;
 
         // Extract next index (single scalar transfer)
-        let next_idx: i64 = next_idx_tensor.to_vec::<i64>()[0];
+        let next_idx: i64 = next_idx_tensor.item::<i64>()?;
 
         // Check if we've returned to start
         if next_idx == start_idx {
@@ -215,14 +215,14 @@ where
     let edge_len_sq = client.add(&client.mul(&dx, &dx)?, &client.mul(&dy, &dy)?)?;
     let edge_len = client.sqrt(&edge_len_sq)?;
     let perimeter_tensor = client.sum(&edge_len, &[0], false)?;
-    let perimeter: f64 = perimeter_tensor.to_vec::<f64>()[0];
+    let perimeter: f64 = perimeter_tensor.item::<f64>()?;
 
     // Area using shoelace formula: 0.5 * |sum(x_i * y_{i+1} - x_{i+1} * y_i)|
     let cross_terms = client.sub(&client.mul(&hx, &hy_next)?, &client.mul(&hx_next, &hy)?)?;
     let area_sum = client.sum(&cross_terms, &[0], false)?;
     let area_tensor = client.abs(&area_sum)?;
     let area_scaled = client.mul_scalar(&area_tensor, 0.5)?;
-    let area: f64 = area_scaled.to_vec::<f64>()[0];
+    let area: f64 = area_scaled.item::<f64>()?;
 
     Ok(ConvexHull {
         points: points.clone(),
@@ -266,8 +266,8 @@ where
     let min_x_idx = client.argmin(&x_coords, 0, false)?;
     let max_x_idx = client.argmax(&x_coords, 0, false)?;
 
-    let p0: i64 = min_x_idx.to_vec::<i64>()[0];
-    let p1: i64 = max_x_idx.to_vec::<i64>()[0];
+    let p0: i64 = min_x_idx.item::<i64>()?;
+    let p1: i64 = max_x_idx.item::<i64>()?;
 
     // Find point furthest from line p0-p1 using tensor ops
     let p0_tensor = Tensor::<R>::from_slice(&[p0], &[1], device);
@@ -323,7 +323,7 @@ where
     )?;
 
     let p2_idx = client.argmax(&dist_masked, 0, false)?;
-    let p2: i64 = p2_idx.to_vec::<i64>()[0];
+    let p2: i64 = p2_idx.item::<i64>()?;
 
     // Find point furthest from plane p0-p1-p2
     let p2_tensor = Tensor::<R>::from_slice(&[p2], &[1], device);
@@ -368,10 +368,10 @@ where
     )?;
 
     let p3_idx = client.argmax(&dist_plane_masked, 0, false)?;
-    let p3: i64 = p3_idx.to_vec::<i64>()[0];
+    let p3: i64 = p3_idx.item::<i64>()?;
 
     // Check for coplanarity
-    let max_dist: f64 = client.max(&dist_plane_masked, &[0], false)?.to_vec::<f64>()[0];
+    let max_dist: f64 = client.max(&dist_plane_masked, &[0], false)?.item::<f64>()?;
     if max_dist < 1e-10 {
         return Err(Error::InvalidArgument {
             arg: "points",
@@ -519,7 +519,7 @@ where
             &client.mul(&nz, &tcz)?,
         )?;
 
-        let dot_val: f64 = dot.to_vec::<f64>()[0];
+        let dot_val: f64 = dot.item::<f64>()?;
         if dot_val > 0.0 {
             face.swap(1, 2);
         }
@@ -718,7 +718,7 @@ where
     let volume_sum = client.sum(&det, &[0], false)?;
     let volume_abs = client.abs(&volume_sum)?;
     let volume_scaled = client.mul_scalar(&volume_abs, 1.0 / 6.0)?;
-    let volume: f64 = volume_scaled.to_vec::<f64>()[0];
+    let volume: f64 = volume_scaled.item::<f64>()?;
 
     // Surface area: sum of triangle areas
     // Area = 0.5 * |e1 × e2|
@@ -743,7 +743,7 @@ where
     let face_areas = client.sqrt(&area_sq)?;
     let face_areas_half = client.mul_scalar(&face_areas, 0.5)?;
     let total_area = client.sum(&face_areas_half, &[0], false)?;
-    let area: f64 = total_area.to_vec::<f64>()[0];
+    let area: f64 = total_area.item::<f64>()?;
 
     Ok((volume, area))
 }

@@ -214,7 +214,7 @@ where
 
     // Main integration loop
     loop {
-        let t_val: f64 = t.to_vec()[0];
+        let t_val: f64 = t.item().map_err(to_integrate_err)?;
 
         if t_val >= t_end {
             break;
@@ -452,7 +452,7 @@ where
         let accept_tensor = compute_acceptance(client, &error).map_err(to_integrate_err)?;
 
         // Only transfer accept for control flow decision
-        let accept_val: f64 = accept_tensor.to_vec()[0];
+        let accept_val: f64 = accept_tensor.item().map_err(to_integrate_err)?;
         let accept = accept_val > 0.5;
 
         // Compute new step size on device
@@ -464,7 +464,7 @@ where
             y = y_new;
             k1 = k13; // FSAL property
 
-            let new_t: f64 = t.to_vec()[0];
+            let new_t: f64 = t.item().map_err(to_integrate_err)?;
             t_values.push(new_t);
             y_values.push(y.clone());
             naccept += 1;
@@ -475,11 +475,12 @@ where
         h = h_new;
 
         // Check minimum step
-        let h_val: f64 = h.to_vec()[0];
+        let h_val: f64 = h.item().map_err(to_integrate_err)?;
         if h_val < min_step {
+            let t_val_err: f64 = t.item().map_err(to_integrate_err)?;
             return Err(IntegrateError::StepSizeTooSmall {
                 step: h_val,
-                t: t.to_vec()[0],
+                t: t_val_err,
                 context: "DOP853".to_string(),
             });
         }
