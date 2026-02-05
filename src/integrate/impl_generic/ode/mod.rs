@@ -8,7 +8,9 @@ mod bvp;
 mod dae;
 mod dae_ic;
 mod dae_jacobian;
+pub mod dense_output;
 mod dop853;
+pub mod events;
 mod jacobian;
 mod lsoda;
 mod radau;
@@ -24,7 +26,9 @@ pub use bdf::bdf_impl;
 pub use bvp::bvp_impl;
 pub use dae::dae_impl;
 pub use dae_jacobian::{compute_dae_jacobian, eval_dae_primal};
+pub use dense_output::{DenseOutputStep, dense_eval};
 pub use dop853::dop853_impl;
+pub use events::{EventCheckResult, check_events, evaluate_events, handle_terminal_event};
 pub use jacobian::{
     compute_iteration_matrix, compute_jacobian_autograd, compute_norm, compute_norm_scalar,
     eval_primal,
@@ -33,7 +37,7 @@ pub use lsoda::lsoda_impl;
 pub use radau::radau_impl;
 // Shared result building (used by all ODE solvers)
 pub use rk23::rk23_impl;
-pub use rk45::rk45_impl;
+pub use rk45::{rk45_impl, rk45_with_events_impl};
 pub use step_control::*;
 pub use symplectic::{leapfrog_impl, verlet_impl};
 

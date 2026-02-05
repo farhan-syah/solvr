@@ -834,6 +834,181 @@ impl<R: Runtime> DAEResultTensor<R> {
     }
 }
 
+// ============================================================================
+// Event Handling Types
+// ============================================================================
+
+/// Direction for event detection.
+///
+/// Specifies which zero-crossing direction should trigger the event.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum EventDirection {
+    /// Trigger on any zero-crossing (both increasing and decreasing).
+    #[default]
+    Any,
+
+    /// Trigger only when the event function crosses from negative to positive.
+    Increasing,
+
+    /// Trigger only when the event function crosses from positive to negative.
+    Decreasing,
+}
+
+/// Specification for an event function.
+///
+/// Defines behavior of a single event function g(t, y) = 0.
+#[derive(Debug, Clone)]
+pub struct EventSpec {
+    /// If true, stop integration when this event occurs.
+    pub terminal: bool,
+
+    /// Which direction of zero-crossing to detect.
+    pub direction: EventDirection,
+}
+
+impl Default for EventSpec {
+    fn default() -> Self {
+        Self {
+            terminal: false,
+            direction: EventDirection::Any,
+        }
+    }
+}
+
+impl EventSpec {
+    /// Create a terminal event (stops integration).
+    pub fn terminal() -> Self {
+        Self {
+            terminal: true,
+            direction: EventDirection::Any,
+        }
+    }
+
+    /// Create a non-terminal event (records but continues).
+    pub fn non_terminal() -> Self {
+        Self {
+            terminal: false,
+            direction: EventDirection::Any,
+        }
+    }
+
+    /// Set the detection direction.
+    pub fn direction(mut self, dir: EventDirection) -> Self {
+        self.direction = dir;
+        self
+    }
+}
+
+/// Record of a detected event.
+#[derive(Debug, Clone)]
+pub struct EventRecord<R: Runtime> {
+    /// Time at which the event occurred.
+    pub t: f64,
+
+    /// State at the event time.
+    pub y: Tensor<R>,
+
+    /// Index of the event function that triggered (0-indexed).
+    pub event_index: usize,
+
+    /// Value of the event function at the event (should be near zero).
+    pub event_value: f64,
+}
+
+/// Options for event detection and root finding.
+#[derive(Debug, Clone)]
+pub struct EventOptions {
+    /// Tolerance for root finding (default: 1e-10).
+    pub root_tol: f64,
+
+    /// Maximum iterations for root refinement (default: 100).
+    pub max_root_iter: usize,
+}
+
+impl Default for EventOptions {
+    fn default() -> Self {
+        Self {
+            root_tol: 1e-10,
+            max_root_iter: 100,
+        }
+    }
+}
+
+impl EventOptions {
+    /// Set root finding tolerance.
+    pub fn with_tolerance(mut self, tol: f64) -> Self {
+        self.root_tol = tol;
+        self
+    }
+
+    /// Set maximum root finding iterations.
+    pub fn with_max_iter(mut self, max_iter: usize) -> Self {
+        self.max_root_iter = max_iter;
+        self
+    }
+}
+
+/// Result of ODE integration with event detection.
+#[derive(Debug, Clone)]
+pub struct ODEResultWithEvents<R: Runtime> {
+    /// Time points where solution was computed (1-D tensor).
+    pub t: Tensor<R>,
+
+    /// Solution values - shape [n_steps, n_vars].
+    pub y: Tensor<R>,
+
+    /// Whether integration was successful.
+    pub success: bool,
+
+    /// Status message.
+    pub message: Option<String>,
+
+    /// Number of function evaluations.
+    pub nfev: usize,
+
+    /// Number of accepted steps.
+    pub naccept: usize,
+
+    /// Number of rejected steps.
+    pub nreject: usize,
+
+    /// Method used for integration.
+    pub method: ODEMethod,
+
+    /// Detected events in chronological order.
+    pub events: Vec<EventRecord<R>>,
+
+    /// Whether integration was terminated by an event.
+    pub terminated_by_event: bool,
+
+    /// Index of the terminal event (if terminated_by_event is true).
+    pub terminal_event_index: Option<usize>,
+}
+
+impl<R: Runtime> ODEResultWithEvents<R> {
+    /// Get the final state as a Vec<f64>.
+    pub fn y_final_vec(&self) -> Vec<f64> {
+        let shape = self.y.shape();
+        if shape.len() != 2 || shape[0] == 0 {
+            return vec![];
+        }
+
+        let n_steps = shape[0];
+        let n_vars = shape[1];
+        let all_data: Vec<f64> = self.y.to_vec();
+        let last_row_start = (n_steps - 1) * n_vars;
+        all_data[last_row_start..].to_vec()
+    }
+
+    /// Get all events for a specific event function index.
+    pub fn events_for(&self, event_index: usize) -> Vec<&EventRecord<R>> {
+        self.events
+            .iter()
+            .filter(|e| e.event_index == event_index)
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -67,6 +67,7 @@ mod cuda;
 pub mod error;
 pub mod impl_generic;
 pub mod ode;
+pub mod sensitivity;
 mod traits;
 #[cfg(feature = "wgpu")]
 mod wgpu;
@@ -76,16 +77,24 @@ pub use error::{IntegrateError, IntegrateResult};
 
 // Re-export ODE types
 pub use ode::{
-    BDFOptions, BVPOptions, DAEOptions, DAEResultTensor, DAEVariableType, LSODAOptions, ODEMethod,
-    ODEOptions, RadauOptions, SymplecticOptions,
+    BDFOptions, BVPOptions, DAEOptions, DAEResultTensor, DAEVariableType, EventDirection,
+    EventOptions, EventRecord, EventSpec, LSODAOptions, ODEMethod, ODEOptions, ODEResultWithEvents,
+    RadauOptions, SymplecticOptions,
 };
 
 // Re-export tensor-based ODE types and functions
-pub use impl_generic::ode::{ODEResultTensor, solve_ivp_impl};
+pub use impl_generic::ode::{ODEResultTensor, rk45_with_events_impl, solve_ivp_impl};
 
 // Re-export the main trait and types
 pub use traits::{
     BVPResult, IntegrationAlgorithms, MonteCarloMethod, MonteCarloOptions, MonteCarloResult,
     NQuadOptions, QMCOptions, QMCSequence, QuadOptions, QuadResult, RombergOptions,
     SymplecticResult, TanhSinhOptions,
+    events::{EventFn, EventFunction, EventSet},
+};
+
+// Re-export sensitivity types and traits
+pub use sensitivity::{
+    AdjointSensitivityAlgorithms, Checkpoint, CheckpointManager, CheckpointStrategy,
+    SensitivityOptions, SensitivityResult, adjoint_sensitivity_impl,
 };
