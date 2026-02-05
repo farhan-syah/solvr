@@ -5,6 +5,9 @@
 
 mod bdf;
 mod bvp;
+mod dae;
+mod dae_ic;
+mod dae_jacobian;
 mod dop853;
 mod jacobian;
 mod lsoda;
@@ -19,6 +22,8 @@ mod symplectic;
 
 pub use bdf::bdf_impl;
 pub use bvp::bvp_impl;
+pub use dae::dae_impl;
+pub use dae_jacobian::{compute_dae_jacobian, eval_dae_primal};
 pub use dop853::dop853_impl;
 pub use jacobian::{
     compute_iteration_matrix, compute_jacobian_autograd, compute_norm, compute_norm_scalar,
