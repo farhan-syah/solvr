@@ -48,6 +48,29 @@ pub enum IntegrateError {
 
     /// Error from underlying numr operation.
     NumrError(String),
+
+    // ========================================================================
+    // DAE-Specific Errors
+    // ========================================================================
+    /// Initial conditions are inconsistent with the DAE constraints.
+    ///
+    /// For a DAE F(t, y, y') = 0, the provided (y0, yp0) do not satisfy
+    /// F(t0, y0, yp0) ≈ 0 and could not be refined within tolerance.
+    InconsistentInitialConditions {
+        residual_norm: f64,
+        tolerance: f64,
+        iterations: usize,
+    },
+
+    /// Newton iteration failed to converge for DAE step.
+    DAENewtonFailed {
+        t: f64,
+        residual_norm: f64,
+        iterations: usize,
+    },
+
+    /// Algebraic constraint was violated during integration.
+    DAEConstraintViolation { t: f64, constraint_norm: f64 },
 }
 
 impl fmt::Display for IntegrateError {
@@ -109,6 +132,35 @@ impl fmt::Display for IntegrateError {
             }
             Self::NumrError(msg) => {
                 write!(f, "numr error: {}", msg)
+            }
+            Self::InconsistentInitialConditions {
+                residual_norm,
+                tolerance,
+                iterations,
+            } => {
+                write!(
+                    f,
+                    "DAE initial conditions inconsistent: residual norm {:.2e} > tolerance {:.2e} after {} iterations",
+                    residual_norm, tolerance, iterations
+                )
+            }
+            Self::DAENewtonFailed {
+                t,
+                residual_norm,
+                iterations,
+            } => {
+                write!(
+                    f,
+                    "DAE Newton iteration failed at t = {:.6}: residual {:.2e} after {} iterations",
+                    t, residual_norm, iterations
+                )
+            }
+            Self::DAEConstraintViolation { t, constraint_norm } => {
+                write!(
+                    f,
+                    "DAE constraint violated at t = {:.6}: norm = {:.2e}",
+                    t, constraint_norm
+                )
             }
         }
     }
