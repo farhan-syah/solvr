@@ -6,6 +6,7 @@
 mod bdf;
 mod bvp;
 mod dae;
+mod dae_helpers;
 mod dae_ic;
 mod dae_jacobian;
 pub mod dense_output;
@@ -18,6 +19,8 @@ mod rk23;
 mod rk45;
 #[cfg(feature = "sparse")]
 mod sparse_utils;
+#[cfg(feature = "sparse")]
+pub use sparse_utils::SparseJacobianCache;
 mod step_control;
 mod stiff_client;
 mod symplectic;
