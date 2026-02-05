@@ -76,7 +76,8 @@ pub use error::{IntegrateError, IntegrateResult};
 
 // Re-export ODE types
 pub use ode::{
-    BDFOptions, BVPOptions, LSODAOptions, ODEMethod, ODEOptions, RadauOptions, SymplecticOptions,
+    BDFOptions, BVPOptions, DAEOptions, DAEResultTensor, DAEVariableType, LSODAOptions, ODEMethod,
+    ODEOptions, RadauOptions, SymplecticOptions,
 };
 
 // Re-export tensor-based ODE types and functions

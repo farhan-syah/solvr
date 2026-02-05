@@ -1,6 +1,7 @@
-//! Types for ODE solvers.
+//! Types for ODE solvers and DAE solvers.
 
 use numr::runtime::Runtime;
+use numr::tensor::Tensor;
 
 #[cfg(feature = "sparse")]
 use numr::sparse::CsrData;
@@ -602,6 +603,237 @@ impl BVPOptions {
     }
 }
 
+// ============================================================================
+// DAE (Differential-Algebraic Equation) Types
+// ============================================================================
+
+/// Classification of variables in a DAE system.
+///
+/// For a DAE F(t, y, y') = 0, each component of y is either:
+/// - **Differential**: Appears in y' (has time derivative)
+/// - **Algebraic**: No y' term (represents a constraint)
+///
+/// This classification is used for:
+/// - Consistent initial condition computation
+/// - Error estimation (optionally excluding algebraic variables)
+/// - Scaling in Newton iteration
+///
+/// # Example
+///
+/// For a pendulum in Cartesian coordinates:
+/// ```ignore
+/// // x'' = λ·x, y'' = λ·y - g, x² + y² = L²
+/// // As first-order system: [x, y, vx, vy, λ]
+/// let var_types = vec![
+///     DAEVariableType::Differential, // x
+///     DAEVariableType::Differential, // y
+///     DAEVariableType::Differential, // vx
+///     DAEVariableType::Differential, // vy
+///     DAEVariableType::Algebraic,    // λ (Lagrange multiplier)
+/// ];
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DAEVariableType {
+    /// Variable appears in y' (has time derivative).
+    Differential,
+    /// Variable has no y' term (constraint equation).
+    Algebraic,
+}
+
+/// Options for DAE (Differential-Algebraic Equation) solvers.
+///
+/// DAEs are of the form F(t, y, y') = 0, which generalizes ODEs to include
+/// algebraic constraints. This struct configures the BDF-based implicit solver.
+///
+/// # Example
+///
+/// ```ignore
+/// use solvr::integrate::ode::{DAEOptions, DAEVariableType};
+///
+/// let dae_opts = DAEOptions::default()
+///     .with_variable_types(vec![
+///         DAEVariableType::Differential,
+///         DAEVariableType::Algebraic,
+///     ])
+///     .with_ic_tolerance(1e-12);
+/// ```
+#[derive(Debug, Clone)]
+pub struct DAEOptions<R: Runtime> {
+    /// Classification of each variable (differential vs algebraic).
+    ///
+    /// If `None`, all variables are treated as differential.
+    /// Providing this enables better initial condition computation
+    /// and can improve error estimation accuracy.
+    pub variable_types: Option<Vec<DAEVariableType>>,
+
+    /// Tolerance for consistent initial condition computation (default: 1e-10).
+    ///
+    /// The solver refines (y0, yp0) to satisfy F(t0, y0, yp0) ≈ 0
+    /// within this tolerance.
+    pub ic_tol: f64,
+
+    /// Maximum iterations for initial condition refinement (default: 20).
+    pub max_ic_iter: usize,
+
+    /// Newton iteration tolerance (default: 1e-6).
+    ///
+    /// Controls convergence of Newton solver for implicit BDF equations.
+    pub newton_tol: f64,
+
+    /// Maximum Newton iterations per time step (default: 10).
+    pub max_newton_iter: usize,
+
+    /// Maximum BDF order (1-5, default: 5).
+    ///
+    /// Higher orders are more accurate but may be less stable
+    /// for very stiff or high-index DAEs.
+    pub max_order: usize,
+
+    /// Exclude algebraic variables from error estimation (default: true).
+    ///
+    /// Following SUNDIALS IDA convention, algebraic variables are typically
+    /// excluded from the local error test since their values are determined
+    /// by the constraints rather than by integration.
+    pub exclude_algebraic_from_error: bool,
+
+    /// Whether to return y' trajectory in results (default: false).
+    ///
+    /// Enable if you need derivative values at each time step.
+    pub return_yp: bool,
+
+    /// Sparse Jacobian configuration (default: disabled).
+    ///
+    /// Enable for large-scale systems (n > 1000) with sparse structure.
+    pub sparse_jacobian: SparseJacobianConfig<R>,
+}
+
+impl<R: Runtime> Default for DAEOptions<R> {
+    fn default() -> Self {
+        Self {
+            variable_types: None,
+            ic_tol: 1e-10,
+            max_ic_iter: 20,
+            newton_tol: 1e-6,
+            max_newton_iter: 10,
+            max_order: 5,
+            exclude_algebraic_from_error: true,
+            return_yp: false,
+            sparse_jacobian: SparseJacobianConfig::default(),
+        }
+    }
+}
+
+impl<R: Runtime> DAEOptions<R> {
+    /// Set variable type classification.
+    pub fn with_variable_types(mut self, types: Vec<DAEVariableType>) -> Self {
+        self.variable_types = Some(types);
+        self
+    }
+
+    /// Set initial condition tolerance.
+    pub fn with_ic_tolerance(mut self, tol: f64) -> Self {
+        self.ic_tol = tol;
+        self
+    }
+
+    /// Set Newton iteration parameters.
+    pub fn with_newton_params(mut self, tol: f64, max_iter: usize) -> Self {
+        self.newton_tol = tol;
+        self.max_newton_iter = max_iter;
+        self
+    }
+
+    /// Set maximum BDF order.
+    pub fn with_max_order(mut self, order: usize) -> Self {
+        self.max_order = order.clamp(1, 5);
+        self
+    }
+
+    /// Set whether to exclude algebraic variables from error estimation.
+    pub fn with_exclude_algebraic(mut self, exclude: bool) -> Self {
+        self.exclude_algebraic_from_error = exclude;
+        self
+    }
+
+    /// Enable returning y' trajectory.
+    pub fn with_return_yp(mut self, return_yp: bool) -> Self {
+        self.return_yp = return_yp;
+        self
+    }
+
+    /// Set sparse Jacobian configuration.
+    pub fn with_sparse_jacobian(mut self, config: SparseJacobianConfig<R>) -> Self {
+        self.sparse_jacobian = config;
+        self
+    }
+}
+
+/// Result of DAE integration.
+///
+/// Contains the solution trajectory and optional derivative trajectory.
+#[derive(Debug, Clone)]
+pub struct DAEResultTensor<R: Runtime> {
+    /// Time points where solution was computed (1-D tensor).
+    pub t: Tensor<R>,
+
+    /// Solution values - shape [n_steps, n_vars].
+    pub y: Tensor<R>,
+
+    /// Derivative values - shape [n_steps, n_vars] (if requested).
+    pub yp: Option<Tensor<R>>,
+
+    /// Whether integration was successful.
+    pub success: bool,
+
+    /// Status message (e.g., why integration failed).
+    pub message: Option<String>,
+
+    /// Number of residual function evaluations.
+    pub nfev: usize,
+
+    /// Number of Jacobian evaluations.
+    pub njac: usize,
+
+    /// Number of Newton iterations for initial conditions.
+    pub n_ic_iter: usize,
+
+    /// Number of accepted time steps.
+    pub naccept: usize,
+
+    /// Number of rejected time steps.
+    pub nreject: usize,
+}
+
+impl<R: Runtime> DAEResultTensor<R> {
+    /// Get the final state as a Vec<f64>.
+    pub fn y_final_vec(&self) -> Vec<f64> {
+        let shape = self.y.shape();
+        if shape.len() != 2 || shape[0] == 0 {
+            return vec![];
+        }
+        let n_steps = shape[0];
+        let n_vars = shape[1];
+        let all_data: Vec<f64> = self.y.to_vec();
+        let last_row_start = (n_steps - 1) * n_vars;
+        all_data[last_row_start..].to_vec()
+    }
+
+    /// Get the final derivative as a Vec<f64> (if available).
+    pub fn yp_final_vec(&self) -> Option<Vec<f64>> {
+        self.yp.as_ref().map(|yp| {
+            let shape = yp.shape();
+            if shape.len() != 2 || shape[0] == 0 {
+                return vec![];
+            }
+            let n_steps = shape[0];
+            let n_vars = shape[1];
+            let all_data: Vec<f64> = yp.to_vec();
+            let last_row_start = (n_steps - 1) * n_vars;
+            all_data[last_row_start..].to_vec()
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -708,5 +940,47 @@ mod tests {
         assert_eq!(opts.rtol, 1e-6);
         assert_eq!(opts.initial_mesh_size, 20);
         assert_eq!(opts.max_mesh_size, 500);
+    }
+
+    #[test]
+    fn test_dae_variable_type() {
+        let diff = DAEVariableType::Differential;
+        let alg = DAEVariableType::Algebraic;
+        assert_ne!(diff, alg);
+        assert_eq!(diff, DAEVariableType::Differential);
+    }
+
+    #[test]
+    fn test_dae_options() {
+        use numr::runtime::cpu::CpuRuntime;
+
+        let opts = DAEOptions::<CpuRuntime>::default();
+        assert!(opts.variable_types.is_none());
+        assert_eq!(opts.ic_tol, 1e-10);
+        assert_eq!(opts.max_ic_iter, 20);
+        assert_eq!(opts.newton_tol, 1e-6);
+        assert_eq!(opts.max_order, 5);
+        assert!(opts.exclude_algebraic_from_error);
+        assert!(!opts.return_yp);
+
+        let opts = DAEOptions::<CpuRuntime>::default()
+            .with_variable_types(vec![
+                DAEVariableType::Differential,
+                DAEVariableType::Algebraic,
+            ])
+            .with_ic_tolerance(1e-12)
+            .with_newton_params(1e-8, 15)
+            .with_max_order(3)
+            .with_exclude_algebraic(false)
+            .with_return_yp(true);
+
+        assert!(opts.variable_types.is_some());
+        assert_eq!(opts.variable_types.as_ref().unwrap().len(), 2);
+        assert_eq!(opts.ic_tol, 1e-12);
+        assert_eq!(opts.newton_tol, 1e-8);
+        assert_eq!(opts.max_newton_iter, 15);
+        assert_eq!(opts.max_order, 3);
+        assert!(!opts.exclude_algebraic_from_error);
+        assert!(opts.return_yp);
     }
 }

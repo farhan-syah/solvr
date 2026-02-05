@@ -58,6 +58,6 @@
 mod types;
 
 pub use types::{
-    BDFOptions, BVPOptions, LSODAOptions, ODEMethod, ODEOptions, RadauOptions,
-    SparseJacobianConfig, SymplecticOptions,
+    BDFOptions, BVPOptions, DAEOptions, DAEResultTensor, DAEVariableType, LSODAOptions, ODEMethod,
+    ODEOptions, RadauOptions, SparseJacobianConfig, SymplecticOptions,
 };
