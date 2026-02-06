@@ -93,4 +93,10 @@ pub trait GmmAlgorithms<R: Runtime> {
 
     /// Compute per-sample log-likelihood.
     fn gmm_score(&self, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>;
+
+    /// Bayesian Information Criterion: n_params * ln(n) - 2 * log_likelihood.
+    fn gmm_bic(&self, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>;
+
+    /// Akaike Information Criterion: 2 * n_params - 2 * log_likelihood.
+    fn gmm_aic(&self, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>;
 }

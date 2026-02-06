@@ -1,7 +1,8 @@
 //! CUDA implementation of Gaussian Mixture Model.
 
 use crate::cluster::impl_generic::{
-    gmm_fit_impl, gmm_predict_impl, gmm_predict_proba_impl, gmm_score_impl,
+    gmm_aic_impl, gmm_bic_impl, gmm_fit_impl, gmm_predict_impl, gmm_predict_proba_impl,
+    gmm_score_impl,
 };
 use crate::cluster::traits::gmm::{GmmAlgorithms, GmmModel, GmmOptions};
 use numr::error::Result;
@@ -39,5 +40,21 @@ impl GmmAlgorithms<CudaRuntime> for CudaClient {
         data: &Tensor<CudaRuntime>,
     ) -> Result<Tensor<CudaRuntime>> {
         gmm_score_impl(self, model, data)
+    }
+
+    fn gmm_bic(
+        &self,
+        model: &GmmModel<CudaRuntime>,
+        data: &Tensor<CudaRuntime>,
+    ) -> Result<Tensor<CudaRuntime>> {
+        gmm_bic_impl(self, model, data)
+    }
+
+    fn gmm_aic(
+        &self,
+        model: &GmmModel<CudaRuntime>,
+        data: &Tensor<CudaRuntime>,
+    ) -> Result<Tensor<CudaRuntime>> {
+        gmm_aic_impl(self, model, data)
     }
 }

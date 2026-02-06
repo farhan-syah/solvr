@@ -1,7 +1,8 @@
 //! CPU implementation of Gaussian Mixture Model.
 
 use crate::cluster::impl_generic::{
-    gmm_fit_impl, gmm_predict_impl, gmm_predict_proba_impl, gmm_score_impl,
+    gmm_aic_impl, gmm_bic_impl, gmm_fit_impl, gmm_predict_impl, gmm_predict_proba_impl,
+    gmm_score_impl,
 };
 use crate::cluster::traits::gmm::{GmmAlgorithms, GmmModel, GmmOptions};
 use numr::error::Result;
@@ -39,6 +40,22 @@ impl GmmAlgorithms<CpuRuntime> for CpuClient {
         data: &Tensor<CpuRuntime>,
     ) -> Result<Tensor<CpuRuntime>> {
         gmm_score_impl(self, model, data)
+    }
+
+    fn gmm_bic(
+        &self,
+        model: &GmmModel<CpuRuntime>,
+        data: &Tensor<CpuRuntime>,
+    ) -> Result<Tensor<CpuRuntime>> {
+        gmm_bic_impl(self, model, data)
+    }
+
+    fn gmm_aic(
+        &self,
+        model: &GmmModel<CpuRuntime>,
+        data: &Tensor<CpuRuntime>,
+    ) -> Result<Tensor<CpuRuntime>> {
+        gmm_aic_impl(self, model, data)
     }
 }
 

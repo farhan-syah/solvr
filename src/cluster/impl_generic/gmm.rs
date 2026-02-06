@@ -610,6 +610,68 @@ where
     lse.contiguous().reshape(&[n])
 }
 
+/// Count free parameters in a GMM.
+fn gmm_n_params(k: usize, d: usize, cov_type: CovarianceType) -> usize {
+    // Weights: k - 1 (simplex constraint)
+    // Means: k * d
+    let mean_params = k * d;
+    let weight_params = k - 1;
+    let cov_params = match cov_type {
+        CovarianceType::Full => k * d * (d + 1) / 2,
+        CovarianceType::Tied => d * (d + 1) / 2,
+        CovarianceType::Diagonal => k * d,
+        CovarianceType::Spherical => k,
+    };
+    mean_params + weight_params + cov_params
+}
+
+/// BIC: n_params * ln(n) - 2 * total_log_likelihood.
+pub fn gmm_bic_impl<R, C>(client: &C, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>
+where
+    R: Runtime,
+    C: GmmClient<R>,
+{
+    let n = data.shape()[0];
+    let d = data.shape()[1];
+    let k = model.weights.shape()[0];
+    let cov_type = infer_covariance_type(&model.covariances, k, d);
+    let n_params = gmm_n_params(k, d, cov_type);
+
+    // Total log-likelihood = sum of per-sample scores
+    let scores = gmm_score_impl(client, model, data)?; // [n]
+    let total_ll = client.sum(&scores, &[0], false)?; // scalar
+
+    // BIC = n_params * ln(n) - 2 * total_ll
+    let penalty = Tensor::<R>::full_scalar(
+        &[],
+        data.dtype(),
+        n_params as f64 * (n as f64).ln(),
+        data.device(),
+    );
+    let two_ll = client.mul_scalar(&total_ll, 2.0)?;
+    client.sub(&penalty, &two_ll)
+}
+
+/// AIC: 2 * n_params - 2 * total_log_likelihood.
+pub fn gmm_aic_impl<R, C>(client: &C, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>
+where
+    R: Runtime,
+    C: GmmClient<R>,
+{
+    let d = data.shape()[1];
+    let k = model.weights.shape()[0];
+    let cov_type = infer_covariance_type(&model.covariances, k, d);
+    let n_params = gmm_n_params(k, d, cov_type);
+
+    let scores = gmm_score_impl(client, model, data)?;
+    let total_ll = client.sum(&scores, &[0], false)?;
+
+    // AIC = 2 * n_params - 2 * total_ll
+    let penalty = Tensor::<R>::full_scalar(&[], data.dtype(), 2.0 * n_params as f64, data.device());
+    let two_ll = client.mul_scalar(&total_ll, 2.0)?;
+    client.sub(&penalty, &two_ll)
+}
+
 /// Infer covariance type from tensor shape.
 fn infer_covariance_type(covariances: &Tensor<impl Runtime>, k: usize, d: usize) -> CovarianceType {
     let shape = covariances.shape();
