@@ -59,9 +59,13 @@ pub mod traits;
 
 // Public API: traits and types
 pub use error::{InterpolateError, InterpolateResult};
+pub use traits::bspline::{BSpline, BSplineBoundary};
 pub use traits::cubic_spline::SplineBoundary;
 pub use traits::interp1d::InterpMethod;
 pub use traits::interpnd::{ExtrapolateMode, InterpNdMethod};
+pub use traits::rbf::{RbfKernel, RbfModel};
+pub use traits::scattered::ScatteredMethod;
 pub use traits::{
-    AkimaAlgorithms, CubicSplineAlgorithms, Interp1dAlgorithms, InterpNdAlgorithms, PchipAlgorithms,
+    AkimaAlgorithms, BSplineAlgorithms, CubicSplineAlgorithms, Interp1dAlgorithms,
+    InterpNdAlgorithms, PchipAlgorithms, RbfAlgorithms, ScatteredInterpAlgorithms,
 };
