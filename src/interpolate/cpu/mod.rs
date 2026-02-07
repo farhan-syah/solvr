@@ -1,8 +1,11 @@
 mod akima;
 mod bspline;
+mod clough_tocher;
 mod cubic_spline;
 mod interp1d;
 mod interpnd;
 mod pchip;
 mod rbf;
+mod rect_bivariate_spline;
 mod scattered;
+mod smooth_bivariate_spline;

@@ -1,17 +1,23 @@
 pub mod akima;
 pub mod bspline;
+pub mod clough_tocher;
 pub mod cubic_spline;
 pub mod interp1d;
 pub mod interpnd;
 pub mod pchip;
 pub mod rbf;
+pub mod rect_bivariate_spline;
 pub mod scattered;
+pub mod smooth_bivariate_spline;
 
 pub use akima::AkimaAlgorithms;
 pub use bspline::{BSpline, BSplineAlgorithms, BSplineBoundary};
+pub use clough_tocher::{CloughTocher2D, CloughTocher2DAlgorithms};
 pub use cubic_spline::{CubicSplineAlgorithms, SplineBoundary};
 pub use interp1d::{Interp1dAlgorithms, InterpMethod};
 pub use interpnd::{ExtrapolateMode, InterpNdAlgorithms, InterpNdMethod};
 pub use pchip::PchipAlgorithms;
 pub use rbf::{RbfAlgorithms, RbfKernel, RbfModel};
+pub use rect_bivariate_spline::{BivariateSpline, RectBivariateSplineAlgorithms};
 pub use scattered::{ScatteredInterpAlgorithms, ScatteredMethod};
+pub use smooth_bivariate_spline::SmoothBivariateSplineAlgorithms;

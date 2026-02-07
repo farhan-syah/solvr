@@ -1,17 +1,23 @@
 mod akima;
 mod bspline;
+mod clough_tocher;
 mod cubic_spline;
 mod interp1d;
 mod interpnd;
 mod pchip;
 mod rbf;
+mod rect_bivariate_spline;
 mod scattered;
+mod smooth_bivariate_spline;
 
 pub use akima::*;
 pub use bspline::*;
+pub use clough_tocher::*;
 pub use cubic_spline::*;
 pub use interp1d::*;
 pub use interpnd::*;
 pub use pchip::*;
 pub use rbf::*;
+pub use rect_bivariate_spline::*;
 pub use scattered::*;
+pub use smooth_bivariate_spline::*;

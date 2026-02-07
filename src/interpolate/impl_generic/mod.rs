@@ -1,11 +1,14 @@
 pub mod akima;
 pub mod bspline;
+pub mod clough_tocher;
 pub mod cubic_spline;
 pub mod interp1d;
 pub mod interpnd;
 pub mod pchip;
 pub mod rbf;
+pub mod rect_bivariate_spline;
 pub mod scattered;
+pub mod smooth_bivariate_spline;
 
 pub use akima::akima_slopes;
 pub use bspline::{
