@@ -7,8 +7,10 @@
 //! errors when called on CUDA tensors.
 
 mod convolution;
+mod edge;
 mod extrema;
 mod medfilt;
+mod nd_filters;
 mod spectrogram;
 mod stft;
 mod wiener;

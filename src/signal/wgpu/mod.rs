@@ -9,8 +9,10 @@
 //! - Some algorithms (extrema, medfilt, wiener) are CPU-only and return errors
 
 mod convolution;
+mod edge;
 mod extrema;
 mod medfilt;
+mod nd_filters;
 mod spectrogram;
 mod stft;
 mod wiener;

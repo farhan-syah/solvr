@@ -88,10 +88,12 @@ pub use traits::analysis::{
     SignalAnalysisAlgorithms,
 };
 pub use traits::convolution::ConvMode;
+pub use traits::edge::EdgeDetectionAlgorithms;
 pub use traits::filter_apply::{
     FilterApplicationAlgorithms, LfilterResult, PadType, SosfiltResult,
 };
 pub use traits::frequency_response::{FrequencyResponseAlgorithms, FreqzResult, FreqzSpec};
+pub use traits::nd_filters::{BoundaryMode, NdFilterAlgorithms};
 pub use traits::spectral::{
     CoherenceResult, CsdResult, Detrend, PeriodogramParams, PeriodogramResult, PsdScaling,
     SpectralAnalysisAlgorithms, SpectralWindow, WelchParams, WelchResult,

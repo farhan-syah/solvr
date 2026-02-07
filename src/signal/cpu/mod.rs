@@ -8,10 +8,12 @@
 
 mod analysis;
 mod convolution;
+mod edge;
 mod extrema;
 mod filter_apply;
 mod frequency_response;
 mod medfilt;
+mod nd_filters;
 mod spectral;
 mod spectrogram;
 mod stft;
