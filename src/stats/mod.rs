@@ -5,26 +5,14 @@
 //!
 //! # Runtime-Generic API
 //!
-//! Statistics algorithms are organized into three focused traits:
+//! Statistics algorithms are organized into focused traits:
 //! - [`DescriptiveStatisticsAlgorithms`] - Computing statistics (mean, variance, skewness, etc.)
-//! - [`HypothesisTestingAlgorithms`] - Statistical hypothesis tests (t-tests, correlations)
+//! - [`HypothesisTestingAlgorithms`] - Statistical hypothesis tests (t-tests, ANOVA, normality)
 //! - [`RegressionAlgorithms`] - Regression analysis (linear regression)
+//! - [`RobustStatisticsAlgorithms`] - Robust statistics (trimmed mean, MAD, Theil-Sen)
+//! - [`InformationTheoryAlgorithms`] - Information theory (entropy, KL divergence, mutual info)
 //!
 //! All are generic over numr's `Runtime`, so the same code works on CPU, CUDA, and WebGPU.
-//!
-//! ```ignore
-//! use solvr::stats::DescriptiveStatisticsAlgorithms;
-//! use numr::runtime::cpu::{CpuClient, CpuDevice};
-//!
-//! let device = CpuDevice::new();
-//! let client = CpuClient::new(device.clone());
-//!
-//! // Create a tensor
-//! let data = Tensor::from_slice(&[1.0, 2.0, 3.0, 4.0, 5.0], &[5], &device);
-//!
-//! // Compute descriptive statistics - works on any backend!
-//! let stats = client.describe(&data).unwrap();
-//! ```
 //!
 //! # Distributions
 //!
@@ -65,8 +53,9 @@ mod error;
 
 // Public API: Trait exports
 pub use traits::{
-    DescriptiveStatisticsAlgorithms, HypothesisTestingAlgorithms, LinregressResult,
-    RegressionAlgorithms, TensorDescriptiveStats, TensorTestResult, validate_stats_dtype,
+    DescriptiveStatisticsAlgorithms, HypothesisTestingAlgorithms, InformationTheoryAlgorithms,
+    LeveneCenter, LinregressResult, RegressionAlgorithms, RobustRegressionResult,
+    RobustStatisticsAlgorithms, TensorDescriptiveStats, TensorTestResult, validate_stats_dtype,
 };
 
 // Public API: Distribution traits and types
@@ -75,11 +64,12 @@ pub use error::{StatsError, StatsResult};
 
 // Public API: Continuous distributions
 pub use continuous::{
-    Beta, Cauchy, ChiSquared, Exponential, FDistribution, Gamma, Gumbel, GumbelMin, Laplace,
-    LogNormal, Normal, Pareto, StudentT, Uniform, Weibull,
+    Beta, Cauchy, ChiSquared, Dirichlet, Exponential, FDistribution, Gamma, Gumbel, GumbelMin,
+    InverseGamma, Laplace, LogNormal, Normal, Pareto, StudentT, TruncatedNormal, Uniform, Weibull,
+    Wishart,
 };
 
 // Public API: Discrete distributions
 pub use discrete::{
-    Binomial, DiscreteUniform, Geometric, Hypergeometric, NegativeBinomial, Poisson,
+    Binomial, DiscreteUniform, Geometric, Hypergeometric, Multinomial, NegativeBinomial, Poisson,
 };
