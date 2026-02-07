@@ -9,6 +9,10 @@ pub mod lbfgs;
 pub mod nelder_mead;
 pub mod newton_cg;
 pub mod powell;
+pub mod trust_exact;
+pub mod trust_krylov;
+pub mod trust_ncg;
+pub mod trust_region_base;
 pub mod utils;
 
 // Re-export main types and functions
@@ -19,3 +23,6 @@ pub use lbfgs::{LbfgsOptions, lbfgs_impl};
 pub use nelder_mead::nelder_mead_impl;
 pub use newton_cg::newton_cg_impl;
 pub use powell::powell_impl;
+pub use trust_exact::trust_exact_impl;
+pub use trust_krylov::trust_krylov_impl;
+pub use trust_ncg::trust_ncg_impl;

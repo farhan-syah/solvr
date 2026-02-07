@@ -13,4 +13,6 @@ mod wgpu;
 pub use impl_generic::LbfgsOptions;
 pub use traits::{
     MinimizeOptions, NewtonCGAlgorithms, NewtonCGOptions, NewtonCGResult, TensorMinimizeResult,
+    TrustExactAlgorithms, TrustKrylovAlgorithms, TrustNcgAlgorithms, TrustRegionOptions,
+    TrustRegionResult,
 };

@@ -1,6 +1,9 @@
 //! CUDA implementations of multivariate minimization algorithms.
 
 mod newton_cg;
+mod trust_exact;
+mod trust_krylov;
+mod trust_ncg;
 
 use numr::error::Result;
 use numr::runtime::cuda::{CudaClient, CudaRuntime};
