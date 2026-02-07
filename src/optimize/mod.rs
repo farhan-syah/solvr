@@ -16,6 +16,7 @@
 //! - [`least_squares`] - Nonlinear least squares and curve fitting
 //! - [`global`] - Global optimization (escaping local minima)
 //! - [`linprog`] - Linear programming (Simplex, MILP)
+//! - [`conic`] - Conic programming (SOCP, SDP)
 //!
 //! # Example
 //!
@@ -35,12 +36,15 @@
 //! let result = client.bfgs(|x| Ok(x.to_vec().iter().map(|xi| xi * xi).sum()), &x0, &opts)?;
 //! ```
 
+pub mod conic;
+pub mod constrained;
 pub mod error;
 pub mod global;
 pub mod impl_generic;
 pub mod least_squares;
 pub mod linprog;
 pub mod minimize;
+pub mod qp;
 pub mod roots;
 pub mod scalar;
 mod traits;
@@ -56,6 +60,12 @@ pub use minimize::{LbfgsOptions, MinimizeOptions, TensorMinimizeResult};
 
 // Newton-CG (autograd-based second-order optimization)
 pub use minimize::{NewtonCGAlgorithms, NewtonCGOptions, NewtonCGResult};
+
+// Trust region methods (autograd-based second-order optimization)
+pub use minimize::{
+    TrustExactAlgorithms, TrustKrylovAlgorithms, TrustNcgAlgorithms, TrustRegionOptions,
+    TrustRegionResult,
+};
 
 // Re-export scalar optimization (1D) - these are inherently scalar, not tensor
 pub use scalar::{
@@ -73,8 +83,8 @@ pub use global::{
 
 // Root finding (systems of nonlinear equations)
 pub use roots::{
-    Broyden1Algorithms, LevenbergMarquardtAlgorithms, NewtonSystemAlgorithms, RootOptions,
-    RootTensorResult,
+    AndersonAlgorithms, AndersonOptions, Broyden1Algorithms, LevenbergMarquardtAlgorithms,
+    NewtonSystemAlgorithms, PowellHybridAlgorithms, RootOptions, RootTensorResult,
 };
 
 // Least squares optimization
@@ -85,3 +95,20 @@ pub use linprog::{
     LinProgAlgorithms, LinProgOptions, LinProgTensorConstraints, LinProgTensorResult,
     MilpAlgorithms, MilpOptions, MilpTensorResult,
 };
+
+// Constrained optimization
+pub use constrained::{
+    Bounds, CobylaAlgorithms, ConstrainedOptions, ConstrainedResult, Constraint, ConstraintType,
+    SlsqpAlgorithms, TrustConstrAlgorithms,
+};
+
+// Quadratic programming
+pub use qp::{QpAlgorithms, QpMethod, QpOptions, QpResult};
+
+// Conic programming
+pub use conic::{
+    SdpAlgorithms, SdpOptions, SdpResult, SocConstraint, SocpAlgorithms, SocpOptions, SocpResult,
+};
+
+// SHGO global optimization
+pub use global::{ShgoAlgorithms, ShgoResult};

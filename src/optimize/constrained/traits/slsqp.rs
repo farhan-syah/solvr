@@ -1,0 +1,35 @@
+//! SLSQP (Sequential Least Squares Programming) algorithm trait.
+
+use numr::error::Result;
+use numr::runtime::Runtime;
+use numr::tensor::Tensor;
+
+use crate::optimize::error::OptimizeResult;
+
+use super::types::{Bounds, ConstrainedOptions, ConstrainedResult, Constraint};
+
+/// Trait for SLSQP constrained optimization.
+pub trait SlsqpAlgorithms<R: Runtime> {
+    /// Sequential Least Squares Programming (SLSQP).
+    ///
+    /// Minimizes a scalar objective function subject to equality and inequality
+    /// constraints using a sequential quadratic programming approach.
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - Objective function f: R^n -> R
+    /// * `x0` - Initial guess
+    /// * `constraints` - Slice of nonlinear constraints
+    /// * `bounds` - Variable bounds (optional lower/upper)
+    /// * `options` - Algorithm options
+    fn slsqp<F>(
+        &self,
+        f: F,
+        x0: &Tensor<R>,
+        constraints: &[Constraint<'_, R>],
+        bounds: &Bounds<R>,
+        options: &ConstrainedOptions,
+    ) -> OptimizeResult<ConstrainedResult<R>>
+    where
+        F: Fn(&Tensor<R>) -> Result<f64>;
+}
