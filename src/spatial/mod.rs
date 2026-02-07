@@ -68,6 +68,7 @@ pub use traits::balltree::{BallTree, BallTreeAlgorithms, BallTreeOptions};
 pub use traits::convex_hull::{ConvexHull, ConvexHullAlgorithms};
 pub use traits::delaunay::{Delaunay, DelaunayAlgorithms};
 pub use traits::distance::{DistanceAlgorithms, DistanceMetric};
+pub use traits::distance_transform::{DistanceTransformAlgorithms, DistanceTransformMetric};
 pub use traits::kdtree::{KDTree, KDTreeAlgorithms, KDTreeOptions, KNNResult, RadiusResult};
 pub use traits::procrustes::{ProcrustesAlgorithms, ProcrustesResult};
 pub use traits::rotation::{EulerOrder, Rotation, RotationAlgorithms};

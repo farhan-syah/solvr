@@ -16,6 +16,7 @@ mod balltree;
 mod convex_hull;
 mod delaunay;
 mod distance;
+pub mod distance_transform;
 mod kdtree;
 mod procrustes;
 mod rotation;
@@ -26,6 +27,7 @@ pub use balltree::{balltree_build_impl, balltree_query_impl, balltree_query_radi
 pub use convex_hull::{convex_hull_contains_impl, convex_hull_impl};
 pub use delaunay::{delaunay_find_simplex_impl, delaunay_impl, delaunay_vertex_neighbors_impl};
 pub use distance::{cdist_impl, pdist_impl, squareform_impl, squareform_inverse_impl};
+pub use distance_transform::{distance_transform_edt_impl, distance_transform_impl};
 pub use kdtree::{kdtree_build_impl, kdtree_query_impl, kdtree_query_radius_impl};
 pub use procrustes::{orthogonal_procrustes_impl, procrustes_impl};
 pub use rotation::{

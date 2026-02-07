@@ -7,6 +7,7 @@ mod balltree;
 mod convex_hull;
 mod delaunay;
 mod distance;
+mod distance_transform;
 mod kdtree;
 mod procrustes;
 mod rotation;
