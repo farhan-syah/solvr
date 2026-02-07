@@ -50,7 +50,10 @@ pub mod impl_generic;
 pub mod traits;
 
 // Re-export traits
-pub use traits::{Broyden1Algorithms, LevenbergMarquardtAlgorithms, NewtonSystemAlgorithms};
+pub use traits::{
+    AndersonAlgorithms, AndersonOptions, Broyden1Algorithms, LevenbergMarquardtAlgorithms,
+    NewtonSystemAlgorithms, PowellHybridAlgorithms,
+};
 
 // Re-export result type from impl_generic
 pub use impl_generic::TensorRootResult;

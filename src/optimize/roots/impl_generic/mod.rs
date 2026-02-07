@@ -1,14 +1,18 @@
 //! Tensor-based implementations of multivariate root finding algorithms.
 
+mod anderson;
 mod broyden;
 pub mod helpers;
 mod levenberg_marquardt;
 mod newton;
+mod powell_hybrid;
 
+pub use anderson::anderson_impl;
 pub use broyden::broyden1_impl;
 pub use helpers::{jacobian_forward_impl, jvp_impl};
 pub use levenberg_marquardt::levenberg_marquardt_impl;
 pub use newton::newton_system_impl;
+pub use powell_hybrid::powell_hybrid_impl;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
