@@ -2,6 +2,7 @@ mod akima;
 mod bspline;
 mod clough_tocher;
 mod cubic_spline;
+mod geometric;
 mod interp1d;
 mod interpnd;
 mod pchip;

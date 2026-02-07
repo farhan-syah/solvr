@@ -62,6 +62,7 @@ pub use error::{InterpolateError, InterpolateResult};
 pub use traits::bspline::{BSpline, BSplineBoundary};
 pub use traits::clough_tocher::CloughTocher2D;
 pub use traits::cubic_spline::SplineBoundary;
+pub use traits::geometric::{GeometricTransformAlgorithms, InterpolationOrder};
 pub use traits::interp1d::InterpMethod;
 pub use traits::interpnd::{ExtrapolateMode, InterpNdMethod};
 pub use traits::rbf::{RbfKernel, RbfModel};
