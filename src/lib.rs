@@ -33,10 +33,10 @@
 //! - [`integrate`] - ODE solvers and numerical quadrature
 //! - [`stats`] - Statistical distributions, hypothesis tests, descriptive stats
 //! - [`spatial`] - KDTree, BallTree, distance metrics, convex hull, Delaunay, Voronoi, rotations
+//! - [`morphology`] - Morphological operations (binary/grey erosion, dilation, opening, closing, connected components)
 //!
 //! # Planned Modules
 //!
-//! - `ndimage` - N-dimensional image processing
 //!
 //! # Backend Support
 //!
@@ -95,6 +95,7 @@ pub mod cluster;
 pub mod common;
 pub mod integrate;
 pub mod interpolate;
+pub mod morphology;
 pub mod optimize;
 pub mod signal;
 pub mod spatial;
@@ -109,6 +110,10 @@ pub use integrate::{
 pub use interpolate::{
     AkimaAlgorithms, CubicSplineAlgorithms, ExtrapolateMode, Interp1dAlgorithms, InterpMethod,
     InterpNdAlgorithms, InterpNdMethod, PchipAlgorithms, SplineBoundary,
+};
+pub use morphology::{
+    BinaryMorphologyAlgorithms, GreyMorphologyAlgorithms, MeasurementAlgorithms, RegionProperties,
+    StructuringElement,
 };
 pub use optimize::{OptimizeError, OptimizeResult, scalar::*};
 pub use signal::{ConvMode, ConvolutionAlgorithms, SpectrogramAlgorithms, StftAlgorithms};
