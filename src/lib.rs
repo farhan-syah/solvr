@@ -26,13 +26,13 @@
 //!
 //! # Current Modules
 //!
-//! - [`signal`] - Signal processing (convolution, correlation, STFT, spectrogram)
+//! - [`signal`] - Signal processing (convolution, correlation, STFT, spectrogram, N-D filters, edge detection)
 //! - [`window`] - Window functions (Hann, Hamming, Blackman, Kaiser)
-//! - [`interpolate`] - Interpolation methods (linear, cubic, splines)
+//! - [`interpolate`] - Interpolation (linear, cubic, splines, geometric transforms: affine, zoom, rotate)
 //! - [`optimize`] - Root finding, minimization, least squares, linear programming
 //! - [`integrate`] - ODE solvers and numerical quadrature
 //! - [`stats`] - Statistical distributions, hypothesis tests, descriptive stats
-//! - [`spatial`] - KDTree, BallTree, distance metrics, convex hull, Delaunay, Voronoi, rotations
+//! - [`spatial`] - KDTree, BallTree, distance metrics, convex hull, Delaunay, Voronoi, rotations, distance transforms
 //! - [`morphology`] - Morphological operations (binary/grey erosion, dilation, opening, closing, connected components)
 //!
 //! # Planned Modules
