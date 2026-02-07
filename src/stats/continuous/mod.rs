@@ -3,32 +3,40 @@
 mod beta;
 mod cauchy;
 mod chi_squared;
+mod dirichlet;
 mod exponential;
 mod f_distribution;
 mod gamma;
 mod gumbel;
+mod inverse_gamma;
 mod laplace;
 mod lognormal;
 mod normal;
 mod pareto;
 mod student_t;
+mod truncated_normal;
 mod uniform;
 mod weibull;
+mod wishart;
 
 pub use beta::Beta;
 pub use cauchy::Cauchy;
 pub use chi_squared::ChiSquared;
+pub use dirichlet::Dirichlet;
 pub use exponential::Exponential;
 pub use f_distribution::FDistribution;
 pub use gamma::Gamma;
 pub use gumbel::{Gumbel, GumbelMin};
+pub use inverse_gamma::InverseGamma;
 pub use laplace::Laplace;
 pub use lognormal::LogNormal;
 pub use normal::Normal;
 pub use pareto::Pareto;
 pub use student_t::StudentT;
+pub use truncated_normal::TruncatedNormal;
 pub use uniform::Uniform;
 pub use weibull::Weibull;
+pub use wishart::Wishart;
 
 /// Helper module for special functions used in distributions.
 pub(crate) mod special {

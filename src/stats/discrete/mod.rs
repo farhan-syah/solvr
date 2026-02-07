@@ -4,6 +4,7 @@ mod binomial;
 mod discrete_uniform;
 mod geometric;
 mod hypergeometric;
+mod multinomial;
 mod negative_binomial;
 mod poisson;
 
@@ -11,6 +12,7 @@ pub use binomial::Binomial;
 pub use discrete_uniform::DiscreteUniform;
 pub use geometric::Geometric;
 pub use hypergeometric::Hypergeometric;
+pub use multinomial::Multinomial;
 pub use negative_binomial::NegativeBinomial;
 pub use poisson::Poisson;
 
