@@ -26,16 +26,19 @@ impl FilterConversions<WgpuRuntime> for WgpuClient {
         _tf: &TransferFunction<WgpuRuntime>,
         _pairing: Option<SosPairing>,
     ) -> Result<SosFilter<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "tf2sos is CPU-only. Use CpuClient for filter design, then transfer to GPU."
-                .to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "tf2sos",
+            "Filter conversion is CPU-only. Use CpuClient for filter design, then transfer to GPU.",
+        ))
     }
 
     fn sos2tf(&self, _sos: &SosFilter<WgpuRuntime>) -> Result<TransferFunction<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "sos2tf is CPU-only. Use CpuClient for filter design.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "sos2tf",
+            "Filter conversion is CPU-only. Use CpuClient for filter design.",
+        ))
     }
 
     fn zpk2sos(
@@ -43,14 +46,18 @@ impl FilterConversions<WgpuRuntime> for WgpuClient {
         _zpk: &ZpkFilter<WgpuRuntime>,
         _pairing: Option<SosPairing>,
     ) -> Result<SosFilter<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "zpk2sos is CPU-only. Use CpuClient for filter design.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "zpk2sos",
+            "Filter conversion is CPU-only. Use CpuClient for filter design.",
+        ))
     }
 
     fn sos2zpk(&self, _sos: &SosFilter<WgpuRuntime>) -> Result<ZpkFilter<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "sos2zpk is CPU-only. Use CpuClient for filter design.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "sos2zpk",
+            "Filter conversion is CPU-only. Use CpuClient for filter design.",
+        ))
     }
 }

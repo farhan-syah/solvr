@@ -15,10 +15,11 @@ impl WienerAlgorithms<CudaRuntime> for CudaClient {
         _kernel_size: Option<usize>,
         _noise: Option<f64>,
     ) -> Result<Tensor<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "wiener",
-            reason: "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "wiener",
+            "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.",
+        ))
     }
 
     fn wiener2d(
@@ -27,9 +28,10 @@ impl WienerAlgorithms<CudaRuntime> for CudaClient {
         _kernel_size: Option<(usize, usize)>,
         _noise: Option<f64>,
     ) -> Result<Tensor<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "wiener2d",
-            reason: "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "wiener2d",
+            "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.",
+        ))
     }
 }

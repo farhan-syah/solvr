@@ -14,10 +14,11 @@ impl MedianFilterAlgorithms<CudaRuntime> for CudaClient {
         _x: &Tensor<CudaRuntime>,
         _kernel_size: usize,
     ) -> Result<Tensor<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "medfilt",
-            reason: "Median filtering is CPU-only due to sorting requirements. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "medfilt",
+            "Median filtering is CPU-only due to sorting requirements. Transfer data to CPU first.",
+        ))
     }
 
     fn medfilt2d(
@@ -25,9 +26,10 @@ impl MedianFilterAlgorithms<CudaRuntime> for CudaClient {
         _x: &Tensor<CudaRuntime>,
         _kernel_size: (usize, usize),
     ) -> Result<Tensor<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "medfilt2d",
-            reason: "Median filtering is CPU-only due to sorting requirements. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "medfilt2d",
+            "Median filtering is CPU-only due to sorting requirements. Transfer data to CPU first.",
+        ))
     }
 }

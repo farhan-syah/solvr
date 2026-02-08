@@ -23,9 +23,11 @@ impl FirDesignAlgorithms<WgpuRuntime> for WgpuClient {
         _scale: bool,
         _device: &<WgpuRuntime as numr::runtime::Runtime>::Device,
     ) -> Result<Tensor<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "firwin is CPU-only. Use CpuClient for filter design, then transfer coefficients to GPU.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "firwin",
+            "FIR filter design is CPU-only. Use CpuClient for filter design, then transfer coefficients to GPU.",
+        ))
     }
 
     fn firwin2(
@@ -37,14 +39,18 @@ impl FirDesignAlgorithms<WgpuRuntime> for WgpuClient {
         _window: FirWindow,
         _device: &<WgpuRuntime as numr::runtime::Runtime>::Device,
     ) -> Result<Tensor<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "firwin2 is CPU-only. Use CpuClient for filter design, then transfer coefficients to GPU.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "firwin2",
+            "FIR filter design is CPU-only. Use CpuClient for filter design, then transfer coefficients to GPU.",
+        ))
     }
 
     fn minimum_phase(&self, _h: &Tensor<WgpuRuntime>) -> Result<Tensor<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "minimum_phase is CPU-only. Use CpuClient for filter design.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "minimum_phase",
+            "FIR filter design is CPU-only. Use CpuClient for filter design.",
+        ))
     }
 }

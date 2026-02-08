@@ -15,10 +15,11 @@ impl ExtremaAlgorithms<WgpuRuntime> for WgpuClient {
         _order: usize,
         _mode: ExtremumMode,
     ) -> Result<ExtremaResult<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "argrelmin",
-            reason: "Local extrema detection is CPU-only due to sequential comparison patterns. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "argrelmin",
+            "Local extrema detection is CPU-only due to sequential comparison patterns. Transfer data to CPU first.",
+        ))
     }
 
     fn argrelmax(
@@ -27,9 +28,10 @@ impl ExtremaAlgorithms<WgpuRuntime> for WgpuClient {
         _order: usize,
         _mode: ExtremumMode,
     ) -> Result<ExtremaResult<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "argrelmax",
-            reason: "Local extrema detection is CPU-only due to sequential comparison patterns. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "argrelmax",
+            "Local extrema detection is CPU-only due to sequential comparison patterns. Transfer data to CPU first.",
+        ))
     }
 }

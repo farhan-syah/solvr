@@ -26,16 +26,19 @@ impl FilterConversions<CudaRuntime> for CudaClient {
         _tf: &TransferFunction<CudaRuntime>,
         _pairing: Option<SosPairing>,
     ) -> Result<SosFilter<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "tf2sos is CPU-only. Use CpuClient for filter design, then transfer to GPU."
-                .to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "tf2sos",
+            "Filter conversion is CPU-only. Use CpuClient for filter design, then transfer to GPU.",
+        ))
     }
 
     fn sos2tf(&self, _sos: &SosFilter<CudaRuntime>) -> Result<TransferFunction<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "sos2tf is CPU-only. Use CpuClient for filter design.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "sos2tf",
+            "Filter conversion is CPU-only. Use CpuClient for filter design.",
+        ))
     }
 
     fn zpk2sos(
@@ -43,14 +46,18 @@ impl FilterConversions<CudaRuntime> for CudaClient {
         _zpk: &ZpkFilter<CudaRuntime>,
         _pairing: Option<SosPairing>,
     ) -> Result<SosFilter<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "zpk2sos is CPU-only. Use CpuClient for filter design.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "zpk2sos",
+            "Filter conversion is CPU-only. Use CpuClient for filter design.",
+        ))
     }
 
     fn sos2zpk(&self, _sos: &SosFilter<CudaRuntime>) -> Result<ZpkFilter<CudaRuntime>> {
-        Err(Error::UnsupportedOperation {
-            operation: "sos2zpk is CPU-only. Use CpuClient for filter design.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "cuda",
+            "sos2zpk",
+            "Filter conversion is CPU-only. Use CpuClient for filter design.",
+        ))
     }
 }

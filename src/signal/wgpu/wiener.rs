@@ -15,10 +15,11 @@ impl WienerAlgorithms<WgpuRuntime> for WgpuClient {
         _kernel_size: Option<usize>,
         _noise: Option<f64>,
     ) -> Result<Tensor<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "wiener",
-            reason: "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "wiener",
+            "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.",
+        ))
     }
 
     fn wiener2d(
@@ -27,9 +28,10 @@ impl WienerAlgorithms<WgpuRuntime> for WgpuClient {
         _kernel_size: Option<(usize, usize)>,
         _noise: Option<f64>,
     ) -> Result<Tensor<WgpuRuntime>> {
-        Err(Error::UnsupportedOperation {
-            op: "wiener2d",
-            reason: "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.".to_string(),
-        })
+        Err(Error::backend_limitation(
+            "wgpu",
+            "wiener2d",
+            "Wiener filtering is CPU-only due to local statistics computation. Transfer data to CPU first.",
+        ))
     }
 }
