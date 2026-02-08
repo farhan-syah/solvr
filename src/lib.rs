@@ -117,8 +117,11 @@ pub use integrate::{
     QuadOptions, QuadResult, RombergOptions, solve_ivp_impl,
 };
 pub use interpolate::{
-    AkimaAlgorithms, CubicSplineAlgorithms, ExtrapolateMode, Interp1dAlgorithms, InterpMethod,
-    InterpNdAlgorithms, InterpNdMethod, PchipAlgorithms, SplineBoundary,
+    AkimaAlgorithms, BSplineCurve, BSplineCurveAlgorithms, BSplineSurface,
+    BSplineSurfaceAlgorithms, BezierCurve, BezierCurveAlgorithms, BezierSurface,
+    BezierSurfaceAlgorithms, CubicSplineAlgorithms, ExtrapolateMode, Interp1dAlgorithms,
+    InterpMethod, InterpNdAlgorithms, InterpNdMethod, NurbsCurve, NurbsCurveAlgorithms,
+    NurbsSurface, NurbsSurfaceAlgorithms, PchipAlgorithms, SplineBoundary,
 };
 pub use linalg::MatrixEquationAlgorithms;
 pub use morphology::{
@@ -150,12 +153,17 @@ pub use spatial::{
     KDTreeAlgorithms,
     KDTreeOptions,
     KNNResult,
+    // Mesh processing
+    Mesh,
+    MeshAlgorithms,
     ProcrustesAlgorithms,
     ProcrustesResult,
     RadiusResult,
     // Transforms
     Rotation,
     RotationAlgorithms,
+    SimplificationMethod,
+    SmoothingMethod,
     Voronoi,
     VoronoiAlgorithms,
 };
