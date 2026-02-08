@@ -35,7 +35,6 @@ pde = ["sparse"]
 
 # Precision features
 f16 = ["numr/f16"]
-fp8 = ["numr/fp8"]
 
 [package.metadata.docs.rs]
 no-default-features = true
