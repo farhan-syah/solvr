@@ -99,6 +99,7 @@ pub mod interpolate;
 pub mod linalg;
 pub mod morphology;
 pub mod optimize;
+pub mod pde;
 pub mod signal;
 pub mod spatial;
 pub mod stats;
@@ -125,6 +126,11 @@ pub use morphology::{
     StructuringElement,
 };
 pub use optimize::{OptimizeError, OptimizeResult, scalar::*};
+pub use pde::{
+    BoundaryCondition, BoundarySide, BoundarySpec, FdmOptions, FdmResult, FemResult,
+    FiniteDifferenceAlgorithms, FiniteElementAlgorithms, Grid2D, Grid3D, PdeError, PdeResult,
+    SpectralAlgorithms, SpectralResult, TimeDependentOptions, TimeResult,
+};
 pub use signal::{ConvMode, ConvolutionAlgorithms, SpectrogramAlgorithms, StftAlgorithms};
 pub use spatial::{
     BallTree,

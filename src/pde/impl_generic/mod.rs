@@ -1,0 +1,22 @@
+pub mod boundary;
+pub mod chebyshev;
+pub mod fem_1d;
+pub mod fem_triangular;
+pub mod heat_2d;
+pub mod heat_3d;
+pub mod ode_extract;
+pub mod poisson;
+pub mod solve_sparse;
+pub mod spectral_1d;
+pub mod spectral_2d;
+pub mod stencil;
+pub mod wave;
+
+pub(crate) use fem_1d::fem_1d_impl;
+pub(crate) use fem_triangular::fem_triangular_impl;
+pub(crate) use heat_2d::heat_2d_impl;
+pub(crate) use heat_3d::heat_3d_impl;
+pub(crate) use poisson::poisson_impl;
+pub(crate) use spectral_1d::spectral_1d_impl;
+pub(crate) use spectral_2d::spectral_2d_impl;
+pub(crate) use wave::wave_impl;
