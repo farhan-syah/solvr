@@ -14,7 +14,7 @@ numr = { version = "0.0.0-beta.1" }
 [dev-dependencies]
 
 [features]
-default = ["cpu", "sparse"]
+default = ["cpu", "graph", "pde"]
 
 # Backend features (passed through to numr)
 cpu = []
@@ -22,9 +22,13 @@ cuda = ["numr/cuda"]
 wgpu = ["numr/wgpu"]
 # rocm = ["numr/rocm"]  # Future: when numr adds ROCm support
 
+# Sparse tensor support (required by graph and pde modules)
+sparse = ["numr/sparse"]
+
+# Module features (require sparse support)
+graph = ["sparse"]
+pde = ["sparse"]
+
 # Precision features
 f16 = ["numr/f16"]
 fp8 = ["numr/fp8"]
-
-# Enables sparse support
-sparse = ["numr/sparse"]
