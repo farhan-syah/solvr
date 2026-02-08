@@ -17,10 +17,12 @@ mod convex_hull;
 mod delaunay;
 mod distance;
 pub mod distance_transform;
+mod halfspace_intersection;
 mod kdtree;
 pub mod mesh;
 mod procrustes;
 mod rotation;
+mod spherical_voronoi;
 mod voronoi;
 
 // Re-export only what backends need
@@ -29,6 +31,7 @@ pub use convex_hull::{convex_hull_contains_impl, convex_hull_impl};
 pub use delaunay::{delaunay_find_simplex_impl, delaunay_impl, delaunay_vertex_neighbors_impl};
 pub use distance::{cdist_impl, pdist_impl, squareform_impl, squareform_inverse_impl};
 pub use distance_transform::{distance_transform_edt_impl, distance_transform_impl};
+pub use halfspace_intersection::halfspace_intersection_impl;
 pub use kdtree::{kdtree_build_impl, kdtree_query_impl, kdtree_query_radius_impl};
 pub use mesh::{mesh_simplify_impl, mesh_smooth_impl, triangulate_polygon_impl};
 pub use procrustes::{orthogonal_procrustes_impl, procrustes_impl};
@@ -38,5 +41,9 @@ pub use rotation::{
     rotation_from_euler_impl, rotation_from_matrix_impl, rotation_from_quat_impl,
     rotation_from_rotvec_impl, rotation_identity_impl, rotation_inverse_impl,
     rotation_magnitude_impl, rotation_random_impl, rotation_slerp_impl,
+};
+pub use spherical_voronoi::{
+    spherical_voronoi_impl, spherical_voronoi_region_areas_impl,
+    spherical_voronoi_sort_regions_impl,
 };
 pub use voronoi::{voronoi_find_region_impl, voronoi_from_delaunay_impl, voronoi_impl};

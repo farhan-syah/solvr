@@ -148,6 +148,9 @@ pub use spatial::{
     DistanceAlgorithms,
     DistanceMetric,
     EulerOrder,
+    // Halfspace intersection
+    HalfspaceIntersection,
+    HalfspaceIntersectionAlgorithms,
     // Spatial trees
     KDTree,
     KDTreeAlgorithms,
@@ -164,6 +167,9 @@ pub use spatial::{
     RotationAlgorithms,
     SimplificationMethod,
     SmoothingMethod,
+    // Spherical Voronoi
+    SphericalVoronoi,
+    SphericalVoronoiAlgorithms,
     Voronoi,
     VoronoiAlgorithms,
 };
