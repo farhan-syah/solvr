@@ -47,8 +47,8 @@ mod tests {
 
     fn setup() -> Option<(WgpuClient, WgpuDevice)> {
         // Skip if no WebGPU device available
-        let device = WgpuDevice::new().ok()?;
-        let client = WgpuClient::new(device.clone());
+        let device = WgpuDevice::new(0);
+        let client = WgpuClient::new(device.clone()).ok()?;
         Some((client, device))
     }
 

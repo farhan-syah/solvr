@@ -24,8 +24,8 @@ mod tests {
 
     fn setup() -> Option<(CudaClient, CudaDevice)> {
         // Skip if no CUDA device available
-        let device = CudaDevice::new(0).ok()?;
-        let client = CudaClient::new(device.clone());
+        let device = CudaDevice::new(0);
+        let client = CudaClient::new(device.clone()).ok()?;
         Some((client, device))
     }
 

@@ -95,8 +95,8 @@ mod tests {
     use numr::runtime::wgpu::WgpuDevice;
 
     fn setup() -> Option<(WgpuClient, WgpuDevice)> {
-        let device = WgpuDevice::new().ok()?;
-        let client = WgpuClient::new(device.clone());
+        let device = WgpuDevice::new(0);
+        let client = WgpuClient::new(device.clone()).ok()?;
         Some((client, device))
     }
 
