@@ -21,7 +21,14 @@ impl DifferentialEvolutionAlgorithms<CudaRuntime> for CudaClient {
     where
         F: Fn(&Tensor<CudaRuntime>) -> Result<f64>,
     {
-        let result = differential_evolution_impl(self, f, lower_bounds, upper_bounds, options)?;
+        let result = differential_evolution_impl(self, f, lower_bounds, upper_bounds, options)
+            .map_err(|e| {
+                numr::error::Error::backend_limitation(
+                    "cuda",
+                    "differential_evolution",
+                    e.to_string(),
+                )
+            })?;
         Ok(DifferentialEvolutionResult {
             x: result.x,
             fun: result.fun,

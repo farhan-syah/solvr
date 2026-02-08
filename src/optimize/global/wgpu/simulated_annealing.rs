@@ -21,7 +21,10 @@ impl SimulatedAnnealingAlgorithms<WgpuRuntime> for WgpuClient {
     where
         F: Fn(&Tensor<WgpuRuntime>) -> Result<f64>,
     {
-        let result = simulated_annealing_impl(self, f, lower_bounds, upper_bounds, options)?;
+        let result = simulated_annealing_impl(self, f, lower_bounds, upper_bounds, options)
+            .map_err(|e| {
+                numr::error::Error::backend_limitation("wgpu", "simulated_annealing", e.to_string())
+            })?;
         Ok(SimulatedAnnealingResult {
             x: result.x,
             fun: result.fun,

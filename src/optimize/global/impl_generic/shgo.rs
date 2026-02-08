@@ -357,7 +357,8 @@ where
     }
 
     // Sort candidates by function value (ascending)
-    candidates.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+    // NaN values are treated as greater than any finite value (worst)
+    candidates.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Greater));
 
     // Refine top-k candidates where k = min(5, n+1)
     let k_refine = 5.min(n + 1);
@@ -383,9 +384,10 @@ where
     }
 
     // Find global best
+    // NaN values are treated as greater than any finite value (worst)
     let (x_best, best_fun) = local_minima
         .iter()
-        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap())
+        .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Greater))
         .map(|(x, fv)| (x.clone(), *fv))
         .unwrap_or_else(|| {
             let best_candidate = &candidates[0];

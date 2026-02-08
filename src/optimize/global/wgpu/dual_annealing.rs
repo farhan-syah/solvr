@@ -21,7 +21,10 @@ impl DualAnnealingAlgorithms<WgpuRuntime> for WgpuClient {
     where
         F: Fn(&Tensor<WgpuRuntime>) -> Result<f64>,
     {
-        let result = dual_annealing_impl(self, f, lower_bounds, upper_bounds, options)?;
+        let result =
+            dual_annealing_impl(self, f, lower_bounds, upper_bounds, options).map_err(|e| {
+                numr::error::Error::backend_limitation("wgpu", "dual_annealing", e.to_string())
+            })?;
         Ok(DualAnnealingResult {
             x: result.x,
             fun: result.fun,
