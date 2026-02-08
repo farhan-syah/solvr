@@ -4,12 +4,10 @@ use crate::optimize::linprog::impl_generic::{
     MilpOptionsInternal, TensorLinearConstraints, milp_impl,
 };
 use crate::optimize::linprog::{
-    LinProgOptions, LinProgTensorConstraints, MilpAlgorithms, MilpOptions, MilpTensorResult,
+    LinProgTensorConstraints, MilpAlgorithms, MilpOptions, MilpTensorResult,
 };
 use numr::error::Result;
-use numr::ops::{CompareOps, ScalarOps, TensorOps};
 use numr::runtime::wgpu::{WgpuClient, WgpuRuntime};
-use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
 impl MilpAlgorithms<WgpuRuntime> for WgpuClient {
