@@ -58,7 +58,7 @@ where
         *hi = 2.0; // Positive frequencies
     }
 
-    if n.is_multiple_of(2) {
+    if n % 2 == 0 {
         h_data[half] = 1.0; // Nyquist for even N
     } else {
         h_data[half] = 2.0; // Include in positive for odd N

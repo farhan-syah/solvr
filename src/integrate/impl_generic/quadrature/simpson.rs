@@ -90,7 +90,7 @@ where
 fn create_simpson_weights(n: usize, intervals: usize) -> Vec<f64> {
     let mut weights = vec![0.0; n];
 
-    if intervals.is_multiple_of(2) {
+    if intervals % 2 == 0 {
         // Even intervals: pure Simpson's 1/3 rule
         // Pattern: 1, 4, 2, 4, 2, ..., 4, 1
         weights[0] = 1.0;
@@ -153,7 +153,7 @@ where
 
     let intervals = n - 1;
 
-    if intervals.is_multiple_of(2) {
+    if intervals % 2 == 0 {
         // Even intervals: pure Simpson's rule using tensor ops
         simpson_even_intervals(client, y, x, n, last_dim, x_last_dim)
     } else {
