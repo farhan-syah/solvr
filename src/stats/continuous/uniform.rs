@@ -172,37 +172,50 @@ impl ContinuousDistribution for Uniform {
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
-        // PDF = 1 / (b - a) = 1 / range (constant on support)
-        // Create tensor of zeros and add constant
-        let zeros = client.mul_scalar(x, 0.0)?;
-        client.add_scalar(&zeros, 1.0 / self.range)
+        // PDF = 1/range when a <= x <= b, else 0
+        // Indicator uses ceil((sign(v)+1)/2): gives 1 when v>=0, 0 when v<0
+        let above_a = client.sub_scalar(x, self.a)?;
+        let sign_a = client.sign(&above_a)?;
+        let ind_a = client.ceil(&client.mul_scalar(&client.add_scalar(&sign_a, 1.0)?, 0.5)?)?;
+
+        let below_b = client.rsub_scalar(x, self.b)?;
+        let sign_b = client.sign(&below_b)?;
+        let ind_b = client.ceil(&client.mul_scalar(&client.add_scalar(&sign_b, 1.0)?, 0.5)?)?;
+
+        let indicator = client.mul(&ind_a, &ind_b)?;
+        client.mul_scalar(&indicator, 1.0 / self.range)
     }
 
     fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
-        // log(PDF) = -ln(range)
-        let zeros = client.mul_scalar(x, 0.0)?;
-        client.add_scalar(&zeros, -self.range.ln())
+        // log(PDF) = -ln(range) in support, -inf outside
+        // Use pdf and take log (log(0) = -inf naturally)
+        let pdf = self.pdf_tensor(x, client)?;
+        client.log(&pdf)
     }
 
     fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
-        // CDF(x) = (x - a) / (b - a)
+        // CDF(x) = clamp((x - a) / (b - a), 0, 1)
         let centered = client.sub_scalar(x, self.a)?;
-        client.mul_scalar(&centered, 1.0 / self.range)
+        let raw = client.mul_scalar(&centered, 1.0 / self.range)?;
+        // Clamp to [0, 1] to handle out-of-support values
+        let clamped_low = client.maximum(&raw, &client.mul_scalar(x, 0.0)?)?;
+        let ones = client.add_scalar(&client.mul_scalar(x, 0.0)?, 1.0)?;
+        client.minimum(&clamped_low, &ones)
     }
 
     fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
-        // SF(x) = (b - x) / (b - a)
-        let b_minus_x = client.sub_scalar(x, -self.b)?;
-        client.mul_scalar(&b_minus_x, 1.0 / self.range)
+        // SF(x) = 1 - CDF(x)
+        let cdf = self.cdf_tensor(x, client)?;
+        client.rsub_scalar(&cdf, 1.0)
     }
 
     fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
@@ -228,7 +241,7 @@ impl ContinuousDistribution for Uniform {
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
         // ISF(p) = PPF(1 - p) = a + (1 - p) * range
-        let one_minus_p = client.sub_scalar(p, -1.0)?;
+        let one_minus_p = client.rsub_scalar(p, 1.0)?;
         let scaled = client.mul_scalar(&one_minus_p, self.range)?;
         client.add_scalar(&scaled, self.a)
     }
