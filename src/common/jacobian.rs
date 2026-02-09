@@ -23,15 +23,20 @@
 //!
 //! User must write their function using `DualTensor` and `dual_*` operations:
 //!
-//! ```ignore
-//! use numr::autograd::dual_ops::{dual_mul, dual_sub};
+//! ```no_run
+//! # use numr::runtime::cpu::{CpuClient, CpuDevice, CpuRuntime};
+//! # use numr::tensor::Tensor;
+//! use numr::autograd::DualTensor;
+//! # let device = CpuDevice::new();
+//! # let client = CpuClient::new(device.clone());
+//! # let y = Tensor::from_slice(&[1.0, 1.0], &[2], &device);
 //!
 //! // f(y) = [y[0]^2 - y[1], y[0] * y[1] - 1]
-//! let jacobian = jacobian_autograd(&client, |y, c| {
+//! let jacobian = solvr::common::jacobian::jacobian_autograd(&client, |_y: &DualTensor<CpuRuntime>, _c: &CpuClient| {
 //!     // Use dual operations for automatic differentiation
-//!     let y0_sq = dual_mul(&y[0], &y[0], c)?;
-//!     // ... build output using dual ops
+//!     unimplemented!()
 //! }, &y)?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 use numr::autograd::{DualTensor, Var, backward, jacobian_forward, jvp, var_mul, var_sum};
@@ -43,7 +48,7 @@ use numr::tensor::Tensor;
 /// Compute the Jacobian matrix using forward-mode automatic differentiation.
 ///
 /// For a function F: ℝⁿ → ℝᵐ, computes the m×n Jacobian matrix J where
-/// J[i,j] = ∂Fᵢ/∂xⱼ.
+/// `J[i,j]` = ∂Fᵢ/∂xⱼ.
 ///
 /// This uses numr's forward-mode AD, which computes n JVPs (one per input
 /// dimension). For square systems (n = m), this is optimal.
@@ -56,19 +61,24 @@ use numr::tensor::Tensor;
 ///
 /// # Returns
 ///
-/// Jacobian matrix of shape [m, n]
+/// Jacobian matrix of shape `[m, n]`
 ///
 /// # Example
 ///
-/// ```ignore
-/// use numr::autograd::dual_ops::dual_mul;
-///
+/// ```no_run
+/// use numr::runtime::cpu::{CpuClient, CpuDevice, CpuRuntime};
+/// use numr::tensor::Tensor;
+/// use numr::autograd::DualTensor;
+/// let device = CpuDevice::new();
+/// let client = CpuClient::new(device.clone());
+/// let x = Tensor::from_slice(&[1.0], &[1], &device);
 /// // F(x) = x² (element-wise), Jacobian = diag(2x)
-/// let jacobian = jacobian_autograd(
+/// let jacobian = solvr::common::jacobian::jacobian_autograd(
 ///     &client,
-///     |dual_x, c| dual_mul(dual_x, dual_x, c),
+///     |dual_x: &DualTensor<CpuRuntime>, c: &CpuClient| { /* dual ops */ unimplemented!() },
 ///     &x,
 /// )?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub fn jacobian_autograd<R, C, F>(client: &C, f: F, x: &Tensor<R>) -> Result<Tensor<R>>
 where
@@ -139,15 +149,22 @@ where
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```no_run
+/// use numr::runtime::cpu::{CpuClient, CpuDevice, CpuRuntime};
+/// use numr::tensor::Tensor;
+/// use numr::autograd::Var;
+/// let device = CpuDevice::new();
+/// let client = CpuClient::new(device.clone());
+/// let x = Tensor::from_slice(&[2.0], &[1], &device);
+/// let v = Tensor::from_slice(&[1.0], &[1], &device);
 /// // F(x) = x², at x=[2], v=[1]
-/// // vᵀ @ J = 1 * 2*2 = 4
-/// let (fx, vjp_result) = vjp_autograd(
+/// let (fx, vjp_result) = solvr::common::jacobian::vjp_autograd(
 ///     &client,
-///     |x_var, c| var_mul(x_var, x_var, c),
+///     |x_var: &Var<CpuRuntime>, c: &CpuClient| { /* var ops */ unimplemented!() },
 ///     &x,
 ///     &v,
 /// )?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub fn vjp_autograd<R, C, F>(
     client: &C,
