@@ -21,12 +21,15 @@ use numr::tensor::Tensor;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Weibull, ContinuousDistribution};
 ///
-/// let w = Weibull::new(2.0, 1.0).unwrap();  // shape=2, scale=1
+/// let w = Weibull::new(2.0, 1.0)?;  // shape=2, scale=1
 /// println!("PDF at 1.0: {}", w.pdf(1.0));
 /// println!("CDF at 1.0: {}", w.cdf(1.0));
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Weibull {

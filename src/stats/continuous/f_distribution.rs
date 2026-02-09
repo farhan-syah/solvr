@@ -20,13 +20,16 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{FDistribution, ContinuousDistribution};
 ///
 /// // ANOVA F-test with 3 and 20 degrees of freedom
-/// let f = FDistribution::new(3.0, 20.0).unwrap();
+/// let f = FDistribution::new(3.0, 20.0)?;
 /// let f_stat = 3.5;
 /// let p_value = f.sf(f_stat); // Right-tail probability
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct FDistribution {

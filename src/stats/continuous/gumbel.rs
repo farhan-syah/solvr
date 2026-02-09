@@ -28,12 +28,15 @@ use std::f64::consts::PI;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use solvr::stats::{Gumbel, ContinuousDistribution};
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use solvr::stats::{Gumbel, ContinuousDistribution, Distribution};
 ///
-/// let g = Gumbel::new(0.0, 1.0).unwrap();  // standard Gumbel
+/// let g = Gumbel::new(0.0, 1.0)?;  // standard Gumbel
 /// println!("PDF at 0: {}", g.pdf(0.0));
 /// println!("Mode: {}", g.mode());  // 0.0
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Gumbel {

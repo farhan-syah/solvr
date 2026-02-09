@@ -108,7 +108,7 @@ impl Dirichlet {
         self.log_pdf(x).exp()
     }
 
-    /// Mean vector: E[Xᵢ] = αᵢ / α₀ where α₀ = Σ αᵢ
+    /// Mean vector: E`[Xᵢ]` = αᵢ / α₀ where α₀ = Σ αᵢ
     pub fn mean_vec(&self) -> Vec<f64> {
         self.alpha.iter().map(|&a| a / self.alpha_sum).collect()
     }

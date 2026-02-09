@@ -23,7 +23,8 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{LogNormal, ContinuousDistribution, Distribution};
 ///
 /// // Standard log-normal (μ=0, σ=1)
@@ -32,7 +33,9 @@ use numr::tensor::Tensor;
 /// println!("Median: {}", ln.median()); // exp(0) = 1
 ///
 /// // Custom parameters
-/// let ln = LogNormal::new(0.0, 0.5).unwrap();
+/// let ln = LogNormal::new(0.0, 0.5)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct LogNormal {

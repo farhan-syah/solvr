@@ -23,14 +23,17 @@ use std::f64::consts::PI;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{TruncatedNormal, ContinuousDistribution, Distribution};
 ///
 /// // Truncate standard normal to [-1, 1]
-/// let tn = TruncatedNormal::new(0.0, 1.0, -1.0, 1.0).unwrap();
+/// let tn = TruncatedNormal::new(0.0, 1.0, -1.0, 1.0)?;
 /// assert!(tn.pdf(-0.5) > 0.0);
 /// assert!(tn.pdf(2.0) == 0.0);  // Outside support
 /// assert!(tn.cdf(1.0) == 1.0);  // At upper bound
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct TruncatedNormal {

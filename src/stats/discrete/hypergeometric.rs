@@ -25,12 +25,15 @@ use numr::tensor::Tensor;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Hypergeometric, DiscreteDistribution};
 ///
 /// // Urn with 20 balls, 7 red, draw 12. What's P(exactly 4 red)?
-/// let h = Hypergeometric::new(20, 7, 12).unwrap();
+/// let h = Hypergeometric::new(20, 7, 12)?;
 /// println!("P(X = 4): {}", h.pmf(4));
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Hypergeometric {

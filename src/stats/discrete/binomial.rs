@@ -19,13 +19,16 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Binomial, DiscreteDistribution, Distribution};
 ///
 /// // 10 coin flips with fair coin
-/// let b = Binomial::new(10, 0.5).unwrap();
+/// let b = Binomial::new(10, 0.5)?;
 /// println!("P(X = 5) = {}", b.pmf(5)); // Most likely outcome
 /// println!("P(X ≤ 3) = {}", b.cdf(3)); // At most 3 heads
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Binomial {

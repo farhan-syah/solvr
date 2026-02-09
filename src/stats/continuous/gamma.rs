@@ -21,16 +21,19 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Gamma, ContinuousDistribution, Distribution};
 ///
 /// // Shape = 2, rate = 1
-/// let g = Gamma::new(2.0, 1.0).unwrap();
+/// let g = Gamma::new(2.0, 1.0)?;
 /// assert!((g.mean() - 2.0).abs() < 1e-10);
 ///
 /// // From shape and scale
-/// let g = Gamma::from_shape_scale(2.0, 0.5).unwrap();
+/// let g = Gamma::from_shape_scale(2.0, 0.5)?;
 /// assert!((g.mean() - 1.0).abs() < 1e-10);
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Gamma {

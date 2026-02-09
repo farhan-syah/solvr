@@ -20,13 +20,16 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Geometric, DiscreteDistribution, Distribution};
 ///
 /// // Success probability 0.3
-/// let g = Geometric::new(0.3).unwrap();
+/// let g = Geometric::new(0.3)?;
 /// println!("P(X = 0) = {}", g.pmf(0)); // First trial succeeds
 /// println!("Mean failures: {}", g.mean());
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Geometric {

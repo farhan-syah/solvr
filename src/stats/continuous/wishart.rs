@@ -99,7 +99,7 @@ impl Wishart {
         self.p
     }
 
-    /// Mean matrix: E[X] = ν * V
+    /// Mean matrix: E`[X]` = ν * V
     pub fn mean_matrix(&self) -> Vec<f64> {
         self.scale.iter().map(|&v| self.df * v).collect()
     }

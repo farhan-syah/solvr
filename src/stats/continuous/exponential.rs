@@ -20,16 +20,19 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Exponential, ContinuousDistribution, Distribution};
 ///
 /// // Rate = 2 (mean = 0.5)
-/// let e = Exponential::new(2.0).unwrap();
+/// let e = Exponential::new(2.0)?;
 /// assert!((e.mean() - 0.5).abs() < 1e-10);
 ///
 /// // From scale parameter
-/// let e = Exponential::from_scale(0.5).unwrap();
+/// let e = Exponential::from_scale(0.5)?;
 /// assert!((e.rate() - 2.0).abs() < 1e-10);
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Exponential {

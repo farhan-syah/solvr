@@ -66,9 +66,11 @@ pub trait Distribution {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Normal, ContinuousDistribution};
 /// use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// use numr::tensor::Tensor;
 ///
 /// let device = CpuDevice::new();
 /// let client = CpuClient::new(device.clone());
@@ -79,7 +81,9 @@ pub trait Distribution {
 ///
 /// // Batch (tensor)
 /// let x = Tensor::from_slice(&[0.0, 1.0, 2.0], &[3], &device);
-/// let p_batch = n.pdf_tensor(&x, &client).unwrap();
+/// let p_batch = n.pdf_tensor(&x, &client)?;
+/// # Ok(())
+/// # }
 /// ```
 pub trait ContinuousDistribution: Distribution {
     /// Probability density function.

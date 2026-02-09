@@ -23,12 +23,15 @@ use numr::tensor::Tensor;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Laplace, ContinuousDistribution};
 ///
-/// let l = Laplace::new(0.0, 1.0).unwrap();  // standard Laplace
+/// let l = Laplace::new(0.0, 1.0)?;  // standard Laplace
 /// println!("PDF at 0: {}", l.pdf(0.0));     // 0.5
 /// println!("CDF at 0: {}", l.cdf(0.0));     // 0.5
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Laplace {

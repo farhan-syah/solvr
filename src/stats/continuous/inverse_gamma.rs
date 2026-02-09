@@ -19,16 +19,19 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{InverseGamma, ContinuousDistribution, Distribution};
 ///
 /// // Shape = 2, scale = 1
-/// let ig = InverseGamma::new(2.0, 1.0).unwrap();
+/// let ig = InverseGamma::new(2.0, 1.0)?;
 /// assert!((ig.mean() - 1.0).abs() < 1e-10);
 ///
 /// // From shape and scale
-/// let ig = InverseGamma::from_shape_scale(3.0, 2.0).unwrap();
+/// let ig = InverseGamma::from_shape_scale(3.0, 2.0)?;
 /// assert!((ig.mean() - 1.0).abs() < 1e-10);
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct InverseGamma {

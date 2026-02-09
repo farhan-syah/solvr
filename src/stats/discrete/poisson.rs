@@ -18,13 +18,16 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Poisson, DiscreteDistribution, Distribution};
 ///
 /// // Average 5 events per interval
-/// let p = Poisson::new(5.0).unwrap();
+/// let p = Poisson::new(5.0)?;
 /// println!("P(X = 5) = {}", p.pmf(5));
 /// println!("P(X ≤ 3) = {}", p.cdf(3));
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Poisson {

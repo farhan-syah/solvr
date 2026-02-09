@@ -16,7 +16,8 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Uniform, ContinuousDistribution, Distribution};
 ///
 /// // Standard uniform U(0, 1)
@@ -25,8 +26,10 @@ use numr::tensor::Tensor;
 /// assert!((u.cdf(0.5) - 0.5).abs() < 1e-10);
 ///
 /// // Custom uniform U(2, 8)
-/// let u = Uniform::new(2.0, 8.0).unwrap();
+/// let u = Uniform::new(2.0, 8.0)?;
 /// assert!((u.mean() - 5.0).abs() < 1e-10);
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Uniform {

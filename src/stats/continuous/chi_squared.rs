@@ -18,12 +18,15 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{ChiSquared, ContinuousDistribution, Distribution};
 ///
-/// let chi2 = ChiSquared::new(5).unwrap();
+/// let chi2 = ChiSquared::new(5)?;
 /// println!("Mean: {}", chi2.mean());
-/// println!("95th percentile: {}", chi2.ppf(0.95).unwrap());
+/// println!("95th percentile: {}", chi2.ppf(0.95)?);
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct ChiSquared {

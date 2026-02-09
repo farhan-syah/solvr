@@ -20,15 +20,18 @@ use std::f64::consts::PI;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{StudentT, ContinuousDistribution, Distribution};
 ///
-/// let t = StudentT::new(10.0).unwrap();
-/// println!("95th percentile: {}", t.ppf(0.95).unwrap());
+/// let t = StudentT::new(10.0)?;
+/// println!("95th percentile: {}", t.ppf(0.95)?);
 ///
 /// // Two-tailed critical value for α = 0.05
 /// let alpha = 0.05;
-/// let t_crit = t.ppf(1.0 - alpha/2.0).unwrap();
+/// let t_crit = t.ppf(1.0 - alpha/2.0)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct StudentT {

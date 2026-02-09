@@ -26,12 +26,15 @@ use std::f64::consts::PI;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Cauchy, ContinuousDistribution};
 ///
-/// let c = Cauchy::new(0.0, 1.0).unwrap();  // standard Cauchy
+/// let c = Cauchy::new(0.0, 1.0)?;  // standard Cauchy
 /// println!("PDF at 0: {}", c.pdf(0.0));    // 1/π ≈ 0.318
 /// println!("CDF at 0: {}", c.cdf(0.0));    // 0.5
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Cauchy {

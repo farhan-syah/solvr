@@ -17,13 +17,16 @@ use numr::tensor::Tensor;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use solvr::stats::{DiscreteUniform, DiscreteDistribution};
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use solvr::stats::{DiscreteUniform, DiscreteDistribution, Distribution};
 ///
 /// // Fair die
-/// let die = DiscreteUniform::new(1, 6).unwrap();
+/// let die = DiscreteUniform::new(1, 6)?;
 /// println!("P(X = 3): {}", die.pmf(3));  // 1/6
 /// println!("Mean: {}", die.mean());      // 3.5
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct DiscreteUniform {

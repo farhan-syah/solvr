@@ -24,12 +24,15 @@ use numr::tensor::Tensor;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use solvr::stats::{NegativeBinomial, DiscreteDistribution};
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use solvr::stats::{NegativeBinomial, DiscreteDistribution, Distribution};
 ///
-/// let nb = NegativeBinomial::new(5, 0.5).unwrap();  // 5 successes, p=0.5
+/// let nb = NegativeBinomial::new(5, 0.5)?;  // 5 successes, p=0.5
 /// println!("P(X = 3): {}", nb.pmf(3));
 /// println!("Mean: {}", nb.mean());
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct NegativeBinomial {

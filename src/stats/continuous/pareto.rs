@@ -25,12 +25,15 @@ use numr::tensor::Tensor;
 ///
 /// # Example
 ///
-/// ```ignore
-/// use solvr::stats::{Pareto, ContinuousDistribution};
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use solvr::stats::{Pareto, ContinuousDistribution, Distribution};
 ///
-/// let p = Pareto::new(2.0, 1.0).unwrap();  // shape=2, scale=1
+/// let p = Pareto::new(2.0, 1.0)?;  // shape=2, scale=1
 /// println!("PDF at 1: {}", p.pdf(1.0));
 /// println!("Mean: {}", p.mean());  // 2.0
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Pareto {

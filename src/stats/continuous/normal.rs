@@ -18,7 +18,8 @@ use std::f64::consts::PI;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Normal, ContinuousDistribution, Distribution};
 ///
 /// // Standard normal N(0, 1)
@@ -27,9 +28,11 @@ use std::f64::consts::PI;
 /// assert!((n.cdf(0.0) - 0.5).abs() < 1e-10);
 ///
 /// // Custom normal N(100, 15)
-/// let n = Normal::new(100.0, 15.0).unwrap();
+/// let n = Normal::new(100.0, 15.0)?;
 /// println!("Mean: {}", n.mean());
 /// println!("P(X < 130) = {}", n.cdf(130.0));
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Normal {

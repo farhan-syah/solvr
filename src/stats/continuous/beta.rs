@@ -19,15 +19,18 @@ use numr::tensor::Tensor;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Beta, ContinuousDistribution, Distribution};
 ///
 /// // Uniform distribution as Beta(1, 1)
-/// let b = Beta::new(1.0, 1.0).unwrap();
+/// let b = Beta::new(1.0, 1.0)?;
 /// assert!((b.pdf(0.5) - 1.0).abs() < 1e-10);
 ///
 /// // Arcsine distribution as Beta(0.5, 0.5)
-/// let b = Beta::new(0.5, 0.5).unwrap();
+/// let b = Beta::new(0.5, 0.5)?;
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Beta {

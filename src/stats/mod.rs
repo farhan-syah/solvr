@@ -18,8 +18,11 @@
 //!
 //! Distributions have both scalar and batch (tensor) methods:
 //!
-//! ```ignore
+//! ```
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! use solvr::stats::{Normal, ContinuousDistribution};
+//! use numr::runtime::cpu::{CpuClient, CpuDevice};
+//! use numr::tensor::Tensor;
 //!
 //! let n = Normal::standard();
 //!
@@ -27,8 +30,12 @@
 //! let p = n.pdf(0.0);
 //!
 //! // Batch - for tensor operations (GPU-accelerated)
-//! let x = client.from_slice(&[0.0, 1.0, 2.0], &device).unwrap();
-//! let p_batch = n.pdf_tensor(&x, &client).unwrap();
+//! let device = CpuDevice::new();
+//! let client = CpuClient::new(device.clone());
+//! let x = Tensor::from_slice(&[0.0, 1.0, 2.0], &[3], &device);
+//! let p_batch = n.pdf_tensor(&x, &client)?;
+//! # Ok(())
+//! # }
 //! ```
 
 // Backend implementations

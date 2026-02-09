@@ -18,13 +18,16 @@ use crate::stats::error::{StatsError, StatsResult};
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::stats::{Multinomial, Distribution};
 ///
 /// // 3-sided die rolled 10 times with probabilities [0.3, 0.3, 0.4]
-/// let m = Multinomial::new(10, vec![0.3, 0.3, 0.4]).unwrap();
+/// let m = Multinomial::new(10, vec![0.3, 0.3, 0.4])?;
 /// println!("P(X = [3, 3, 4]) = {}", m.pmf(&[3, 3, 4]));
 /// println!("Mean vector: {:?}", m.mean_vec());
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone)]
 pub struct Multinomial {
@@ -160,7 +163,7 @@ impl Multinomial {
 
     /// Compute the mean vector.
     ///
-    /// E[Xᵢ] = n * pᵢ
+    /// E`[Xᵢ]` = n * pᵢ
     pub fn mean_vec(&self) -> Vec<f64> {
         let n_f = self.n as f64;
         self.p.iter().map(|&pi| n_f * pi).collect()
