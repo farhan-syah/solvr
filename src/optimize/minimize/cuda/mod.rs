@@ -128,6 +128,7 @@ impl crate::optimize::OptimizationAlgorithms<CudaRuntime> for CudaClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::optimize::OptimizationAlgorithms;
     use numr::runtime::cuda::CudaDevice;
 
     fn setup() -> Option<(CudaDevice, CudaClient)> {
