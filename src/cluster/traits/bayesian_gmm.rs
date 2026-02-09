@@ -69,9 +69,9 @@ impl Default for BayesianGmmOptions {
 /// Fitted Bayesian Gaussian Mixture Model.
 #[derive(Debug, Clone)]
 pub struct BayesianGmmModel<R: Runtime> {
-    /// Effective mixture weights [k] (some may be near zero).
+    /// Effective mixture weights `[k]` (some may be near zero).
     pub weights: Tensor<R>,
-    /// Component means [k, d].
+    /// Component means `[k, d]`.
     pub means: Tensor<R>,
     /// Covariances (shape depends on covariance_type).
     pub covariances: Tensor<R>,
@@ -79,9 +79,9 @@ pub struct BayesianGmmModel<R: Runtime> {
     pub precisions_cholesky: Tensor<R>,
     /// Weight concentration parameters (posterior).
     pub weight_concentration: Tensor<R>,
-    /// Mean precision parameters (posterior) [k].
+    /// Mean precision parameters (posterior) `[k]`.
     pub mean_precision: Tensor<R>,
-    /// Degrees of freedom (posterior) [k].
+    /// Degrees of freedom (posterior) `[k]`.
     pub degrees_of_freedom: Tensor<R>,
     /// Whether variational EM converged.
     pub converged: bool,
@@ -93,7 +93,7 @@ pub struct BayesianGmmModel<R: Runtime> {
 
 /// Bayesian Gaussian Mixture Model algorithms.
 pub trait BayesianGmmAlgorithms<R: Runtime> {
-    /// Fit Bayesian GMM to data [n, d].
+    /// Fit Bayesian GMM to data `[n, d]`.
     fn bayesian_gmm_fit(
         &self,
         data: &Tensor<R>,
@@ -107,7 +107,7 @@ pub trait BayesianGmmAlgorithms<R: Runtime> {
         data: &Tensor<R>,
     ) -> Result<Tensor<R>>;
 
-    /// Predict component probabilities [n, k].
+    /// Predict component probabilities `[n, k]`.
     fn bayesian_gmm_predict_proba(
         &self,
         model: &BayesianGmmModel<R>,

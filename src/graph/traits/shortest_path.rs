@@ -51,7 +51,7 @@ pub trait ShortestPathAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `heuristic` - Estimated distance from each node to target [n].
+    /// * `heuristic` - Estimated distance from each node to target `[n]`.
     ///   Must be admissible (never overestimates).
     fn astar(
         &self,

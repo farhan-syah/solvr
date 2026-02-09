@@ -31,9 +31,9 @@ impl Default for AffinityPropagationOptions {
 /// Result of Affinity Propagation.
 #[derive(Debug, Clone)]
 pub struct AffinityPropagationResult<R: Runtime> {
-    /// Cluster labels [n] I64.
+    /// Cluster labels `[n]` I64.
     pub labels: Tensor<R>,
-    /// Indices of exemplars [k] I64.
+    /// Indices of exemplars `[k]` I64.
     pub cluster_centers_indices: Tensor<R>,
     /// Number of iterations run.
     pub n_iter: usize,
@@ -41,7 +41,7 @@ pub struct AffinityPropagationResult<R: Runtime> {
 
 /// Affinity Propagation clustering algorithms.
 pub trait AffinityPropagationAlgorithms<R: Runtime> {
-    /// Run Affinity Propagation on a similarity matrix [n, n].
+    /// Run Affinity Propagation on a similarity matrix `[n, n]`.
     fn affinity_propagation(
         &self,
         similarities: &Tensor<R>,

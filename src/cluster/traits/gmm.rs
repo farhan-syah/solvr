@@ -7,14 +7,14 @@ use numr::tensor::Tensor;
 /// Covariance parameterization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum CovarianceType {
-    /// Each component has its own full covariance [k, d, d].
+    /// Each component has its own full covariance `[k, d, d]`.
     #[default]
     Full,
-    /// All components share one covariance [d, d].
+    /// All components share one covariance `[d, d]`.
     Tied,
-    /// Diagonal covariance [k, d].
+    /// Diagonal covariance `[k, d]`.
     Diagonal,
-    /// Scalar variance per component [k].
+    /// Scalar variance per component `[k]`.
     Spherical,
 }
 
@@ -64,9 +64,9 @@ impl Default for GmmOptions {
 /// Fitted Gaussian Mixture Model.
 #[derive(Debug, Clone)]
 pub struct GmmModel<R: Runtime> {
-    /// Mixture weights [k] (sum = 1).
+    /// Mixture weights `[k]` (sum = 1).
     pub weights: Tensor<R>,
-    /// Component means [k, d].
+    /// Component means `[k, d]`.
     pub means: Tensor<R>,
     /// Covariances (shape depends on covariance_type).
     pub covariances: Tensor<R>,
@@ -82,13 +82,13 @@ pub struct GmmModel<R: Runtime> {
 
 /// Gaussian Mixture Model algorithms.
 pub trait GmmAlgorithms<R: Runtime> {
-    /// Fit GMM to data [n, d].
+    /// Fit GMM to data `[n, d]`.
     fn gmm_fit(&self, data: &Tensor<R>, options: &GmmOptions) -> Result<GmmModel<R>>;
 
     /// Predict most likely component for each point.
     fn gmm_predict(&self, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>;
 
-    /// Predict component probabilities [n, k].
+    /// Predict component probabilities `[n, k]`.
     fn gmm_predict_proba(&self, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>;
 
     /// Compute per-sample log-likelihood.

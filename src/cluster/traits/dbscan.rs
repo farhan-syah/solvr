@@ -29,9 +29,9 @@ impl Default for DbscanOptions {
 /// Result of DBSCAN clustering.
 #[derive(Debug, Clone)]
 pub struct DbscanResult<R: Runtime> {
-    /// Cluster labels [n] I64, -1 for noise.
+    /// Cluster labels `[n]` I64, -1 for noise.
     pub labels: Tensor<R>,
-    /// Indices of core samples [n_core] I64.
+    /// Indices of core samples `[n_core]` I64.
     pub core_sample_indices: Tensor<R>,
     /// Number of clusters found.
     pub n_clusters: usize,
@@ -39,6 +39,6 @@ pub struct DbscanResult<R: Runtime> {
 
 /// DBSCAN clustering algorithms.
 pub trait DbscanAlgorithms<R: Runtime> {
-    /// Run DBSCAN on data [n, d].
+    /// Run DBSCAN on data `[n, d]`.
     fn dbscan(&self, data: &Tensor<R>, options: &DbscanOptions) -> Result<DbscanResult<R>>;
 }

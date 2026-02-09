@@ -45,16 +45,16 @@ impl Default for HdbscanOptions {
 /// Result of HDBSCAN clustering.
 #[derive(Debug, Clone)]
 pub struct HdbscanResult<R: Runtime> {
-    /// Cluster labels [n] I64, -1 for noise.
+    /// Cluster labels `[n]` I64, -1 for noise.
     pub labels: Tensor<R>,
-    /// Membership strength [n].
+    /// Membership strength `[n]`.
     pub probabilities: Tensor<R>,
-    /// Persistence of each cluster [n_clusters].
+    /// Persistence of each cluster `[n_clusters]`.
     pub cluster_persistence: Tensor<R>,
 }
 
 /// HDBSCAN clustering algorithms.
 pub trait HdbscanAlgorithms<R: Runtime> {
-    /// Run HDBSCAN on data [n, d].
+    /// Run HDBSCAN on data `[n, d]`.
     fn hdbscan(&self, data: &Tensor<R>, options: &HdbscanOptions) -> Result<HdbscanResult<R>>;
 }

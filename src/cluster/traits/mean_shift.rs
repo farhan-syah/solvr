@@ -31,9 +31,9 @@ impl Default for MeanShiftOptions {
 /// Result of Mean Shift clustering.
 #[derive(Debug, Clone)]
 pub struct MeanShiftResult<R: Runtime> {
-    /// Cluster labels [n] I64.
+    /// Cluster labels `[n]` I64.
     pub labels: Tensor<R>,
-    /// Cluster centers [k, d].
+    /// Cluster centers `[k, d]`.
     pub cluster_centers: Tensor<R>,
     /// Number of iterations run.
     pub n_iter: usize,
@@ -41,7 +41,7 @@ pub struct MeanShiftResult<R: Runtime> {
 
 /// Mean Shift clustering algorithms.
 pub trait MeanShiftAlgorithms<R: Runtime> {
-    /// Run Mean Shift on data [n, d].
+    /// Run Mean Shift on data `[n, d]`.
     fn mean_shift(
         &self,
         data: &Tensor<R>,

@@ -23,7 +23,7 @@ pub trait ClusterMetricsAlgorithms<R: Runtime> {
         metric: DistanceMetric,
     ) -> Result<Tensor<R>>;
 
-    /// Per-sample silhouette coefficients [n].
+    /// Per-sample silhouette coefficients `[n]`.
     fn silhouette_samples(
         &self,
         data: &Tensor<R>,

@@ -13,7 +13,7 @@ use super::helpers::extract_csr_arrays;
 
 /// PageRank centrality.
 ///
-/// r = (1-d)/n + d * M^T * r, where M[i,j] = A[i,j] / out_degree[i].
+/// r = (1-d)/n + d * M^T * r, where `M[i,j]` = `A[i,j]` / `out_degree[i]`.
 /// Implemented sequentially using CSR arrays.
 pub fn pagerank_impl<R, C>(
     _client: &C,

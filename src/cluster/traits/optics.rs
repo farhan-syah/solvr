@@ -32,18 +32,18 @@ impl Default for OpticsOptions {
 /// Result of OPTICS.
 #[derive(Debug, Clone)]
 pub struct OpticsResult<R: Runtime> {
-    /// Processing order [n] I64.
+    /// Processing order `[n]` I64.
     pub ordering: Tensor<R>,
-    /// Reachability distances [n].
+    /// Reachability distances `[n]`.
     pub reachability: Tensor<R>,
-    /// Core distances [n].
+    /// Core distances `[n]`.
     pub core_distances: Tensor<R>,
-    /// Cluster labels [n] I64 (if xi provided).
+    /// Cluster labels `[n]` I64 (if xi provided).
     pub labels: Tensor<R>,
 }
 
 /// OPTICS clustering algorithms.
 pub trait OpticsAlgorithms<R: Runtime> {
-    /// Run OPTICS on data [n, d].
+    /// Run OPTICS on data `[n, d]`.
     fn optics(&self, data: &Tensor<R>, options: &OpticsOptions) -> Result<OpticsResult<R>>;
 }

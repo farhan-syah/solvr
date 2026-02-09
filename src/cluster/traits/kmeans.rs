@@ -12,7 +12,7 @@ pub enum KMeansInit<R: Runtime> {
     KMeansPlusPlus,
     /// Random selection from data points.
     Random,
-    /// User-provided initial centroids [k, d].
+    /// User-provided initial centroids `[k, d]`.
     Points(Tensor<R>),
 }
 
@@ -59,9 +59,9 @@ impl<R: Runtime> Default for KMeansOptions<R> {
 /// Result of K-Means clustering.
 #[derive(Debug, Clone)]
 pub struct KMeansResult<R: Runtime> {
-    /// Cluster centroids [k, d].
+    /// Cluster centroids `[k, d]`.
     pub centroids: Tensor<R>,
-    /// Cluster assignment for each point [n] I64.
+    /// Cluster assignment for each point `[n]` I64.
     pub labels: Tensor<R>,
     /// Sum of squared distances to nearest centroid (scalar).
     pub inertia: Tensor<R>,
@@ -71,7 +71,7 @@ pub struct KMeansResult<R: Runtime> {
 
 /// K-Means clustering algorithms.
 pub trait KMeansAlgorithms<R: Runtime> {
-    /// Fit K-Means clustering to data [n, d].
+    /// Fit K-Means clustering to data `[n, d]`.
     fn kmeans(&self, data: &Tensor<R>, options: &KMeansOptions<R>) -> Result<KMeansResult<R>>;
 
     /// Predict cluster assignments for new data given centroids.

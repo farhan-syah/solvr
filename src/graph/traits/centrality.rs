@@ -13,7 +13,7 @@ pub trait CentralityAlgorithms<R: Runtime> {
     /// Degree centrality: fraction of nodes each node is connected to.
     ///
     /// GPU-parallel via sparse_sum_rows.
-    /// Returns [n] tensor with centrality values in [0, 1].
+    /// Returns `[n]` tensor with centrality values in [0, 1].
     fn degree_centrality(&self, graph: &GraphData<R>) -> Result<Tensor<R>>;
 
     /// Betweenness centrality: fraction of shortest paths passing through each node.
