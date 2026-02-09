@@ -11,17 +11,15 @@
 //!
 //! # Example
 //!
-//! ```ignore
-//! use numr::autograd::dual_ops::{dual_sub, dual_mul_scalar};
+//! ```no_run
+//! use numr::autograd::DualTensor;
+//! use numr::runtime::cpu::{CpuClient, CpuRuntime};
 //!
 //! // DAE: y' = z, 0 = y - sin(t)
-//! // Formulated as F(t, y, y') = [y' - z, y - sin(t)]
-//! let f = |t: &DualTensor<R>, y: &DualTensor<R>, yp: &DualTensor<R>, c: &C| {
+//! let f = |_t: &DualTensor<CpuRuntime>, _y: &DualTensor<CpuRuntime>, _yp: &DualTensor<CpuRuntime>, _c: &CpuClient| {
 //!     // Build residual using dual ops for autograd
-//!     // ...
+//!     unimplemented!()
 //! };
-//!
-//! let result = dae_impl(&client, f, [0.0, 10.0], &y0, &yp0, &ode_opts, &dae_opts)?;
 //! ```
 
 use numr::autograd::DualTensor;

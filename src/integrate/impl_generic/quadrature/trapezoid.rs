@@ -74,7 +74,7 @@ where
 
 /// Trapezoidal rule with uniform spacing.
 ///
-/// Uses the formula: integral = dx * (sum(y) - 0.5*(y[0] + y[n-1]))
+/// Uses the formula: integral = dx * (sum(y) - 0.5*(y`[0]` + y`[n-1]`))
 /// All operations are tensor-based.
 pub fn trapezoid_uniform_impl<R, C>(client: &C, y: &Tensor<R>, dx: f64) -> Result<Tensor<R>>
 where

@@ -18,9 +18,9 @@ pub trait ScatteredInterpAlgorithms<R: Runtime> {
     /// Interpolate scattered data at query points.
     ///
     /// # Arguments
-    /// * `points` - Known data point coordinates, shape [n, d]
-    /// * `values` - Known values at data points, shape [n]
-    /// * `xi` - Query point coordinates, shape [m, d]
+    /// * `points` - Known data point coordinates, shape `[n, d]`
+    /// * `values` - Known values at data points, shape `[n]`
+    /// * `xi` - Query point coordinates, shape `[m, d]`
     /// * `method` - Interpolation method
     fn griddata(
         &self,

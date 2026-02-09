@@ -7,11 +7,11 @@ use numr::tensor::Tensor;
 /// A NURBS curve defined by weighted control points and knot vector.
 #[derive(Debug, Clone)]
 pub struct NurbsCurve<R: Runtime> {
-    /// Control points, shape [n_points, n_dims].
+    /// Control points, shape `[n_points, n_dims]`.
     pub control_points: Tensor<R>,
-    /// Weights for each control point, shape [n_points].
+    /// Weights for each control point, shape `[n_points]`.
     pub weights: Tensor<R>,
-    /// Knot vector, shape [n_knots]. Must be non-decreasing.
+    /// Knot vector, shape `[n_knots]`. Must be non-decreasing.
     pub knots: Tensor<R>,
     /// Polynomial degree.
     pub degree: usize,

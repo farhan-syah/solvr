@@ -14,9 +14,9 @@ use numr::tensor::Tensor;
 pub struct CloughTocher2D<R: Runtime> {
     /// Delaunay triangulation of the input points.
     pub triangulation: Delaunay<R>,
-    /// Function values at vertices, shape [n].
+    /// Function values at vertices, shape `[n]`.
     pub values: Tensor<R>,
-    /// Estimated gradients at vertices, shape [n, 2].
+    /// Estimated gradients at vertices, shape `[n, 2]`.
     pub gradients: Tensor<R>,
     /// Fill value for points outside the convex hull.
     pub fill_value: f64,
@@ -30,8 +30,8 @@ pub trait CloughTocher2DAlgorithms<R: Runtime> {
     /// Fit a Clough-Tocher interpolant to scattered 2D data.
     ///
     /// # Arguments
-    /// * `points` - 2D tensor of point coordinates, shape [n, 2]
-    /// * `values` - 1D tensor of values at each point, shape [n]
+    /// * `points` - 2D tensor of point coordinates, shape `[n, 2]`
+    /// * `values` - 1D tensor of values at each point, shape `[n]`
     /// * `fill_value` - Value for query points outside the convex hull (default: NaN)
     fn clough_tocher_fit(
         &self,
@@ -44,10 +44,10 @@ pub trait CloughTocher2DAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     /// * `ct` - The fitted Clough-Tocher interpolator
-    /// * `xi` - 2D tensor of query points, shape [m, 2]
+    /// * `xi` - 2D tensor of query points, shape `[m, 2]`
     ///
     /// # Returns
-    /// 1D tensor of interpolated values, shape [m].
+    /// 1D tensor of interpolated values, shape `[m]`.
     /// Points outside the convex hull get `fill_value`.
     fn clough_tocher_evaluate(
         &self,

@@ -35,18 +35,15 @@ pub use crate::integrate::impl_generic::ode::direct_solver_config::{
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # use numr::runtime::cpu::CpuRuntime;
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::integrate::ode::SparseJacobianConfig;
-/// use numr::algorithm::iterative::PreconditionerType;
-///
-/// let sparse_config = SparseJacobianConfig {
-///     enabled: true,
-///     pattern: None,  // Auto-detect or provide CsrData
-///     gmres_tol: 1e-10,
-///     max_gmres_iter: 100,
-///     preconditioner: PreconditionerType::Ilu0,
-///     _phantom: std::marker::PhantomData,
-/// };
+/// # let sparse_config = SparseJacobianConfig::<CpuRuntime>::default()
+/// #     .with_gmres_tol(1e-10);
+/// # // Type is: SparseJacobianConfig
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone)]
 pub struct SparseJacobianConfig<R: Runtime> {
@@ -676,9 +673,10 @@ impl BVPOptions {
 /// # Example
 ///
 /// For a pendulum in Cartesian coordinates:
-/// ```ignore
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use solvr::integrate::ode::DAEVariableType;
 /// // x'' = λ·x, y'' = λ·y - g, x² + y² = L²
-/// // As first-order system: [x, y, vx, vy, λ]
 /// let var_types = vec![
 ///     DAEVariableType::Differential, // x
 ///     DAEVariableType::Differential, // y
@@ -686,6 +684,8 @@ impl BVPOptions {
 ///     DAEVariableType::Differential, // vy
 ///     DAEVariableType::Algebraic,    // λ (Lagrange multiplier)
 /// ];
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DAEVariableType {
@@ -702,15 +702,18 @@ pub enum DAEVariableType {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # use numr::runtime::cpu::CpuRuntime;
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use solvr::integrate::ode::{DAEOptions, DAEVariableType};
-///
-/// let dae_opts = DAEOptions::default()
+/// let dae_opts = DAEOptions::<CpuRuntime>::default()
 ///     .with_variable_types(vec![
 ///         DAEVariableType::Differential,
 ///         DAEVariableType::Algebraic,
 ///     ])
 ///     .with_ic_tolerance(1e-12);
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug, Clone)]
 pub struct DAEOptions<R: Runtime> {
@@ -860,7 +863,7 @@ pub struct DAEResultTensor<R: Runtime> {
 }
 
 impl<R: Runtime> DAEResultTensor<R> {
-    /// Get the final state as a Vec<f64>.
+    /// Get the final state as a `Vec<f64>`.
     pub fn y_final_vec(&self) -> Vec<f64> {
         let shape = self.y.shape();
         if shape.len() != 2 || shape[0] == 0 {
@@ -873,7 +876,7 @@ impl<R: Runtime> DAEResultTensor<R> {
         all_data[last_row_start..].to_vec()
     }
 
-    /// Get the final derivative as a Vec<f64> (if available).
+    /// Get the final derivative as a `Vec<f64>` (if available).
     pub fn yp_final_vec(&self) -> Option<Vec<f64>> {
         self.yp.as_ref().map(|yp| {
             let shape = yp.shape();
@@ -1041,7 +1044,7 @@ pub struct ODEResultWithEvents<R: Runtime> {
 }
 
 impl<R: Runtime> ODEResultWithEvents<R> {
-    /// Get the final state as a Vec<f64>.
+    /// Get the final state as a `Vec<f64>`.
     pub fn y_final_vec(&self) -> Vec<f64> {
         let shape = self.y.shape();
         if shape.len() != 2 || shape[0] == 0 {

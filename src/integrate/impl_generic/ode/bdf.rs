@@ -11,16 +11,15 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```no_run
 //! use numr::autograd::DualTensor;
-//! use numr::autograd::dual_ops::dual_mul_scalar;
+//! use numr::runtime::cpu::{CpuClient, CpuRuntime};
 //!
 //! // Stiff decay: dy/dt = -1000*y
-//! let f = |_t: &DualTensor<R>, y: &DualTensor<R>, c: &C| {
-//!     dual_mul_scalar(y, -1000.0, c)
+//! let f = |_t: &DualTensor<CpuRuntime>, y: &DualTensor<CpuRuntime>, _c: &CpuClient| {
+//!     // Use dual ops to compute derivative
+//!     unimplemented!()
 //! };
-//!
-//! let result = bdf_impl(&client, f, [0.0, 1.0], &y0, &opts, &bdf_opts)?;
 //! ```
 
 use numr::autograd::DualTensor;

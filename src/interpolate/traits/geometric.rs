@@ -30,14 +30,14 @@ pub trait GeometricTransformAlgorithms<R: Runtime> {
     /// # Arguments
     ///
     /// * `input` - Input tensor
-    /// * `coordinates` - Tensor of shape [ndim, ...output_shape] where each
+    /// * `coordinates` - Tensor of shape `[ndim, ...output_shape]` where each
     ///   slice along dim 0 gives the coordinates for that axis
     /// * `order` - Interpolation order
     /// * `cval` - Value for out-of-bounds coordinates (default: 0.0)
     ///
     /// # Returns
     ///
-    /// Output tensor with shape matching coordinates[0].shape()
+    /// Output tensor with shape matching `coordinates[0].shape()`
     fn map_coordinates(
         &self,
         input: &Tensor<R>,
@@ -53,8 +53,8 @@ pub trait GeometricTransformAlgorithms<R: Runtime> {
     /// # Arguments
     ///
     /// * `input` - Input tensor
-    /// * `matrix` - Transformation matrix of shape [ndim, ndim]
-    /// * `offset` - Translation offset of shape [ndim]
+    /// * `matrix` - Transformation matrix of shape `[ndim, ndim]`
+    /// * `offset` - Translation offset of shape `[ndim]`
     /// * `output_shape` - Shape of the output tensor (if None, same as input)
     /// * `order` - Interpolation order
     /// * `cval` - Fill value for out-of-bounds

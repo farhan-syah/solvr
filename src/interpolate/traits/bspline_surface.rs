@@ -7,11 +7,11 @@ use numr::tensor::Tensor;
 /// A B-spline surface defined by a 2D grid of control points and two knot vectors.
 #[derive(Debug, Clone)]
 pub struct BSplineSurface<R: Runtime> {
-    /// Control points, shape [nu, nv, n_dims].
+    /// Control points, shape `[nu, nv, n_dims]`.
     pub control_points: Tensor<R>,
-    /// Knot vector in u direction, shape [n_knots_u].
+    /// Knot vector in u direction, shape `[n_knots_u]`.
     pub knots_u: Tensor<R>,
-    /// Knot vector in v direction, shape [n_knots_v].
+    /// Knot vector in v direction, shape `[n_knots_v]`.
     pub knots_v: Tensor<R>,
     /// Degree in u direction.
     pub degree_u: usize,

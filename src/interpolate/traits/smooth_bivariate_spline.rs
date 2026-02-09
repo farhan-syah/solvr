@@ -15,10 +15,10 @@ pub trait SmoothBivariateSplineAlgorithms<R: Runtime> {
     /// Fit a smoothing bivariate spline to scattered data.
     ///
     /// # Arguments
-    /// * `x` - 1D tensor of x coordinates, shape [m]
-    /// * `y` - 1D tensor of y coordinates, shape [m]
-    /// * `z` - 1D tensor of values, shape [m]
-    /// * `weights` - Optional 1D tensor of weights, shape [m]. If None, uniform weights.
+    /// * `x` - 1D tensor of x coordinates, shape `[m]`
+    /// * `y` - 1D tensor of y coordinates, shape `[m]`
+    /// * `z` - 1D tensor of values, shape `[m]`
+    /// * `weights` - Optional 1D tensor of weights, shape `[m]`. If None, uniform weights.
     /// * `smoothing` - Smoothing factor (0 = interpolation, >0 = smoothing)
     /// * `kx` - Degree in x direction (typically 3)
     /// * `ky` - Degree in y direction (typically 3)
@@ -38,11 +38,11 @@ pub trait SmoothBivariateSplineAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     /// * `spline` - The fitted bivariate spline
-    /// * `xi` - 1D tensor of x query coordinates, shape [m]
-    /// * `yi` - 1D tensor of y query coordinates, shape [m]
+    /// * `xi` - 1D tensor of x query coordinates, shape `[m]`
+    /// * `yi` - 1D tensor of y query coordinates, shape `[m]`
     ///
     /// # Returns
-    /// 1D tensor of interpolated values, shape [m]
+    /// 1D tensor of interpolated values, shape `[m]`
     fn smooth_bivariate_spline_evaluate(
         &self,
         spline: &BivariateSpline<R>,

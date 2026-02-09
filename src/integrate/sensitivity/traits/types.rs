@@ -93,7 +93,7 @@ impl SensitivityOptions {
 /// Result of adjoint sensitivity analysis.
 #[derive(Debug, Clone)]
 pub struct SensitivityResult<R: Runtime> {
-    /// Gradient of the cost with respect to parameters: ∂J/∂p [n_params].
+    /// Gradient of the cost with respect to parameters: ∂J/∂p `[n_params]`.
     pub gradient: Tensor<R>,
 
     /// Cost function value J = g(y(T)).
@@ -113,12 +113,12 @@ pub struct SensitivityResult<R: Runtime> {
 }
 
 impl<R: Runtime> SensitivityResult<R> {
-    /// Get the gradient as a Vec<f64>.
+    /// Get the gradient as a `Vec<f64>`.
     pub fn gradient_vec(&self) -> Vec<f64> {
         self.gradient.to_vec()
     }
 
-    /// Get the final state as a Vec<f64>.
+    /// Get the final state as a `Vec<f64>`.
     pub fn y_final_vec(&self) -> Vec<f64> {
         self.y_final.to_vec()
     }

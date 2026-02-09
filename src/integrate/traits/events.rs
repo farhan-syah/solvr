@@ -6,6 +6,11 @@
 //! # Example
 //!
 //! ```ignore
+//! # use numr::runtime::Runtime;
+//! # use numr::ops::TensorOps;
+//! # use numr::runtime::RuntimeClient;
+//! # use numr::tensor::Tensor;
+//! # use numr::error::Result;
 //! use solvr::integrate::traits::EventFunction;
 //!
 //! // Detect when y[0] crosses zero (e.g., ball hitting ground)
@@ -16,8 +21,9 @@
 //!     C: TensorOps<R> + RuntimeClient<R>,
 //! {
 //!     fn evaluate(&self, _client: &C, _t: f64, y: &Tensor<R>) -> Result<f64> {
-//!         let y_data: Vec<f64> = y.to_vec();
-//!         Ok(y_data[0])  // g(t, y) = y[0], event when height = 0
+//!         // g(t, y) = y[0], event when height = 0
+//!         let val = y.get_scalar(0)?;
+//!         Ok(val)
 //!     }
 //! }
 //! ```

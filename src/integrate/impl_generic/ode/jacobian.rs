@@ -14,14 +14,15 @@
 //!
 //! Users write their ODE function using `DualTensor` and `dual_*` operations:
 //!
-//! ```ignore
-//! use numr::autograd::dual_ops::{dual_mul, dual_sub, dual_mul_scalar};
+//! ```no_run
+//! use numr::autograd::DualTensor;
+//! use numr::runtime::cpu::{CpuClient, CpuRuntime};
 //!
 //! // Van der Pol oscillator: y'' - μ(1-y²)y' + y = 0
 //! // As system: [y₀' = y₁, y₁' = μ(1-y₀²)y₁ - y₀]
-//! let f = |_t: &DualTensor<R>, y: &DualTensor<R>, client: &C| {
+//! let f = |_t: &DualTensor<CpuRuntime>, _y: &DualTensor<CpuRuntime>, _client: &CpuClient| {
 //!     // Extract components, compute using dual ops
-//!     // ...
+//!     unimplemented!()
 //! };
 //! ```
 
@@ -37,7 +38,7 @@ use crate::common::jacobian::jacobian_autograd;
 /// Compute the Jacobian matrix ∂f/∂y using forward-mode automatic differentiation.
 ///
 /// For an ODE dy/dt = f(t, y), computes the n×n Jacobian matrix J where
-/// J[i,j] = ∂fᵢ/∂yⱼ.
+/// `J[i,j]` = ∂fᵢ/∂yⱼ.
 ///
 /// This is a thin wrapper around [`crate::common::jacobian::jacobian_autograd`]
 /// that handles the time parameter for ODE functions. Time is wrapped in a
@@ -52,7 +53,7 @@ use crate::common::jacobian::jacobian_autograd;
 ///
 /// # Returns
 ///
-/// Jacobian matrix of shape [n, n] where n is state dimension.
+/// Jacobian matrix of shape `[n, n]` where n is state dimension.
 pub fn compute_jacobian_autograd<R, C, F>(
     client: &C,
     f: &F,

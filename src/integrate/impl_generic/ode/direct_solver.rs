@@ -81,9 +81,9 @@ pub struct DirectSparseSolver<R: Runtime> {
     /// On subsequent solves, only values are replaced via `update_values`.
     cached_permuted_csc: Option<CscData<R>>,
 
-    /// Gather row indices (I64 tensor [nnz]) mapping CSC nonzeros to dense matrix rows.
+    /// Gather row indices (I64 tensor `[nnz]`) mapping CSC nonzeros to dense matrix rows.
     gather_row_indices: Option<Tensor<R>>,
-    /// Gather column indices (I64 tensor [nnz]) mapping CSC nonzeros to dense matrix columns.
+    /// Gather column indices (I64 tensor `[nnz]`) mapping CSC nonzeros to dense matrix columns.
     gather_col_indices: Option<Tensor<R>>,
 
     /// Pre-allocated workspace for numeric LU refactorization (no allocation after first solve).
@@ -158,7 +158,7 @@ impl<R: Runtime> DirectSparseSolver<R> {
     ///
     /// * `client` - Runtime client with sparse and indexing operations
     /// * `m_dense` - Dense iteration matrix (I - hγJ)
-    /// * `b` - Right-hand side vector [n] or [n, 1]
+    /// * `b` - Right-hand side vector `[n]` or `[n, 1]`
     pub fn solve<C>(&mut self, client: &C, m_dense: &Tensor<R>, b: &Tensor<R>) -> Result<Tensor<R>>
     where
         C: SparseOps<R> + IndexingOps<R> + numr::ops::TensorOps<R> + numr::ops::ScalarOps<R>,

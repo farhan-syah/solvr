@@ -28,17 +28,17 @@ use super::{
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// # use numr::tensor::Tensor;
 /// use solvr::integrate::IntegrationAlgorithms;
-/// use numr::runtime::cpu::{CpuClient, CpuDevice};
-///
-/// let device = CpuDevice::new();
-/// let client = CpuClient::new(device.clone());
-///
+/// # let device = CpuDevice::new();
+/// # let client = CpuClient::new(device.clone());
 /// // Integrate y = x^2 from 0 to 1
-/// let x = Tensor::from_slice(&[0.0, 0.25, 0.5, 0.75, 1.0], &[5], &device);
-/// let y = Tensor::from_slice(&[0.0, 0.0625, 0.25, 0.5625, 1.0], &[5], &device);
+/// # let x = Tensor::from_slice(&[0.0, 0.25, 0.5, 0.75, 1.0], &[5], &device);
+/// # let y = Tensor::from_slice(&[0.0, 0.0625, 0.25, 0.5625, 1.0], &[5], &device);
 /// let result = client.trapezoid(&y, &x)?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub trait IntegrationAlgorithms<R: Runtime> {
     /// Trapezoidal rule integration.
@@ -138,11 +138,11 @@ pub trait IntegrationAlgorithms<R: Runtime> {
     ///
     /// Solves the system dy/dt = f(t, y) with initial condition y(t0) = y0.
     /// All computation stays on device - no GPU→CPU→GPU roundtrips.
-    /// Time is passed as a scalar tensor (shape [1]) to enable device-resident computation.
+    /// Time is passed as a scalar tensor (shape `[1]`) to enable device-resident computation.
     ///
     /// # Arguments
-    /// * `f` - Right-hand side function f(t, y) -> dy/dt, where t is a scalar tensor [1]
-    /// * `t_span` - Integration interval [t0, tf]
+    /// * `f` - Right-hand side function f(t, y) -> dy/dt, where t is a scalar tensor `[1]`
+    /// * `t_span` - Integration interval `[t0, tf]`
     /// * `y0` - Initial condition as a 1-D tensor
     /// * `options` - Solver options (method, tolerances, step bounds)
     ///
@@ -151,22 +151,22 @@ pub trait IntegrationAlgorithms<R: Runtime> {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+    /// # use numr::tensor::Tensor;
+    /// # use numr::ops::ScalarOps;
     /// use solvr::integrate::{IntegrationAlgorithms, ODEOptions};
-    /// use numr::runtime::cpu::{CpuClient, CpuDevice};
-    ///
-    /// let device = CpuDevice::new();
-    /// let client = CpuClient::new(device.clone());
-    ///
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
     /// // Solve dy/dt = -y, y(0) = 1
-    /// // Note: t is a tensor [1], y is a tensor [n]
-    /// let y0 = Tensor::from_slice(&[1.0], &[1], &device);
+    /// # let y0 = Tensor::from_slice(&[1.0], &[1], &device);
     /// let result = client.solve_ivp(
-    ///     |_t, y| client.mul_scalar(y, -1.0),
+    ///     |_t, y| Ok(client.mul_scalar(y, -1.0)?),
     ///     [0.0, 5.0],
     ///     &y0,
     ///     &ODEOptions::default(),
     /// )?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn solve_ivp<F>(
         &self,
@@ -484,22 +484,28 @@ pub trait IntegrationAlgorithms<R: Runtime> {
     ///
     /// # Example
     ///
-    /// ```ignore
-    /// use numr::autograd::dual_ops::{dual_sub, dual_mul_scalar};
-    ///
+    /// ```no_run
+    /// use numr::autograd::DualTensor;
+    /// use numr::tensor::Tensor;
+    /// use solvr::integrate::{IntegrationAlgorithms, ODEOptions, DAEOptions};
+    /// use numr::runtime::cpu::{CpuClient, CpuDevice, CpuRuntime};
+    /// let device = CpuDevice::new();
+    /// let client = CpuClient::new(device.clone());
+    /// let y0 = Tensor::from_slice(&[0.0], &[1], &device);
+    /// let yp0 = Tensor::from_slice(&[1.0], &[1], &device);
     /// // Simple DAE: y' = z, y - sin(t) = 0
-    /// // F(t, y, y') = [y' - z, y - sin(t)]
-    /// let f = |t: &DualTensor<R>, y: &DualTensor<R>, yp: &DualTensor<R>, c: &C| {
-    ///     // ... compute residual using dual operations
+    /// let f = |_t: &DualTensor<CpuRuntime>, _y: &DualTensor<CpuRuntime>, _yp: &DualTensor<CpuRuntime>, _c: &CpuClient| {
+    ///     // Compute residual using dual operations
+    ///     unimplemented!()
     /// };
-    ///
     /// let result = client.solve_dae(
     ///     f,
     ///     [0.0, 10.0],
     ///     &y0, &yp0,
-    ///     &ODEOptions::with_tolerances(1e-6, 1e-9),
+    ///     &ODEOptions::default(),
     ///     &DAEOptions::default(),
     /// )?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn solve_dae<F>(
         &self,

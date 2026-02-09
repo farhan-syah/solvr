@@ -9,7 +9,7 @@ use numr::tensor::Tensor;
 
 /// Compute normalized error as a scalar tensor (stays on device).
 ///
-/// Returns error tensor of shape [1] representing sqrt(sum((y_err/sc)^2)/n).
+/// Returns error tensor of shape `[1]` representing sqrt(sum((y_err/sc)^2)/n).
 pub fn compute_error<R, C>(
     client: &C,
     y_new: &Tensor<R>,

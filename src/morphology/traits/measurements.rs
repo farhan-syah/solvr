@@ -13,8 +13,8 @@ pub struct RegionProperties {
     pub label: usize,
     /// Number of pixels in the region
     pub area: usize,
-    /// Bounding box as [min_row, min_col, max_row, max_col] (2D) or
-    /// [min_0, min_1, ..., max_0, max_1, ...] (N-D)
+    /// Bounding box as `[min_row, min_col, max_row, max_col]` (2D) or
+    /// `[min_0, min_1, ..., max_0, max_1, ...]` (N-D)
     pub bbox: Vec<usize>,
 }
 
@@ -58,7 +58,7 @@ pub trait MeasurementAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// Tensor of shape [num_labels] with sum per region.
+    /// Tensor of shape `[num_labels]` with sum per region.
     fn sum_labels(
         &self,
         input: &Tensor<R>,

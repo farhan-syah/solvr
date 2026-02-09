@@ -7,9 +7,9 @@ use numr::tensor::Tensor;
 /// A B-spline curve represented by its knot vector and coefficients.
 #[derive(Debug, Clone)]
 pub struct BSpline<R: Runtime> {
-    /// Knot vector, shape [n_knots]. Must be non-decreasing.
+    /// Knot vector, shape `[n_knots]`. Must be non-decreasing.
     pub knots: Tensor<R>,
-    /// Spline coefficients, shape [n_coeffs] for 1D values.
+    /// Spline coefficients, shape `[n_coeffs]` for 1D values.
     pub coefficients: Tensor<R>,
     /// Polynomial degree (order = degree + 1).
     pub degree: usize,

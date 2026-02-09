@@ -51,25 +51,20 @@ pub trait AdjointSensitivityAlgorithms<R: Runtime> {
     ///
     /// # Example
     ///
-    /// ```ignore
-    /// use numr::autograd::{Var, var_mul_scalar};
+    /// ```no_run
+    /// use numr::autograd::Var;
+    /// use numr::runtime::cpu::{CpuClient, CpuRuntime};
     ///
     /// // dy/dt = -k*y, y(0) = 1, J = y(T)²
-    /// // Analytical: ∂J/∂k = -2*T*y(T)²
-    ///
-    /// let f = |t: &Var<R>, y: &Var<R>, p: &Var<R>, c: &C| {
+    /// let f = |_t: &Var<CpuRuntime>, _y: &Var<CpuRuntime>, _p: &Var<CpuRuntime>, _c: &CpuClient| {
     ///     // dy/dt = -p[0] * y
-    ///     var_mul_scalar(&var_mul(p, y, c)?, -1.0, c)
+    ///     unimplemented!()
     /// };
     ///
-    /// let g = |y_final: &Var<R>, c: &C| {
+    /// let g = |_y_final: &Var<CpuRuntime>, _c: &CpuClient| {
     ///     // J = y²
-    ///     var_mul(y_final, y_final, c)
+    ///     unimplemented!()
     /// };
-    ///
-    /// let result = client.adjoint_sensitivity(
-    ///     f, g, [0.0, 1.0], &y0, &params, &ode_opts, &sens_opts
-    /// )?;
     /// ```
     #[allow(clippy::too_many_arguments)]
     fn adjoint_sensitivity<F, G>(

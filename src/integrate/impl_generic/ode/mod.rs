@@ -114,7 +114,7 @@ pub struct ODEResultTensor<R: Runtime> {
     /// Time points where solution was computed (1-D tensor)
     pub t: Tensor<R>,
 
-    /// Solution values - shape [n_steps, n_vars]
+    /// Solution values - shape `[n_steps, n_vars]`
     pub y: Tensor<R>,
 
     /// Whether integration was successful
@@ -160,7 +160,7 @@ impl<R: Runtime> ODEResultTensor<R> {
         Ok(self.y.clone())
     }
 
-    /// Get the final state as a Vec<f64>.
+    /// Get the final state as a `Vec<f64>`.
     ///
     /// This is the recommended way to get the final state for inspection.
     pub fn y_final_vec(&self) -> Vec<f64> {
@@ -181,33 +181,34 @@ impl<R: Runtime> ODEResultTensor<R> {
 /// Solve an initial value problem using tensor operations.
 ///
 /// All computation stays on device. The RHS function `f` receives and returns tensors.
-/// Time is passed as a scalar tensor (shape [1]) to enable device-resident computation.
+/// Time is passed as a scalar tensor (shape `[1]`) to enable device-resident computation.
 ///
 /// # Arguments
 ///
 /// * `client` - Runtime client for tensor operations
-/// * `f` - Right-hand side function f(t, y) -> dy/dt, where t is a scalar tensor [1]
-/// * `t_span` - Integration interval [t0, tf]
+/// * `f` - Right-hand side function f(t, y) -> dy/dt, where t is a scalar tensor `[1]`
+/// * `t_span` - Integration interval `[t0, tf]`
 /// * `y0` - Initial condition as a 1-D tensor
 /// * `options` - Solver options
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// # use numr::tensor::Tensor;
+/// # use numr::ops::ScalarOps;
 /// use solvr::integrate::{IntegrationAlgorithms, ODEOptions};
-/// use numr::runtime::cpu::{CpuClient, CpuDevice};
-///
-/// let device = CpuDevice::new();
-/// let client = CpuClient::new(device.clone());
-///
+/// # let device = CpuDevice::new();
+/// # let client = CpuClient::new(device.clone());
 /// // Solve dy/dt = -y, y(0) = 1
-/// let y0 = Tensor::from_slice(&[1.0], &[1], &device);
+/// # let y0 = Tensor::from_slice(&[1.0], &[1], &device);
 /// let result = client.solve_ivp(
-///     |_t, y| client.mul_scalar(y, -1.0),  // t is a tensor [1], y is a tensor [n]
+///     |_t, y| Ok(client.mul_scalar(y, -1.0)?),
 ///     [0.0, 5.0],
 ///     &y0,
 ///     &ODEOptions::default(),
 /// )?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub fn solve_ivp_impl<R, C, F>(
     client: &C,

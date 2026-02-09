@@ -7,9 +7,9 @@ use numr::tensor::Tensor;
 /// A parametric B-spline curve defined by control points and knot vector.
 #[derive(Debug, Clone)]
 pub struct BSplineCurve<R: Runtime> {
-    /// Control points, shape [n_points, n_dims].
+    /// Control points, shape `[n_points, n_dims]`.
     pub control_points: Tensor<R>,
-    /// Knot vector, shape [n_knots]. Must be non-decreasing.
+    /// Knot vector, shape `[n_knots]`. Must be non-decreasing.
     pub knots: Tensor<R>,
     /// Polynomial degree.
     pub degree: usize,
@@ -21,10 +21,10 @@ pub trait BSplineCurveAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     /// * `curve` - The B-spline curve
-    /// * `t` - 1D tensor of parameter values, shape [m]
+    /// * `t` - 1D tensor of parameter values, shape `[m]`
     ///
     /// # Returns
-    /// Points on the curve, shape [m, n_dims]
+    /// Points on the curve, shape `[m, n_dims]`
     fn bspline_curve_evaluate(
         &self,
         curve: &BSplineCurve<R>,

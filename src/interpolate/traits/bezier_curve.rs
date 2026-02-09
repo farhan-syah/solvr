@@ -7,7 +7,7 @@ use numr::tensor::Tensor;
 /// A Bezier curve defined by control points.
 #[derive(Debug, Clone)]
 pub struct BezierCurve<R: Runtime> {
-    /// Control points, shape [n_points, n_dims].
+    /// Control points, shape `[n_points, n_dims]`.
     pub control_points: Tensor<R>,
     /// Polynomial degree (n_points - 1).
     pub degree: usize,
@@ -19,10 +19,10 @@ pub trait BezierCurveAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     /// * `curve` - The Bezier curve
-    /// * `t` - 1D tensor of parameter values, shape [m]
+    /// * `t` - 1D tensor of parameter values, shape `[m]`
     ///
     /// # Returns
-    /// Points on the curve, shape [m, n_dims]
+    /// Points on the curve, shape `[m, n_dims]`
     fn bezier_evaluate(
         &self,
         curve: &BezierCurve<R>,

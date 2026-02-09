@@ -10,11 +10,15 @@
 //! This provides ~10-50x speedup for the ILU precomputation.
 //!
 //! ```ignore
+//! # use numr::sparse::CsrData;
+//! # use numr::runtime::cpu::CpuRuntime;
 //! // First Newton iteration: compute symbolic factorization
+//! # let client: &_ = unimplemented!();
+//! # let jacobian_csr: CsrData<CpuRuntime> = unimplemented!();
 //! let mut cache = SparseJacobianCache::new();
 //! let ilu = cache.get_or_compute_ilu(&client, &jacobian_csr)?;
-//!
 //! // Subsequent iterations: reuse symbolic factorization
+//! # let updated_jacobian_csr = jacobian_csr;
 //! let ilu = cache.get_or_compute_ilu(&client, &updated_jacobian_csr)?;
 //! ```
 

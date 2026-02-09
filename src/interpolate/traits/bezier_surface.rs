@@ -7,7 +7,7 @@ use numr::tensor::Tensor;
 /// A Bezier surface defined by a 2D grid of control points.
 #[derive(Debug, Clone)]
 pub struct BezierSurface<R: Runtime> {
-    /// Control points, shape [nu, nv, n_dims].
+    /// Control points, shape `[nu, nv, n_dims]`.
     pub control_points: Tensor<R>,
     /// Degree in u direction (nu - 1).
     pub degree_u: usize,
@@ -20,11 +20,11 @@ pub trait BezierSurfaceAlgorithms<R: Runtime> {
     /// Evaluate the Bezier surface at parameter values (u, v) in [0, 1]^2.
     ///
     /// # Arguments
-    /// * `u` - 1D tensor of u parameter values, shape [m]
-    /// * `v` - 1D tensor of v parameter values, shape [m]
+    /// * `u` - 1D tensor of u parameter values, shape `[m]`
+    /// * `v` - 1D tensor of v parameter values, shape `[m]`
     ///
     /// # Returns
-    /// Points on the surface, shape [m, n_dims]
+    /// Points on the surface, shape `[m, n_dims]`
     fn bezier_surface_evaluate(
         &self,
         surface: &BezierSurface<R>,

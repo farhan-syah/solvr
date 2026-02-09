@@ -18,10 +18,10 @@ use numr::tensor::Tensor;
 
 /// Fit a tensor-product B-spline to rectangular grid data.
 ///
-/// 1. Build 1D basis matrices Bx [nx, ncx] and By [ny, ncy]
-/// 2. Form 2D collocation: A = kron(By, Bx) → [nx*ny, ncx*ncy]
+/// 1. Build 1D basis matrices Bx `[nx, ncx]` and By `[ny, ncy]`
+/// 2. Form 2D collocation: A = kron(By, Bx) → `[nx*ny, ncx*ncy]`
 /// 3. Flatten z and solve: coeffs = solve(A, z_flat)
-/// 4. Reshape coefficients to [ncx, ncy]
+/// 4. Reshape coefficients to `[ncx, ncy]`
 #[allow(clippy::too_many_arguments)]
 pub fn rect_bivariate_spline_fit_impl<R, C>(
     client: &C,
@@ -64,18 +64,18 @@ where
     let ncy = knots_y.shape()[0] - degree_y - 1;
 
     // Build 1D basis matrices
-    let bx = compute_basis_matrix(client, x, &knots_x, degree_x, ncx)?; // [nx, ncx]
-    let by = compute_basis_matrix(client, y, &knots_y, degree_y, ncy)?; // [ny, ncy]
+    let bx = compute_basis_matrix(client, x, &knots_x, degree_x, ncx)?; // `[nx, ncx]`
+    let by = compute_basis_matrix(client, y, &knots_y, degree_y, ncy)?; // `[ny, ncy]`
 
     // 2D collocation via Kronecker product: A = kron(By, Bx)
-    let a = LinearAlgebraAlgorithms::kron(client, &by, &bx)?; // [nx*ny, ncx*ncy]
+    let a = LinearAlgebraAlgorithms::kron(client, &by, &bx)?; // `[nx*ny, ncx*ncy]`
 
-    // Flatten z in row-major order: z[i,j] → z_flat[j*nx + i]
+    // Flatten z in row-major order: `z[i,j]` → `z_flat[j*nx + i]`
     // kron(By, Bx) expects the vec(Z) to be ordered matching kron order
     // kron(By, Bx) @ vec(C) = vec(Z) where vec() is column-major (Fortran order)
-    // For row-major: we need z_flat[j*nx + i] = z[i, j]
-    // Transpose z to [ny, nx], then flatten
-    let z_t = z.transpose(0, 1)?.contiguous(); // [ny, nx]
+    // For row-major: we need `z_flat[j*nx + i]` = `z[i, j]`
+    // Transpose z to `[ny, nx]`, then flatten
+    let z_t = z.transpose(0, 1)?.contiguous(); // `[ny, nx]`
     let z_flat = z_t.reshape(&[nx * ny, 1])?;
 
     // Solve the system
@@ -101,8 +101,8 @@ where
 
 /// Evaluate bivariate spline at scattered query points.
 ///
-/// For each query (xi[i], yi[i]):
-///   result[i] = Bx_row[i,:] @ C @ By_row[i,:]ᵀ
+/// For each query (xi`[i]`, yi`[i]`):
+///   result`[i]` = Bx_row`[i,:]` @ C @ By_row`[i,:]`ᵀ
 ///
 /// Vectorized: element-wise multiply basis rows, matmul with C, row-sum.
 pub fn rect_bivariate_spline_evaluate_impl<R, C>(
@@ -128,11 +128,11 @@ where
     let ncy = spline.knots_y.shape()[0] - spline.degree_y - 1;
 
     // Compute basis matrices at query points
-    let bx = compute_basis_matrix(client, xi, &spline.knots_x, spline.degree_x, ncx)?; // [m, ncx]
-    let by = compute_basis_matrix(client, yi, &spline.knots_y, spline.degree_y, ncy)?; // [m, ncy]
+    let bx = compute_basis_matrix(client, xi, &spline.knots_x, spline.degree_x, ncx)?; // `[m, ncx]`
+    let by = compute_basis_matrix(client, yi, &spline.knots_y, spline.degree_y, ncy)?; // `[m, ncy]`
 
-    // For each query point i: result[i] = Bx[i,:] @ C @ By[i,:]ᵀ
-    // Vectorized: tmp = Bx @ C → [m, ncy], then element-wise multiply with By and sum
+    // For each query point i: result`[i]` = Bx`[i,:]` @ C @ By`[i,:]`ᵀ
+    // Vectorized: tmp = Bx @ C → `[m, ncy]`, then element-wise multiply with By and sum
     let tmp = client.matmul(&bx, &spline.coefficients)?; // [m, ncy]
     let product = client.mul(&tmp, &by)?; // [m, ncy]
     let result = client.sum(&product, &[1], false)?; // [m]
@@ -142,7 +142,7 @@ where
 
 /// Evaluate bivariate spline on a grid of query points.
 ///
-/// Returns z[i,j] = S(xi[i], yi[j]) as a [mx, my] tensor.
+/// Returns z`[i,j]` = S(xi`[i]`, yi`[j]`) as a `[mx, my]` tensor.
 pub fn rect_bivariate_spline_evaluate_grid_impl<R, C>(
     client: &C,
     spline: &BivariateSpline<R>,

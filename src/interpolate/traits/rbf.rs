@@ -26,9 +26,9 @@ pub enum RbfKernel {
 /// A fitted RBF interpolation model.
 #[derive(Debug, Clone)]
 pub struct RbfModel<R: Runtime> {
-    /// Center points, shape [n, d].
+    /// Center points, shape `[n, d]`.
     pub centers: Tensor<R>,
-    /// Weights for each center, shape [n] or [n, m] for multi-output.
+    /// Weights for each center, shape `[n]` or `[n, m]` for multi-output.
     pub weights: Tensor<R>,
     /// Kernel function.
     pub kernel: RbfKernel,
@@ -45,8 +45,8 @@ pub trait RbfAlgorithms<R: Runtime> {
     /// Fit an RBF interpolant to scattered data.
     ///
     /// # Arguments
-    /// * `points` - Data point coordinates, shape [n, d]
-    /// * `values` - Values at data points, shape [n] or [n, m]
+    /// * `points` - Data point coordinates, shape `[n, d]`
+    /// * `values` - Values at data points, shape `[n]` or `[n, m]`
     /// * `kernel` - RBF kernel function
     /// * `epsilon` - Shape parameter (None = auto-select)
     /// * `smoothing` - Smoothing parameter (0 = exact interpolation)

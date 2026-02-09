@@ -48,17 +48,17 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```
+//! # use numr::runtime::cpu::{CpuClient, CpuDevice};
+//! # use numr::tensor::Tensor;
 //! use solvr::integrate::IntegrationAlgorithms;
-//! use numr::runtime::cpu::{CpuClient, CpuDevice};
-//!
-//! let device = CpuDevice::new();
-//! let client = CpuClient::new(device.clone());
-//!
+//! # let device = CpuDevice::new();
+//! # let client = CpuClient::new(device.clone());
 //! // Tensor-based integration
-//! let x = Tensor::from_slice(&[0.0, 0.5, 1.0], &[3], &device);
-//! let y = Tensor::from_slice(&[0.0, 0.25, 1.0], &[3], &device);  // y = x^2
+//! # let x = Tensor::from_slice(&[0.0, 0.5, 1.0], &[3], &device);
+//! # let y = Tensor::from_slice(&[0.0, 0.25, 1.0], &[3], &device);
 //! let result = client.trapezoid(&y, &x)?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 mod cpu;

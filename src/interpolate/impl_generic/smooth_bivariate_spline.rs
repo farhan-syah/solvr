@@ -49,8 +49,8 @@ where
 /// Approach: Penalized least squares with tensor-product B-spline basis.
 ///
 /// 1. Auto-generate knot vectors from data range
-/// 2. Build 1D basis Bx [m, ncx] and By [m, ncy] at scattered points
-/// 3. Build 2D design matrix: A[i,:] = Bx[i,:] ⊗ By[i,:] (row-wise Kronecker)
+/// 2. Build 1D basis Bx `[m, ncx]` and By `[m, ncy]` at scattered points
+/// 3. Build 2D design matrix: `A[i,:]` = `Bx[i,:] ⊗ By[i,:]` (row-wise Kronecker)
 /// 4. When smoothing=0: coeffs = lstsq(W*A, W*z)
 /// 5. When smoothing>0: coeffs = lstsq([W*A; √λ*P], [W*z; 0])
 #[allow(clippy::too_many_arguments)]

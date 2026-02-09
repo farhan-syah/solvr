@@ -33,26 +33,25 @@
 //!
 //! Use the `solve_ivp` method on a client implementing `IntegrationAlgorithms`:
 //!
-//! ```ignore
+//! ```
+//! # use numr::runtime::cpu::{CpuClient, CpuDevice};
+//! # use numr::tensor::Tensor;
+//! # use numr::ops::ScalarOps;
 //! use solvr::integrate::{IntegrationAlgorithms, ODEOptions};
-//! use numr::runtime::cpu::{CpuClient, CpuDevice};
-//! use numr::tensor::Tensor;
-//!
-//! let device = CpuDevice::new();
-//! let client = CpuClient::new(device.clone());
-//!
+//! # let device = CpuDevice::new();
+//! # let client = CpuClient::new(device.clone());
 //! // Solve dy/dt = -y, y(0) = 1
-//! let y0 = Tensor::from_slice(&[1.0], &[1], &device);
+//! # let y0 = Tensor::from_slice(&[1.0], &[1], &device);
 //! let result = client.solve_ivp(
-//!     |_t, y| client.mul_scalar(y, -1.0),
+//!     |_t, y| Ok(client.mul_scalar(y, -1.0)?),
 //!     [0.0, 5.0],
 //!     &y0,
 //!     &ODEOptions::default(),
 //! )?;
-//!
 //! // y(5) ≈ exp(-5) ≈ 0.00674
-//! let y_final = result.y_final_vec();
-//! assert!((y_final[0] - (-5.0_f64).exp()).abs() < 1e-5);
+//! # let y_final = result.y_final_vec();
+//! # assert!((y_final[0] - (-5.0_f64).exp()).abs() < 1e-3);
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 mod types;

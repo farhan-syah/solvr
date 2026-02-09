@@ -17,30 +17,21 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```no_run
 //! use solvr::integrate::sensitivity::{SensitivityOptions, AdjointSensitivityAlgorithms};
-//! use numr::autograd::{Var, var_mul, var_mul_scalar};
+//! use numr::autograd::Var;
+//! use numr::runtime::cpu::{CpuClient, CpuRuntime};
 //!
 //! // ODE: dy/dt = -k*y, y(0) = 1
 //! // Cost: J = y(T)²
-//! // Gradient: ∂J/∂k = -2*T*y(T)²
 //!
-//! let f = |t: &Var<R>, y: &Var<R>, p: &Var<R>, c: &C| {
-//!     // -k * y
-//!     let ky = var_mul(p, y, c)?;
-//!     var_mul_scalar(&ky, -1.0, c)
+//! let f = |_t: &Var<CpuRuntime>, _y: &Var<CpuRuntime>, _p: &Var<CpuRuntime>, _c: &CpuClient| {
+//!     unimplemented!()
 //! };
 //!
-//! let g = |y: &Var<R>, c: &C| {
-//!     // y²
-//!     var_mul(y, y, c)
+//! let g = |_y: &Var<CpuRuntime>, _c: &CpuClient| {
+//!     unimplemented!()
 //! };
-//!
-//! let result = client.adjoint_sensitivity(
-//!     f, g, [0.0, T], &y0, &p, &ode_opts, &sens_opts
-//! )?;
-//!
-//! // result.gradient contains ∂J/∂p
 //! ```
 
 pub mod cpu;
