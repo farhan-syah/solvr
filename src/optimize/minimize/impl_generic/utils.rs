@@ -128,7 +128,7 @@ where
 /// Compute Jacobian matrix using forward finite differences for vector-valued function.
 ///
 /// For a function f: R^n -> R^m, computes the m x n Jacobian matrix
-/// where J[i,j] = ∂f_i/∂x_j ≈ (f_i(x + eps*e_j) - f_i(x)) / eps.
+/// where J`[i,j]` = ∂f_i/∂x_j ≈ (f_i(x + eps*e_j) - f_i(x)) / eps.
 ///
 /// All operations stay on device - data is only extracted for the final scalar gradient values.
 pub fn finite_difference_jacobian<R, C, F>(

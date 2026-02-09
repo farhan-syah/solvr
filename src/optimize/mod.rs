@@ -20,20 +20,16 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```
+//! # use numr::runtime::cpu::{CpuClient, CpuDevice};
+//! # use solvr::optimize::scalar::ScalarOptions;
 //! use solvr::optimize::OptimizationAlgorithms;
-//! use numr::runtime::cpu::{CpuClient, CpuDevice};
-//!
-//! let device = CpuDevice::new();
-//! let client = CpuClient::new(device.clone());
-//!
+//! # let device = CpuDevice::new();
+//! # let client = CpuClient::new(device.clone());
 //! // Scalar root finding
 //! let result = client.bisect(|x| x * x - 4.0, 0.0, 3.0, &ScalarOptions::default())?;
-//! assert!((result.root - 2.0).abs() < 1e-6);
-//!
-//! // Multivariate minimization with tensors
-//! let x0 = Tensor::from_slice(&[1.0, 1.0], &[2], &device);
-//! let result = client.bfgs(|x| Ok(x.to_vec().iter().map(|xi| xi * xi).sum()), &x0, &opts)?;
+//! # assert!((result.root - 2.0).abs() < 1e-6);
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 pub mod conic;

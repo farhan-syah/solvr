@@ -18,11 +18,11 @@ use super::solve_sparse::solve_sparse_system;
 /// Solve -nabla^2 u = f on a 2D triangular mesh.
 ///
 /// # Arguments
-/// * `f_rhs` - Right-hand side evaluated at nodes, shape [n_nodes]
-/// * `nodes` - Node coordinates, shape [n_nodes, 2]
-/// * `elements` - Triangle connectivity, shape [n_elements, 3] (I64 indices)
-/// * `boundary_nodes` - Indices of boundary nodes, shape [n_boundary] (I64)
-/// * `boundary_values` - Dirichlet values at boundary nodes, shape [n_boundary]
+/// * `f_rhs` - Right-hand side evaluated at nodes, shape `[n_nodes]`
+/// * `nodes` - Node coordinates, shape `[n_nodes, 2]`
+/// * `elements` - Triangle connectivity, shape `[n_elements, 3]` (I64 indices)
+/// * `boundary_nodes` - Indices of boundary nodes, shape `[n_boundary]` (I64)
+/// * `boundary_values` - Dirichlet values at boundary nodes, shape `[n_boundary]`
 pub fn fem_triangular_impl<R, C>(
     client: &C,
     f_rhs: &Tensor<R>,

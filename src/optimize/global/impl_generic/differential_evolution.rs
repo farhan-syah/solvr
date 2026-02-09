@@ -1,6 +1,6 @@
 //! Tensor-based differential evolution implementation.
 //!
-//! Population stored as Vec<Tensor<R>> where each element is shape [n].
+//! Population stored as `Vec<Tensor<R>>` where each element is shape `[n]`.
 //! All tensor operations stay on device.
 
 use numr::dtype::DType;
@@ -26,7 +26,7 @@ pub struct DifferentialEvolutionTensorResult<R: Runtime> {
 
 /// Differential Evolution global optimizer using tensor operations.
 ///
-/// Population is stored as Vec<Tensor<R>> where each is shape [n].
+/// Population is stored as `Vec<Tensor<R>>` where each is shape `[n]`.
 /// All operations stay on device - no to_vec()/from_slice() in loops.
 pub fn differential_evolution_impl<R, C, F>(
     client: &C,

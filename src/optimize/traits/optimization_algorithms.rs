@@ -18,15 +18,15 @@ use crate::optimize::scalar::{MinimizeResult, RootResult, ScalarOptions};
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// # use solvr::optimize::scalar::ScalarOptions;
 /// use solvr::optimize::OptimizationAlgorithms;
-/// use numr::runtime::cpu::{CpuClient, CpuDevice};
-///
-/// let device = CpuDevice::new();
-/// let client = CpuClient::new(device.clone());
-///
+/// # let device = CpuDevice::new();
+/// # let client = CpuClient::new(device.clone());
 /// // Find root of x^2 - 4 = 0
 /// let result = client.bisect(|x| x * x - 4.0, 0.0, 3.0, &ScalarOptions::default())?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub trait OptimizationAlgorithms<R: Runtime> {
     /// Bisection method for scalar root finding.

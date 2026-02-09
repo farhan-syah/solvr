@@ -30,7 +30,7 @@ impl Default for SdpOptions {
 /// Result of SDP solver.
 #[derive(Debug, Clone)]
 pub struct SdpResult<R: Runtime> {
-    /// Solution matrix X [n, n].
+    /// Solution matrix X `[n, n]`.
     pub x: Tensor<R>,
     /// Optimal objective value.
     pub fun: f64,
@@ -52,9 +52,9 @@ pub trait SdpAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `c_mat` - Cost matrix [n, n]
-    /// * `a_mats` - Constraint matrices, each [n, n]
-    /// * `b_vec` - Constraint RHS values [m]
+    /// * `c_mat` - Cost matrix `[n, n]`
+    /// * `a_mats` - Constraint matrices, each `[n, n]`
+    /// * `b_vec` - Constraint RHS values `[m]`
     /// * `options` - Solver options
     fn solve_sdp(
         &self,

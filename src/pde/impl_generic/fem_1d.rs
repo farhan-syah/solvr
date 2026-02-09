@@ -1,4 +1,4 @@
-//! 1D finite element method: -u'' = f(x) on [a,b] with Dirichlet BCs.
+//! 1D finite element method: -u'' = f(x) on `[a,b]` with Dirichlet BCs.
 //!
 //! Uses linear hat basis functions on an arbitrary node set.
 //! Assembles tridiagonal stiffness matrix, solves with dense solver.

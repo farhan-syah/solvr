@@ -189,11 +189,18 @@ use numr::autograd::{Var, VarGradStore, backward, backward_with_graph, var_mul, 
 /// # Example
 ///
 /// ```ignore
+/// use numr::autograd::Var;
+/// use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// use numr::tensor::Tensor;
+///
+/// let device = CpuDevice::new();
+/// let client = CpuClient::new(device.clone());
+/// let tensor = Tensor::from_slice(&[1.0], &[1], &device);
 /// // f(x) = x², H = 2, so H @ v = 2v
 /// let x = Var::new(tensor, true);
-/// let loss = var_mul(&x, &x, &client)?;
-/// let v = Tensor::ones(&[n], dtype, device);
-/// let hvp = hvp_reverse_over_reverse(&client, &loss, &x, &v)?;
+/// let loss = /* compute loss */;
+/// let v = Tensor::from_slice(&[1.0], &[1], &device);
+/// let hvp = solvr::optimize::minimize::impl_generic::helpers::hvp_reverse_over_reverse(&client, &loss, &x, &v)?;
 /// ```
 pub fn hvp_reverse_over_reverse<R, C>(
     client: &C,

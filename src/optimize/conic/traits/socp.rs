@@ -11,11 +11,11 @@ use crate::optimize::error::OptimizeResult;
 /// A second-order cone constraint: ||A*x + b|| <= c'*x + d
 #[derive(Debug, Clone)]
 pub struct SocConstraint<R: Runtime> {
-    /// Matrix A [m_i, n]
+    /// Matrix A `[m_i, n]`
     pub a: Tensor<R>,
-    /// Vector b [m_i]
+    /// Vector b `[m_i]`
     pub b: Tensor<R>,
-    /// Vector c [n]
+    /// Vector c `[n]`
     pub c: Tensor<R>,
     /// Scalar d
     pub d: f64,

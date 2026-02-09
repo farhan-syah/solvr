@@ -116,18 +116,23 @@ pub trait NewtonCGAlgorithms<R: Runtime> {
     ///
     /// # Example
     ///
-    /// ```ignore
-    /// use numr::autograd::{Var, var_mul, var_sum};
-    ///
+    /// ```no_run
+    /// use numr::autograd::Var;
+    /// use numr::runtime::cpu::{CpuClient, CpuDevice, CpuRuntime};
+    /// use numr::tensor::Tensor;
+    /// use solvr::optimize::NewtonCGAlgorithms;
+    /// let device = CpuDevice::new();
+    /// let client = CpuClient::new(device.clone());
+    /// let x0 = Tensor::from_slice(&[1.0], &[1], &device);
     /// // Minimize f(x) = sum(x²)
     /// let result = client.newton_cg(
-    ///     |x, c| {
-    ///         let x_sq = var_mul(x, x, c)?;
-    ///         var_sum(&x_sq, &[], false, c)
+    ///     |_x: &Var<CpuRuntime>, _c: &CpuClient| {
+    ///         unimplemented!()
     ///     },
     ///     &x0,
-    ///     &NewtonCGOptions::default(),
+    ///     &Default::default(),
     /// )?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn newton_cg<F>(
         &self,

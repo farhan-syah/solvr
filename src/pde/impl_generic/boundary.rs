@@ -64,7 +64,7 @@ pub fn extract_dirichlet_scalar<R: Runtime>(
     }
 }
 
-/// Extract 2D boundary values as a flat array [nx*ny] from BoundarySpec.
+/// Extract 2D boundary values as a flat array `[nx*ny]` from BoundarySpec.
 ///
 /// Handles per-side Dirichlet values for 2D grids with row-major layout.
 pub fn extract_boundary_values_2d<R: Runtime>(

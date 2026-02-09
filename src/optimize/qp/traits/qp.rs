@@ -69,12 +69,12 @@ pub trait QpAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `q` - Symmetric positive (semi-)definite matrix [n, n]
-    /// * `c` - Linear cost vector [n]
-    /// * `a_eq` - Equality constraint matrix [m_eq, n] (optional)
-    /// * `b_eq` - Equality constraint RHS [m_eq] (optional)
-    /// * `a_ineq` - Inequality constraint matrix [m_ineq, n] (optional)
-    /// * `b_ineq` - Inequality constraint RHS [m_ineq] (optional)
+    /// * `q` - Symmetric positive (semi-)definite matrix `[n, n]`
+    /// * `c` - Linear cost vector `[n]`
+    /// * `a_eq` - Equality constraint matrix `[m_eq, n]` (optional)
+    /// * `b_eq` - Equality constraint RHS `[m_eq]` (optional)
+    /// * `a_ineq` - Inequality constraint matrix `[m_ineq, n]` (optional)
+    /// * `b_ineq` - Inequality constraint RHS `[m_ineq]` (optional)
     /// * `options` - Solver options
     #[allow(clippy::too_many_arguments)]
     fn solve_qp(
