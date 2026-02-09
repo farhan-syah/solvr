@@ -59,16 +59,14 @@ solvr = { version = "<latest>", features = ["wgpu"] }
 
 ## Feature Flags
 
-Default features: `["cpu", "graph", "pde"]`
+Default features: `["graph", "pde"]`
 
-- `cpu`: CPU backend marker.
 - `cuda`: enables CUDA backend support through `numr/cuda`.
 - `wgpu`: enables WebGPU backend support through `numr/wgpu`.
 - `graph`: enables graph algorithms module (also enables `sparse`).
 - `pde`: enables PDE module (also enables `sparse`).
 - `sparse`: sparse tensor support through `numr/sparse`.
 - `f16`: half precision support through `numr/f16`.
-- `fp8`: fp8 support through `numr/fp8`.
 
 ## Quick Example
 
