@@ -72,23 +72,22 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```
+//! # use numr::runtime::cpu::{CpuClient, CpuDevice};
+//! # use numr::runtime::RuntimeClient;
+//! # use numr::dtype::DType;
+//! # use numr::ops::RandomOps;
 //! use solvr::signal::{ConvolutionAlgorithms, ConvMode};
 //! use solvr::window::WindowFunctions;
-//! use numr::runtime::cpu::{CpuClient, CpuDevice};
-//! use numr::runtime::RuntimeClient;
-//! use numr::dtype::DType;
-//!
-//! let device = CpuDevice::new();
-//! let client = CpuClient::new(device.clone());
-//!
+//! # let device = CpuDevice::new();
+//! # let client = CpuClient::new(device.clone());
 //! // Create a Hann window
-//! let window = client.hann_window(256, DType::F32, &device).unwrap();
-//!
+//! # let window = client.hann_window(256, DType::F32, &device).unwrap();
 //! // Perform convolution
-//! let signal = /* ... */;
-//! let kernel = /* ... */;
-//! let result = client.convolve(&signal, &kernel, ConvMode::Same).unwrap();
+//! # let signal = client.randn(&[256], DType::F32)?;
+//! # let kernel = client.randn(&[32], DType::F32)?;
+//! let result = client.convolve(&signal, &kernel, ConvMode::Same)?;
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 pub mod cluster;
