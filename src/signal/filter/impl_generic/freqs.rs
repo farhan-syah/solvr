@@ -18,8 +18,8 @@ use numr::tensor::Tensor;
 /// Compute analog frequency response using tensor operations.
 ///
 /// Evaluates H(jω) = B(jω) / A(jω) where:
-/// - B(s) = b[0]*s^M + b[1]*s^(M-1) + ... + b[M]
-/// - A(s) = a[0]*s^N + a[1]*s^(N-1) + ... + a[N]
+/// - B(s) = b`[0]`*s^M + b`[1]`*s^(M-1) + ... + b`[M]`
+/// - A(s) = a`[0]`*s^N + a`[1]`*s^(N-1) + ... + a`[N]`
 /// - s = jω (purely imaginary)
 ///
 /// The computation is fully tensorized:

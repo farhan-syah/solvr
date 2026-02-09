@@ -55,20 +55,23 @@ pub trait IirFilterAlgorithms<R: Runtime> {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
     /// use solvr::signal::filter::{IirFilterAlgorithms, IirDesignType, FilterType, FilterOutput};
-    ///
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
     /// // Design a 4th-order Chebyshev Type I lowpass with 1dB ripple
     /// let result = client.iirfilter(
     ///     4,
     ///     &[0.2],
     ///     FilterType::Lowpass,
     ///     IirDesignType::Chebyshev1,
-    ///     Some(1.0),  // rp
-    ///     None,       // rs
+    ///     Some(1.0),
+    ///     None,
     ///     FilterOutput::Sos,
     ///     &device,
     /// )?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn iirfilter(
         &self,

@@ -11,16 +11,16 @@ use numr::tensor::Tensor;
 /// Spherical Voronoi diagram result.
 #[derive(Debug, Clone)]
 pub struct SphericalVoronoi<R: Runtime> {
-    /// Generator points on the sphere [n, 3].
+    /// Generator points on the sphere `[n, 3]`.
     pub points: Tensor<R>,
 
-    /// Center of the sphere [3].
+    /// Center of the sphere `[3]`.
     pub center: Tensor<R>,
 
     /// Radius of the sphere.
     pub radius: f64,
 
-    /// Voronoi vertices on the sphere surface [n_vertices, 3].
+    /// Voronoi vertices on the sphere surface `[n_vertices, 3]`.
     /// These are circumcenters of hull faces, projected onto the sphere.
     pub vertices: Tensor<R>,
 
@@ -29,7 +29,7 @@ pub struct SphericalVoronoi<R: Runtime> {
     /// `regions_indices[regions_indptr[i]..regions_indptr[i+1]]`.
     pub regions_indices: Tensor<R>,
 
-    /// Region index pointers [n+1] (I64).
+    /// Region index pointers `[n+1]` (I64).
     pub regions_indptr: Tensor<R>,
 }
 
@@ -39,9 +39,9 @@ pub trait SphericalVoronoiAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `points` - Generator points on the sphere [n, 3], must have n >= 3
+    /// * `points` - Generator points on the sphere `[n, 3]`, must have n >= 3
     /// * `radius` - Sphere radius (positive)
-    /// * `center` - Sphere center [3] (or None for origin)
+    /// * `center` - Sphere center `[3]` (or None for origin)
     ///
     /// # Returns
     ///
@@ -65,6 +65,6 @@ pub trait SphericalVoronoiAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// Tensor [n] with the spherical area of each region. Sum equals 4*pi*r^2.
+    /// Tensor `[n]` with the spherical area of each region. Sum equals 4*pi*r^2.
     fn spherical_voronoi_region_areas(&self, sv: &SphericalVoronoi<R>) -> Result<Tensor<R>>;
 }

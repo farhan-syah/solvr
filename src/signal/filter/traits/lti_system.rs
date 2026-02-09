@@ -28,8 +28,8 @@ pub trait DiscreteTimeLtiAlgorithms<R: Runtime> {
     /// # Arguments
     ///
     /// * `system` - Discrete-time LTI system (any representation)
-    /// * `u` - Input signal [n_samples] or [n_samples, n_inputs]
-    /// * `x0` - Initial state [n_states], or None for zero state
+    /// * `u` - Input signal `[n_samples]` or `[n_samples, n_inputs]`
+    /// * `x0` - Initial state `[n_states]`, or None for zero state
     ///
     /// # Returns
     ///
@@ -62,8 +62,8 @@ pub trait DiscreteTimeLtiAlgorithms<R: Runtime> {
 pub struct DlsimResult<R: Runtime> {
     /// Time indices (sample numbers).
     pub t: Tensor<R>,
-    /// Output signal [n_samples] or [n_samples, n_outputs].
+    /// Output signal `[n_samples]` or `[n_samples, n_outputs]`.
     pub y: Tensor<R>,
-    /// State trajectory [n_samples, n_states].
+    /// State trajectory `[n_samples, n_states]`.
     pub x: Tensor<R>,
 }

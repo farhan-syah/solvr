@@ -10,26 +10,26 @@ use numr::tensor::Tensor;
 /// Convex hull result.
 #[derive(Debug, Clone)]
 pub struct ConvexHull<R: Runtime> {
-    /// Original points [n, d].
+    /// Original points `[n, d]`.
     pub points: Tensor<R>,
 
-    /// Vertex indices on the hull boundary [n_vertices] (I64 dtype).
+    /// Vertex indices on the hull boundary `[n_vertices]` (I64 dtype).
     /// For 2D: ordered counterclockwise.
     /// For 3D+: unordered set of vertices on hull.
     pub vertices: Tensor<R>,
 
-    /// Simplices (facets) of the hull [n_simplices, d] (I64 dtype).
+    /// Simplices (facets) of the hull `[n_simplices, d]` (I64 dtype).
     /// For 2D: edges as pairs of vertex indices.
     /// For 3D: triangular faces as triples of vertex indices.
     /// For nD: (n-1)-simplices as n-tuples of vertex indices.
     pub simplices: Tensor<R>,
 
-    /// For 3D+: neighboring simplex indices [n_simplices, d] (I64 dtype).
-    /// neighbors[i, j] is the simplex sharing facet opposite to vertex j.
+    /// For 3D+: neighboring simplex indices `[n_simplices, d]` (I64 dtype).
+    /// `neighbors[i, j]` is the simplex sharing facet opposite to vertex j.
     /// -1 indicates no neighbor (boundary).
     pub neighbors: Option<Tensor<R>>,
 
-    /// Equations of the hyperplanes for each simplex [n_simplices, d+1].
+    /// Equations of the hyperplanes for each simplex `[n_simplices, d+1]`.
     /// For each simplex, (A, b) where Ax + b = 0 defines the hyperplane.
     /// The first d values are the normal A, the last is the offset b.
     pub equations: Option<Tensor<R>>,
@@ -64,18 +64,22 @@ pub trait ConvexHullAlgorithms<R: Runtime> {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+    /// # use numr::tensor::Tensor;
+    /// use solvr::spatial::ConvexHullAlgorithms;
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
     /// // 2D point set
-    /// let points = Tensor::from_slice(&[
-    ///     0.0, 0.0,
-    ///     1.0, 0.0,
-    ///     1.0, 1.0,
-    ///     0.0, 1.0,
-    ///     0.5, 0.5,  // Interior point
-    /// ], &[5, 2], &device);
-    ///
+    /// # let points = Tensor::from_slice(&[
+    /// #     0.0, 0.0,
+    /// #     1.0, 0.0,
+    /// #     1.0, 1.0,
+    /// #     0.0, 1.0,
+    /// #     0.5, 0.5,
+    /// # ], &[5, 2], &device);
     /// let hull = client.convex_hull(&points)?;
-    /// // hull.vertices contains indices [0, 1, 2, 3] (the corners)
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn convex_hull(&self, points: &Tensor<R>) -> Result<ConvexHull<R>>;
 
@@ -88,7 +92,7 @@ pub trait ConvexHullAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// Boolean tensor [m] where true indicates the point is inside or on the hull.
+    /// Boolean tensor `[m]` where true indicates the point is inside or on the hull.
     fn convex_hull_contains(&self, hull: &ConvexHull<R>, points: &Tensor<R>) -> Result<Tensor<R>>;
 }
 

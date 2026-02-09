@@ -31,16 +31,15 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```
+//! # use numr::runtime::cpu::{CpuClient, CpuDevice};
 //! use solvr::signal::filter::{IirDesignAlgorithms, FilterType, FilterOutput};
-//! use numr::runtime::cpu::{CpuClient, CpuDevice};
-//!
-//! let device = CpuDevice::new();
-//! let client = CpuClient::new(device.clone());
-//!
+//! # let device = CpuDevice::new();
+//! # let client = CpuClient::new(device.clone());
 //! // Design a 4th-order Butterworth lowpass filter at 0.2 * Nyquist
 //! let result = client.butter(4, &[0.2], FilterType::Lowpass, FilterOutput::Sos, &device)?;
-//! let sos = result.as_sos().unwrap();
+//! # let sos = result.as_sos().unwrap();
+//! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
 
 pub mod impl_generic;

@@ -30,20 +30,21 @@ pub trait DistanceAlgorithms<R: Runtime> {
     /// # Returns
     ///
     /// Distance matrix with shape (n, m) where element (i, j) is the distance
-    /// between x[i] and y[j].
+    /// between `x[i]` and `y[j]`.
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+    /// # use numr::tensor::Tensor;
     /// use solvr::spatial::{DistanceAlgorithms, DistanceMetric};
-    ///
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
     /// // Points in 3D space
-    /// let x = Tensor::from_slice(&[0.0, 0.0, 0.0, 1.0, 1.0, 1.0], &[2, 3], &device);
-    /// let y = Tensor::from_slice(&[1.0, 0.0, 0.0, 2.0, 2.0, 2.0], &[2, 3], &device);
-    ///
-    /// // Euclidean distances
+    /// # let x = Tensor::from_slice(&[0.0, 0.0, 0.0, 1.0, 1.0, 1.0], &[2, 3], &device);
+    /// # let y = Tensor::from_slice(&[1.0, 0.0, 0.0, 2.0, 2.0, 2.0], &[2, 3], &device);
     /// let d = client.cdist(&x, &y, DistanceMetric::Euclidean)?;
-    /// // d has shape (2, 2), d[i,j] = ||x[i] - y[j]||
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn cdist(&self, x: &Tensor<R>, y: &Tensor<R>, metric: DistanceMetric) -> Result<Tensor<R>>;
 
@@ -69,12 +70,15 @@ pub trait DistanceAlgorithms<R: Runtime> {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+    /// # use numr::tensor::Tensor;
+    /// use solvr::spatial::{DistanceMetric, DistanceAlgorithms};
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
     /// let x = Tensor::from_slice(&[0.0, 0.0, 1.0, 0.0, 0.0, 1.0], &[3, 2], &device);
-    ///
-    /// // Condensed distances: [d(0,1), d(0,2), d(1,2)]
     /// let d = client.pdist(&x, DistanceMetric::Euclidean)?;
-    /// // d has shape (3,) = n*(n-1)/2 for n=3
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn pdist(&self, x: &Tensor<R>, metric: DistanceMetric) -> Result<Tensor<R>>;
 
@@ -92,7 +96,7 @@ pub trait DistanceAlgorithms<R: Runtime> {
     ///
     /// Square distance matrix with shape (n, n) where:
     /// - Diagonal elements are 0
-    /// - Matrix is symmetric (d[i,j] == d[j,i])
+    /// - Matrix is symmetric (d`[i,j]` == d`[j,i]`)
     fn squareform(&self, condensed: &Tensor<R>, n: usize) -> Result<Tensor<R>>;
 
     /// Convert square distance matrix to condensed form.

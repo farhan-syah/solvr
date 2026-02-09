@@ -17,7 +17,7 @@ pub trait SystemResponseAlgorithms<R: Runtime> {
     /// # Algorithm
     ///
     /// Applies the filter to an impulse input: x = [1, 0, 0, 0, ...]
-    /// The output is the filter's impulse response h[n].
+    /// The output is the filter's impulse response `h[n]`.
     ///
     /// # Arguments
     ///
@@ -27,7 +27,7 @@ pub trait SystemResponseAlgorithms<R: Runtime> {
     /// # Returns
     ///
     /// [`ImpulseResponse`] containing:
-    /// - `t`: Time indices [0, 1, 2, ..., n-1]
+    /// - `t`: Time indices `[0, 1, 2, ..., n-1]`
     /// - `y`: Impulse response samples
     fn impulse(
         &self,
@@ -51,7 +51,7 @@ pub trait SystemResponseAlgorithms<R: Runtime> {
     /// # Returns
     ///
     /// [`StepResponse`] containing:
-    /// - `t`: Time indices [0, 1, 2, ..., n-1]
+    /// - `t`: Time indices `[0, 1, 2, ..., n-1]`
     /// - `y`: Step response samples
     fn step(
         &self,

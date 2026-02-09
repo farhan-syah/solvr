@@ -38,28 +38,28 @@ impl Default for BallTreeOptions {
 /// Stores the tree structure as flat tensors for efficient GPU operations.
 #[derive(Debug, Clone)]
 pub struct BallTree<R: Runtime> {
-    /// Original point data [n, d].
+    /// Original point data `[n, d]`.
     pub data: Tensor<R>,
 
-    /// Center of each ball [n_nodes, d].
+    /// Center of each ball `[n_nodes, d]`.
     pub centers: Tensor<R>,
 
-    /// Radius of each ball [n_nodes].
+    /// Radius of each ball `[n_nodes]`.
     pub radii: Tensor<R>,
 
-    /// Left child indices for each node [n_nodes]. -1 for leaves.
+    /// Left child indices for each node `[n_nodes]`. -1 for leaves.
     pub left_children: Tensor<R>,
 
-    /// Right child indices for each node [n_nodes]. -1 for leaves.
+    /// Right child indices for each node `[n_nodes]`. -1 for leaves.
     pub right_children: Tensor<R>,
 
-    /// Point indices in depth-first order [n].
+    /// Point indices in depth-first order `[n]`.
     pub point_indices: Tensor<R>,
 
-    /// Start index in point_indices for each leaf [n_leaves].
+    /// Start index in point_indices for each leaf `[n_leaves]`.
     pub leaf_starts: Tensor<R>,
 
-    /// Number of points in each leaf [n_leaves].
+    /// Number of points in each leaf `[n_leaves]`.
     pub leaf_sizes: Tensor<R>,
 
     /// Tree construction options.

@@ -17,8 +17,8 @@ pub trait StateSpaceConversions<R: Runtime> {
     /// # Algorithm
     ///
     /// For a transfer function H(z) = B(z) / A(z) with:
-    /// - A(z) = a[0] + a[1]z^-1 + ... + a[n]z^-n  (a[0] = 1 after normalization)
-    /// - B(z) = b[0] + b[1]z^-1 + ... + b[m]z^-m
+    /// - A(z) = a`[0]` + a`[1]`z^-1 + ... + a`[n]`z^-n  (a`[0]` = 1 after normalization)
+    /// - B(z) = b`[0]` + b`[1]`z^-1 + ... + b`[m]`z^-m
     ///
     /// Constructs the controllable canonical form:
     /// ```text

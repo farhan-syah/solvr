@@ -13,10 +13,10 @@ pub trait StftAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `signal` - Input signal tensor of shape [..., time]
+    /// * `signal` - Input signal tensor of shape `[..., time]`
     /// * `n_fft` - FFT size (must be power of 2)
     /// * `hop_length` - Number of samples between frames (default: n_fft / 4)
-    /// * `window` - Window function tensor of shape [n_fft] (default: Hann window)
+    /// * `window` - Window function tensor of shape `[n_fft]` (default: Hann window)
     /// * `center` - If true, pad signal so frame is centered at sample
     /// * `normalized` - If true, normalize by 1/sqrt(n_fft)
     ///

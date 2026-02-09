@@ -33,7 +33,7 @@ pub trait FirDesignAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// FIR filter coefficients [numtaps].
+    /// FIR filter coefficients `[numtaps]`.
     fn firwin(
         &self,
         numtaps: usize,
@@ -61,7 +61,7 @@ pub trait FirDesignAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// FIR filter coefficients [numtaps].
+    /// FIR filter coefficients `[numtaps]`.
     fn firwin2(
         &self,
         numtaps: usize,

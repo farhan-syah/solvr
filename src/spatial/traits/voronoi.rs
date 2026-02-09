@@ -13,20 +13,20 @@ use super::delaunay::Delaunay;
 /// Voronoi diagram result.
 #[derive(Debug, Clone)]
 pub struct Voronoi<R: Runtime> {
-    /// Generator points (original input) [n, d].
+    /// Generator points (original input) `[n, d]`.
     pub points: Tensor<R>,
 
-    /// Voronoi vertices [n_vertices, d].
+    /// Voronoi vertices `[n_vertices, d]`.
     /// These are the circumcenters of the Delaunay simplices.
     pub vertices: Tensor<R>,
 
     /// For each Voronoi region (generator), indices of vertices forming the region.
     /// Stored in CSR-like format.
     /// - ridge_vertices: concatenated vertex indices for all ridges
-    /// - ridge_points: for each ridge, the two generator points it separates [n_ridges, 2]
+    /// - ridge_points: for each ridge, the two generator points it separates `[n_ridges, 2]`
     pub ridge_vertices: Tensor<R>,
 
-    /// For each ridge, the two generator points it separates [n_ridges, 2] (I64 dtype).
+    /// For each ridge, the two generator points it separates `[n_ridges, 2]` (I64 dtype).
     pub ridge_points: Tensor<R>,
 
     /// For each generator, indices of ridges forming its region boundary.
@@ -34,7 +34,7 @@ pub struct Voronoi<R: Runtime> {
     pub regions_indices: Tensor<R>,
     pub regions_indptr: Tensor<R>,
 
-    /// Point indices with unbounded regions [n_unbounded] (I64 dtype).
+    /// Point indices with unbounded regions `[n_unbounded]` (I64 dtype).
     /// Regions extending to infinity.
     pub point_region: Tensor<R>,
 }
@@ -63,14 +63,19 @@ pub trait VoronoiAlgorithms<R: Runtime> {
     ///
     /// # Examples
     ///
-    /// ```ignore
-    /// let points = Tensor::from_slice(&[
-    ///     0.0, 0.0,
-    ///     1.0, 0.0,
-    ///     0.5, 1.0,
-    /// ], &[3, 2], &device);
-    ///
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+    /// # use numr::tensor::Tensor;
+    /// use solvr::spatial::VoronoiAlgorithms;
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
+    /// # let points = Tensor::from_slice(&[
+    /// #     0.0, 0.0,
+    /// #     1.0, 0.0,
+    /// #     0.5, 1.0,
+    /// # ], &[3, 2], &device);
     /// let vor = client.voronoi(&points)?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn voronoi(&self, points: &Tensor<R>) -> Result<Voronoi<R>>;
 
@@ -88,7 +93,7 @@ pub trait VoronoiAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// Tensor [m] (I64 dtype) with generator (region) indices.
+    /// Tensor `[m]` (I64 dtype) with generator (region) indices.
     fn voronoi_find_region(&self, vor: &Voronoi<R>, query: &Tensor<R>) -> Result<Tensor<R>>;
 }
 

@@ -47,11 +47,11 @@ pub trait ExtremaAlgorithms<R: Runtime> {
     ///
     /// # Example
     ///
-    /// For order=1, a point x[i] is a local minimum if:
-    /// - x[i] < x[i-1] AND x[i] < x[i+1]
+    /// For order=1, a point x`[i]` is a local minimum if:
+    /// - x`[i]` < x`[i-1]` AND x`[i]` < x`[i+1]`
     ///
-    /// For order=2, a point x[i] is a local minimum if:
-    /// - x[i] < x[i-2] AND x[i] < x[i-1] AND x[i] < x[i+1] AND x[i] < x[i+2]
+    /// For order=2, a point x`[i]` is a local minimum if:
+    /// - x`[i]` < x`[i-2]` AND x`[i]` < x`[i-1]` AND x`[i]` < x`[i+1]` AND x`[i]` < x`[i+2]`
     fn argrelmin(
         &self,
         x: &Tensor<R>,

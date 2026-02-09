@@ -27,10 +27,10 @@ pub trait FilterApplicationAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `b` - Numerator coefficients [M] in descending power order
-    /// * `a` - Denominator coefficients [N] in descending power order (a[0] should be 1)
-    /// * `x` - Input signal [..., samples]
-    /// * `zi` - Initial filter state [max(M,N)-1], or None for zero state
+    /// * `b` - Numerator coefficients `[M]` in descending power order
+    /// * `a` - Denominator coefficients `[N]` in descending power order (a`[0]` should be 1)
+    /// * `x` - Input signal `[..., samples]`
+    /// * `zi` - Initial filter state `[max(M,N)-1]`, or None for zero state
     ///
     /// # Returns
     ///
@@ -89,9 +89,9 @@ pub trait FilterApplicationAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `sos` - Second-order sections [n_sections, 6]
+    /// * `sos` - Second-order sections `[n_sections, 6]`
     /// * `x` - Input signal
-    /// * `zi` - Initial state [n_sections, 2], or None for zero state
+    /// * `zi` - Initial state `[n_sections, 2]`, or None for zero state
     ///
     /// # Returns
     ///
@@ -129,19 +129,19 @@ pub struct LfilterResult<R: Runtime> {
 pub struct SosfiltResult<R: Runtime> {
     /// Filtered output signal.
     pub y: Tensor<R>,
-    /// Final filter state [n_sections, 2].
+    /// Final filter state `[n_sections, 2]`.
     pub zf: Tensor<R>,
 }
 
 /// Padding type for filtfilt.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum PadType {
-    /// Odd extension (default): x[-n] = 2*x[0] - x[n]
+    /// Odd extension (default): x`[-n]` = 2*x`[0]` - x`[n]`
     #[default]
     Odd,
-    /// Even extension: x[-n] = x[n]
+    /// Even extension: x`[-n]` = x`[n]`
     Even,
-    /// Constant extension: x[-n] = x[0]
+    /// Constant extension: x`[-n]` = x`[0]`
     Constant,
     /// No padding.
     None,

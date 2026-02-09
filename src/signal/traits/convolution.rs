@@ -83,8 +83,8 @@ pub trait ConvolutionAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `signal` - Input signal tensor of shape [..., N]
-    /// * `kernel` - Convolution kernel tensor of shape [M] (1D only)
+    /// * `signal` - Input signal tensor of shape `[..., N]`
+    /// * `kernel` - Convolution kernel tensor of shape `[M]` (1D only)
     /// * `mode` - Output mode (Full, Same, Valid)
     ///
     /// # Returns

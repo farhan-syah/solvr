@@ -40,8 +40,8 @@ impl<R: Runtime> TransferFunction<R> {
     ///
     /// # Arguments
     ///
-    /// * `b` - Numerator coefficients [M+1] in descending power order
-    /// * `a` - Denominator coefficients [N+1] in descending power order
+    /// * `b` - Numerator coefficients `[M+1]` in descending power order
+    /// * `a` - Denominator coefficients `[N+1]` in descending power order
     pub fn new(b: Tensor<R>, a: Tensor<R>) -> Self {
         Self { b, a }
     }
@@ -53,7 +53,7 @@ impl<R: Runtime> TransferFunction<R> {
         num_order.max(den_order)
     }
 
-    /// Check if this is an FIR filter (denominator is just [1]).
+    /// Check if this is an FIR filter (denominator is just `[1]`).
     pub fn is_fir(&self) -> bool {
         self.a.shape()[0] == 1
     }
@@ -72,13 +72,13 @@ impl<R: Runtime> TransferFunction<R> {
 /// Complex conjugate pairs are handled automatically during conversions.
 #[derive(Debug, Clone)]
 pub struct ZpkFilter<R: Runtime> {
-    /// Real parts of zeros [num_zeros].
+    /// Real parts of zeros `[num_zeros]`.
     pub zeros_real: Tensor<R>,
-    /// Imaginary parts of zeros [num_zeros].
+    /// Imaginary parts of zeros `[num_zeros]`.
     pub zeros_imag: Tensor<R>,
-    /// Real parts of poles [num_poles].
+    /// Real parts of poles `[num_poles]`.
     pub poles_real: Tensor<R>,
-    /// Imaginary parts of poles [num_poles].
+    /// Imaginary parts of poles `[num_poles]`.
     pub poles_imag: Tensor<R>,
     /// System gain.
     pub gain: f64,

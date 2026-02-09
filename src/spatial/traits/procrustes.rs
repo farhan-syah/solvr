@@ -16,14 +16,14 @@ pub struct ProcrustesResult<R: Runtime> {
     /// Optimal rotation to align source to target.
     pub rotation: Rotation<R>,
 
-    /// Optimal translation vector [d].
+    /// Optimal translation vector `[d]`.
     /// Applied after rotation: target ≈ scale * R @ source + translation
     pub translation: Tensor<R>,
 
     /// Optimal scaling factor (1.0 if scaling was disabled).
     pub scale: f64,
 
-    /// Transformed source points [n, d].
+    /// Transformed source points `[n, d]`.
     /// Equals scale * R @ source + translation
     pub transformed: Tensor<R>,
 
@@ -63,13 +63,17 @@ pub trait ProcrustesAlgorithms<R: Runtime> {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+    /// # use numr::tensor::Tensor;
+    /// use solvr::spatial::ProcrustesAlgorithms;
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
     /// // Align two corresponding point sets
-    /// let source = Tensor::from_slice(&[0.0, 0.0, 1.0, 0.0, 0.5, 1.0], &[3, 2], &device);
-    /// let target = Tensor::from_slice(&[1.0, 1.0, 2.0, 1.0, 1.5, 2.0], &[3, 2], &device);
-    ///
+    /// # let source = Tensor::from_slice(&[0.0, 0.0, 1.0, 0.0, 0.5, 1.0], &[3, 2], &device);
+    /// # let target = Tensor::from_slice(&[1.0, 1.0, 2.0, 1.0, 1.5, 2.0], &[3, 2], &device);
     /// let result = client.procrustes(&source, &target, true, false)?;
-    /// // result.transformed is close to target
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn procrustes(
         &self,

@@ -11,24 +11,24 @@ use numr::tensor::Tensor;
 /// Delaunay triangulation result.
 #[derive(Debug, Clone)]
 pub struct Delaunay<R: Runtime> {
-    /// Original points [n, d].
+    /// Original points `[n, d]`.
     pub points: Tensor<R>,
 
-    /// Simplices of the triangulation [n_simplices, d+1] (I64 dtype).
+    /// Simplices of the triangulation `[n_simplices, d+1]` (I64 dtype).
     /// For 2D: triangles as triples of vertex indices.
     /// For 3D: tetrahedra as 4-tuples of vertex indices.
     pub simplices: Tensor<R>,
 
-    /// Neighboring simplex indices [n_simplices, d+1] (I64 dtype).
-    /// neighbors[i, j] is the simplex sharing the facet opposite vertex j.
+    /// Neighboring simplex indices `[n_simplices, d+1]` (I64 dtype).
+    /// `neighbors[i, j]` is the simplex sharing the facet opposite vertex j.
     /// -1 indicates no neighbor (boundary).
     pub neighbors: Tensor<R>,
 
-    /// For each point, index of one simplex containing it [n] (I64 dtype).
+    /// For each point, index of one simplex containing it `[n]` (I64 dtype).
     /// Used for efficient point location queries.
     pub vertex_to_simplex: Tensor<R>,
 
-    /// Vertex indices of the convex hull [n_hull] (I64 dtype).
+    /// Vertex indices of the convex hull `[n_hull]` (I64 dtype).
     pub convex_hull: Tensor<R>,
 }
 
@@ -59,17 +59,21 @@ pub trait DelaunayAlgorithms<R: Runtime> {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
+    /// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+    /// # use numr::tensor::Tensor;
+    /// use solvr::spatial::DelaunayAlgorithms;
+    /// # let device = CpuDevice::new();
+    /// # let client = CpuClient::new(device.clone());
     /// // 2D points
-    /// let points = Tensor::from_slice(&[
-    ///     0.0, 0.0,
-    ///     1.0, 0.0,
-    ///     0.5, 1.0,
-    ///     0.5, 0.3,
-    /// ], &[4, 2], &device);
-    ///
+    /// # let points = Tensor::from_slice(&[
+    /// #     0.0, 0.0,
+    /// #     1.0, 0.0,
+    /// #     0.5, 1.0,
+    /// #     0.5, 0.3,
+    /// # ], &[4, 2], &device);
     /// let tri = client.delaunay(&points)?;
-    /// // tri.simplices contains triangles (3-tuples of vertex indices)
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn delaunay(&self, points: &Tensor<R>) -> Result<Delaunay<R>>;
 
@@ -82,7 +86,7 @@ pub trait DelaunayAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// Tensor [m] (I64 dtype) with simplex indices. -1 for points outside the hull.
+    /// Tensor `[m]` (I64 dtype) with simplex indices. -1 for points outside the hull.
     fn delaunay_find_simplex(&self, tri: &Delaunay<R>, query: &Tensor<R>) -> Result<Tensor<R>>;
 
     /// Get the vertex neighbors of each point.

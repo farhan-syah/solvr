@@ -28,12 +28,12 @@ pub enum EulerOrder {
 
 /// Rotation represented internally as unit quaternions.
 ///
-/// Quaternions are stored as [w, x, y, z] where w is the scalar part.
+/// Quaternions are stored as `[w, x, y, z]` where w is the scalar part.
 #[derive(Debug, Clone)]
 pub struct Rotation<R: Runtime> {
-    /// Unit quaternions [n, 4] where each row is [w, x, y, z].
-    /// For a single rotation, shape is [4].
-    /// For batch rotations, shape is [n, 4].
+    /// Unit quaternions `[n, 4]` where each row is `[w, x, y, z]`.
+    /// For a single rotation, shape is `[4]`.
+    /// For batch rotations, shape is `[n, 4]`.
     pub quaternions: Tensor<R>,
 
     /// Whether this represents a batch of rotations.
@@ -44,11 +44,11 @@ pub struct Rotation<R: Runtime> {
 ///
 /// All backends implementing rotation algorithms MUST implement this trait.
 pub trait RotationAlgorithms<R: Runtime> {
-    /// Create a rotation from a quaternion [w, x, y, z].
+    /// Create a rotation from a quaternion `[w, x, y, z]`.
     ///
     /// # Arguments
     ///
-    /// * `quaternion` - Quaternion(s) with shape [4] or [n, 4]
+    /// * `quaternion` - Quaternion(s) with shape `[4]` or `[n, 4]`
     ///
     /// # Returns
     ///
@@ -59,7 +59,7 @@ pub trait RotationAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `matrix` - Rotation matrix with shape [3, 3] or [n, 3, 3]
+    /// * `matrix` - Rotation matrix with shape `[3, 3]` or `[n, 3, 3]`
     ///
     /// # Returns
     ///
@@ -70,7 +70,7 @@ pub trait RotationAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `angles` - Euler angles [α, β, γ] in radians with shape [3] or [n, 3]
+    /// * `angles` - Euler angles `[α, β, γ]` in radians with shape `[3]` or `[n, 3]`
     /// * `order` - Order of rotations (e.g., XYZ, ZYX)
     ///
     /// # Returns
@@ -82,8 +82,8 @@ pub trait RotationAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `axis` - Unit rotation axis with shape [3] or [n, 3]
-    /// * `angle` - Rotation angle in radians with shape [] or [n]
+    /// * `axis` - Unit rotation axis with shape `[3]` or `[n, 3]`
+    /// * `angle` - Rotation angle in radians with shape `[]` or `[n]`
     ///
     /// # Returns
     ///
@@ -96,17 +96,17 @@ pub trait RotationAlgorithms<R: Runtime> {
     ///
     /// # Arguments
     ///
-    /// * `rotvec` - Rotation vector with shape [3] or [n, 3]
+    /// * `rotvec` - Rotation vector with shape `[3]` or `[n, 3]`
     fn rotation_from_rotvec(&self, rotvec: &Tensor<R>) -> Result<Rotation<R>>;
 
     /// Convert rotation to quaternion representation.
     ///
-    /// Returns quaternion(s) as [w, x, y, z] with shape [4] or [n, 4].
+    /// Returns quaternion(s) as `[w, x, y, z]` with shape `[4]` or `[n, 4]`.
     fn rotation_as_quat(&self, rot: &Rotation<R>) -> Result<Tensor<R>>;
 
     /// Convert rotation to 3x3 rotation matrix.
     ///
-    /// Returns matrix with shape [3, 3] or [n, 3, 3].
+    /// Returns matrix with shape `[3, 3]` or `[n, 3, 3]`.
     fn rotation_as_matrix(&self, rot: &Rotation<R>) -> Result<Tensor<R>>;
 
     /// Convert rotation to Euler angles.
@@ -118,12 +118,12 @@ pub trait RotationAlgorithms<R: Runtime> {
     ///
     /// # Returns
     ///
-    /// Euler angles [α, β, γ] in radians with shape [3] or [n, 3].
+    /// Euler angles `[α, β, γ]` in radians with shape `[3]` or `[n, 3]`.
     fn rotation_as_euler(&self, rot: &Rotation<R>, order: EulerOrder) -> Result<Tensor<R>>;
 
     /// Convert rotation to rotation vector (Rodrigues representation).
     ///
-    /// Returns rotation vector with shape [3] or [n, 3].
+    /// Returns rotation vector with shape `[3]` or `[n, 3]`.
     fn rotation_as_rotvec(&self, rot: &Rotation<R>) -> Result<Tensor<R>>;
 
     /// Apply rotation to vectors.
@@ -131,7 +131,7 @@ pub trait RotationAlgorithms<R: Runtime> {
     /// # Arguments
     ///
     /// * `rot` - The rotation
-    /// * `vectors` - Vectors to rotate with shape [3], [m, 3], or compatible batch shape
+    /// * `vectors` - Vectors to rotate with shape `[3]`, `[m, 3]`, or compatible batch shape
     ///
     /// # Returns
     ///
@@ -186,7 +186,7 @@ pub trait RotationAlgorithms<R: Runtime> {
 
     /// Compute the rotation angle (magnitude of rotation).
     ///
-    /// Returns angle in radians with shape [] or [n].
+    /// Returns angle in radians with shape `[]` or `[n]`.
     fn rotation_magnitude(&self, rot: &Rotation<R>) -> Result<Tensor<R>>;
 }
 

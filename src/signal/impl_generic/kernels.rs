@@ -30,8 +30,13 @@ use numr::tensor::Tensor;
 /// # Example
 ///
 /// ```ignore
+/// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// # use numr::dtype::DType;
+/// # let device = CpuDevice::new();
+/// # let client = CpuClient::new(device.clone());
 /// // Generate a Gaussian smoothing kernel with sigma=1.0, truncate at 4 standard deviations
-/// let kernel = gaussian_kernel_1d(&client, 1.0, 0, 4.0, DType::F64)?;
+/// # let kernel = solvr::signal::impl_generic::kernels::gaussian_kernel_1d(&client, 1.0, 0, 4.0, DType::F64)?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub fn gaussian_kernel_1d<R, C>(
     client: &C,
@@ -182,11 +187,14 @@ where
 /// # Example
 ///
 /// ```ignore
+/// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// # use numr::dtype::DType;
+/// # let device = CpuDevice::new();
+/// # let client = CpuClient::new(device.clone());
 /// // For Sobel filter along x-axis:
-/// // - Use derivative kernel in x direction
-/// // - Use smoothing kernel in y direction
-/// let deriv = edge_kernel_1d(&client, "sobel", true, DType::F64)?;   // [-1, 0, 1]
-/// let smooth = edge_kernel_1d(&client, "sobel", false, DType::F64)?;  // [1, 2, 1]
+/// # let deriv = solvr::signal::impl_generic::kernels::edge_kernel_1d(&client, "sobel", true, DType::F64)?;
+/// # let smooth = solvr::signal::impl_generic::kernels::edge_kernel_1d(&client, "sobel", false, DType::F64)?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub fn edge_kernel_1d<R, C>(
     client: &C,

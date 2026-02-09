@@ -16,14 +16,14 @@ use numr::tensor::Tensor;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # use numr::runtime::cpu::{CpuClient, CpuDevice};
+/// # use numr::dtype::DType;
 /// use solvr::window::WindowFunctions;
-/// use numr::runtime::cpu::{CpuClient, CpuDevice};
-/// use numr::dtype::DType;
-///
-/// let device = CpuDevice::new();
-/// let client = CpuClient::new(device.clone());
+/// # let device = CpuDevice::new();
+/// # let client = CpuClient::new(device.clone());
 /// let window = client.hann_window(1024, DType::F32, &device)?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 pub trait WindowFunctions<R: Runtime> {
     /// Generate a Hann (Hanning) window.
