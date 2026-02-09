@@ -3,6 +3,7 @@
 //! The Gauss-Legendre node computation is inherently scalar (one-time setup),
 //! but the function evaluation and weighted sum use tensor ops for GPU acceleration.
 
+use numr::dtype::DType;
 use numr::error::{Error, Result};
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -35,12 +36,28 @@ where
 
     let transformed_nodes: Vec<f64> = nodes.iter().map(|&x| center + half_width * x).collect();
 
-    // Evaluate function at all nodes in a single batch
-    let x_tensor = Tensor::<R>::from_slice(&transformed_nodes, &[n], client.device());
-    let f_values = f(&x_tensor)?;
-
-    // Create weight tensor and compute weighted sum using tensor ops
-    let weight_tensor = Tensor::<R>::from_slice(&weights, &[n], client.device());
+    // Try F64 nodes first; fall back to F32 for backends like wgpu
+    let x_tensor_f64 = Tensor::<R>::from_slice(&transformed_nodes, &[n], client.device());
+    let (f_values, weight_tensor) = match f(&x_tensor_f64) {
+        Ok(fv) => {
+            let wt = if fv.dtype() == DType::F32 {
+                let w32: Vec<f32> = weights.iter().map(|&w| w as f32).collect();
+                Tensor::<R>::from_slice(&w32, &[n], client.device())
+            } else {
+                Tensor::<R>::from_slice(&weights, &[n], client.device())
+            };
+            (fv, wt)
+        }
+        Err(_) => {
+            // F64 unsupported — retry with F32 nodes
+            let nodes_f32: Vec<f32> = transformed_nodes.iter().map(|&x| x as f32).collect();
+            let x_tensor_f32 = Tensor::<R>::from_slice(&nodes_f32, &[n], client.device());
+            let fv = f(&x_tensor_f32)?;
+            let w32: Vec<f32> = weights.iter().map(|&w| w as f32).collect();
+            let wt = Tensor::<R>::from_slice(&w32, &[n], client.device());
+            (fv, wt)
+        }
+    };
 
     // weighted = f_values * weights
     let weighted = client.mul(&f_values, &weight_tensor)?;

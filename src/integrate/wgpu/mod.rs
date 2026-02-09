@@ -310,16 +310,16 @@ mod tests {
         };
 
         let n = 101;
-        let x_data: Vec<f64> = (0..n).map(|i| i as f64 / (n - 1) as f64).collect();
-        let y_data: Vec<f64> = x_data.iter().map(|&xi| xi * xi).collect();
+        let x_data: Vec<f32> = (0..n).map(|i| i as f32 / (n - 1) as f32).collect();
+        let y_data: Vec<f32> = x_data.iter().map(|&xi| xi * xi).collect();
 
         let x = Tensor::<WgpuRuntime>::from_slice(&x_data, &[n], &device);
         let y = Tensor::<WgpuRuntime>::from_slice(&y_data, &[n], &device);
 
         let result = client.trapezoid(&y, &x).unwrap();
-        let result_val: Vec<f64> = result.to_vec();
+        let result_val: Vec<f32> = result.to_vec();
 
-        assert!((result_val[0] - 1.0 / 3.0).abs() < 0.001);
+        assert!((result_val[0] - 1.0 / 3.0).abs() < 0.01);
     }
 
     #[test]
@@ -332,8 +332,9 @@ mod tests {
         let result = client
             .fixed_quad(
                 |x| {
+                    // Nodes may be F64; read as f64, compute, then create F32 tensor
                     let data: Vec<f64> = x.to_vec();
-                    let sin_data: Vec<f64> = data.iter().map(|&xi| xi.sin()).collect();
+                    let sin_data: Vec<f32> = data.iter().map(|&xi| (xi as f32).sin()).collect();
                     Ok(Tensor::<WgpuRuntime>::from_slice(
                         &sin_data,
                         x.shape(),
@@ -346,8 +347,8 @@ mod tests {
             )
             .unwrap();
 
-        let result_val: Vec<f64> = result.to_vec();
-        assert!((result_val[0] - 2.0).abs() < 1e-10);
+        let result_val: Vec<f32> = result.to_vec();
+        assert!((result_val[0] - 2.0).abs() < 1e-3);
     }
 
     #[test]
