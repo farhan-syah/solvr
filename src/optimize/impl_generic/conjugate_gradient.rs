@@ -1,4 +1,5 @@
 //! Conjugate gradient method for multivariate minimization.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -21,7 +22,7 @@ pub fn conjugate_gradient_impl<R, C, F>(
     options: &MinimizeOptions,
 ) -> OptimizeResult<TensorMinimizeResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {

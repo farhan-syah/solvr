@@ -1,4 +1,5 @@
 //! Gamma distribution.
+use crate::DType;
 
 use super::special;
 use crate::stats::distribution::{ContinuousDistribution, Distribution};
@@ -201,7 +202,11 @@ impl ContinuousDistribution for Gamma {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -211,7 +216,11 @@ impl ContinuousDistribution for Gamma {
             .and_then(|log_pdf| client.exp(&log_pdf))
     }
 
-    fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -224,7 +233,11 @@ impl ContinuousDistribution for Gamma {
         client.add_scalar(&result, self.log_norm)
     }
 
-    fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -234,7 +247,11 @@ impl ContinuousDistribution for Gamma {
         client.gammainc(&alpha_t, &beta_x)
     }
 
-    fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -244,7 +261,11 @@ impl ContinuousDistribution for Gamma {
         client.gammaincc(&alpha_t, &beta_x)
     }
 
-    fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -253,7 +274,11 @@ impl ContinuousDistribution for Gamma {
         client.log(&cdf)
     }
 
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -263,7 +288,11 @@ impl ContinuousDistribution for Gamma {
         client.mul_scalar(&gamma_inv, 1.0 / self.beta)
     }
 
-    fn isf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn isf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

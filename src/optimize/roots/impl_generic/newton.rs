@@ -23,7 +23,7 @@ pub fn newton_system_impl<R, C, F>(
     options: &RootOptions,
 ) -> OptimizeResult<TensorRootResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -152,7 +152,7 @@ pub fn finite_difference_jacobian_tensor<R, C, F>(
     eps: f64,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {

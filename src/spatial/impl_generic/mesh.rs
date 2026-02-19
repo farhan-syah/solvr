@@ -2,6 +2,7 @@
 //!
 //! Provides ear clipping triangulation, QEM mesh simplification,
 //! and Laplacian/Taubin mesh smoothing.
+use crate::DType;
 
 use crate::spatial::traits::mesh::{Mesh, SimplificationMethod, SmoothingMethod};
 use numr::algorithm::linalg::LinearAlgebraAlgorithms;
@@ -19,7 +20,7 @@ use numr::tensor::Tensor;
 /// but individual ear tests use tensor ops.
 pub fn triangulate_polygon_impl<R, C>(client: &C, vertices: &Tensor<R>) -> Result<Mesh<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     let shape = vertices.shape();
@@ -168,7 +169,7 @@ pub fn mesh_simplify_impl<R, C>(
     _method: SimplificationMethod,
 ) -> Result<Mesh<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + CompareOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let n_verts = mesh.vertices.shape()[0];
@@ -414,7 +415,7 @@ pub fn mesh_smooth_impl<R, C>(
     method: SmoothingMethod,
 ) -> Result<Mesh<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     let n_verts = mesh.vertices.shape()[0];

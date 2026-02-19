@@ -1,4 +1,5 @@
 //! Shared ODE result extraction for time-dependent PDE solvers.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -14,7 +15,7 @@ use crate::pde::types::TimeResult;
 /// - `stride`: total variables per timestep (may differ from `n_vars` for wave equation)
 /// - `n_vars`: number of variables to extract per step
 /// - `sol_shape`: shape to reshape each extracted solution into
-pub fn extract_ode_solutions<R: Runtime>(
+pub fn extract_ode_solutions<R: Runtime<DType = DType>>(
     ode_t: Tensor<R>,
     ode_y: &Tensor<R>,
     n_vars: usize,

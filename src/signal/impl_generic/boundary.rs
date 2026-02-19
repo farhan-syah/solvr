@@ -2,6 +2,7 @@
 //!
 //! Implements padding strategies for different boundary modes used by
 //! scipy.ndimage-equivalent filters. All operations stay on device - no GPU->CPU transfers.
+use crate::DType;
 
 use crate::signal::traits::nd_filters::BoundaryMode;
 use numr::error::{Error, Result};
@@ -32,7 +33,7 @@ pub fn pad_axis_impl<R, C>(
     mode: BoundaryMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     if pad_before == 0 && pad_after == 0 {

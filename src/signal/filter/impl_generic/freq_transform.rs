@@ -7,6 +7,7 @@
 
 // Allow complex return types for tensor quadruplets in bandpass/bandstop transforms
 #![allow(clippy::type_complexity)]
+use crate::DType;
 
 use crate::signal::filter::types::AnalogPrototype;
 use numr::error::Result;
@@ -28,7 +29,7 @@ fn complex_div_tensor<R, C>(
     b_im: &Tensor<R>,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // denom = c² + d²
@@ -62,7 +63,7 @@ fn complex_sqrt_tensor<R, C>(
     im: &Tensor<R>,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // mag = sqrt(re² + im²)
@@ -91,7 +92,7 @@ where
 /// Compute complex magnitude squared: re² + im²
 fn complex_mag_sq<R, C>(client: &C, re: &Tensor<R>, im: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let re_sq = client.mul(re, re)?;
@@ -102,7 +103,7 @@ where
 /// Compute complex magnitude: sqrt(re² + im²)
 fn complex_mag<R, C>(client: &C, re: &Tensor<R>, im: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let mag_sq = complex_mag_sq(client, re, im)?;
@@ -124,7 +125,7 @@ pub fn lp2lp_zpk_impl<R, C>(
     wo: f64,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // Transform zeros: z → z * ω₀
@@ -162,7 +163,7 @@ pub fn lp2hp_zpk_impl<R, C>(
     wo: f64,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let device = proto.zeros_real.device();
@@ -268,7 +269,7 @@ pub fn lp2bp_zpk_impl<R, C>(
     bw: f64,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let device = proto.zeros_real.device();
@@ -357,7 +358,7 @@ pub fn lp2bs_zpk_impl<R, C>(
     bw: f64,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let device = proto.zeros_real.device();
@@ -468,7 +469,7 @@ fn lp2bp_transform_tensor<R, C>(
     bw: f64,
 ) -> Result<(Tensor<R>, Tensor<R>, Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // z' = (s*bw ± sqrt((s*bw)² - 4*wo²)) / 2
@@ -516,7 +517,7 @@ fn lp2bs_transform_tensor<R, C>(
     bw: f64,
 ) -> Result<(Tensor<R>, Tensor<R>, Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // For bandstop: first compute bw/s, then apply same formula
@@ -562,7 +563,7 @@ where
 /// Interleave two tensors: [a0, b0, a1, b1, a2, b2, ...]
 fn interleave_tensors<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ShapeOps<R> + RuntimeClient<R>,
 {
     let n = a.shape()[0];

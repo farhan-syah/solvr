@@ -1,4 +1,5 @@
 //! Dual annealing algorithm trait.
+use crate::DType;
 
 use super::GlobalOptions;
 use numr::error::Result;
@@ -7,7 +8,7 @@ use numr::tensor::Tensor;
 
 /// Tensor-based result from dual annealing.
 #[derive(Debug, Clone)]
-pub struct DualAnnealingResult<R: Runtime> {
+pub struct DualAnnealingResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -16,7 +17,7 @@ pub struct DualAnnealingResult<R: Runtime> {
 }
 
 /// Dual annealing algorithm trait.
-pub trait DualAnnealingAlgorithms<R: Runtime> {
+pub trait DualAnnealingAlgorithms<R: Runtime<DType = DType>> {
     /// Dual annealing global optimizer.
     ///
     /// Combines simulated annealing with local search for smooth functions.

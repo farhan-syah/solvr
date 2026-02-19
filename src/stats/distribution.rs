@@ -12,6 +12,7 @@
 //! - `SpecialFunctions<R>` for special functions (erf, gamma, betainc, etc.)
 //!
 //! This ensures GPU tensors stay on GPU throughout computation - no transfers.
+use crate::DType;
 
 use crate::stats::StatsResult;
 use numr::algorithm::special::SpecialFunctions;
@@ -155,33 +156,53 @@ pub trait ContinuousDistribution: Distribution {
     ///
     /// Each distribution implements this using numr tensor ops. For example,
     /// Normal uses `exp`, `mul_scalar`, `sub_scalar` to compute the PDF formula.
-    fn pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>;
 
     /// Batch log probability density function.
     ///
     /// More numerically stable than `log(pdf_tensor(x))` for extreme values.
-    fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>;
 
     /// Batch cumulative distribution function.
     ///
     /// Computes CDF for all elements in the input tensor.
-    fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
     /// Batch survival function.
     ///
     /// Computes SF = 1 - CDF for all elements.
-    fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
     /// Batch log cumulative distribution function.
-    fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
@@ -189,14 +210,22 @@ pub trait ContinuousDistribution: Distribution {
     ///
     /// Computes PPF for all probability values in the input tensor.
     /// Values should be in [0, 1].
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
     /// Batch inverse survival function.
     ///
     /// Returns x such that SF(x) = p for all elements.
-    fn isf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn isf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 }
@@ -260,24 +289,40 @@ pub trait DiscreteDistribution: Distribution {
     ///
     /// Computes PMF for all elements in the input tensor.
     /// The tensor should contain non-negative integer values (stored as floats).
-    fn pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
     /// Batch log probability mass function.
-    fn log_pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
     /// Batch cumulative distribution function.
     ///
     /// Computes CDF for all elements in the input tensor.
-    fn cdf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
     /// Batch survival function.
-    fn sf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 
@@ -285,7 +330,11 @@ pub trait DiscreteDistribution: Distribution {
     ///
     /// Computes PPF for all probability values in the input tensor.
     /// Returns the smallest k such that CDF(k) >= p.
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>;
 }

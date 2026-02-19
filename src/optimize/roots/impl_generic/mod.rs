@@ -1,4 +1,5 @@
 //! Tensor-based implementations of multivariate root finding algorithms.
+use crate::DType;
 
 mod anderson;
 mod broyden;
@@ -19,7 +20,7 @@ use numr::tensor::Tensor;
 
 /// Result from tensor-based multivariate root finding.
 #[derive(Debug, Clone)]
-pub struct TensorRootResult<R: Runtime> {
+pub struct TensorRootResult<R: Runtime<DType = DType>> {
     /// The root found.
     pub x: Tensor<R>,
     /// Function value at root (should be near zero).

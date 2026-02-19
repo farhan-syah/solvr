@@ -3,6 +3,7 @@
 //! Computes the Voronoi diagram (dual of Delaunay triangulation) of a point set.
 //! The Voronoi diagram partitions space into regions where each region contains
 //! all points closer to one generator than any other.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -12,7 +13,7 @@ use super::delaunay::Delaunay;
 
 /// Voronoi diagram result.
 #[derive(Debug, Clone)]
-pub struct Voronoi<R: Runtime> {
+pub struct Voronoi<R: Runtime<DType = DType>> {
     /// Generator points (original input) `[n, d]`.
     pub points: Tensor<R>,
 
@@ -42,7 +43,7 @@ pub struct Voronoi<R: Runtime> {
 /// Algorithmic contract for Voronoi diagram operations.
 ///
 /// All backends implementing Voronoi algorithms MUST implement this trait.
-pub trait VoronoiAlgorithms<R: Runtime> {
+pub trait VoronoiAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the Voronoi diagram of a point set.
     ///
     /// # Arguments

@@ -17,7 +17,7 @@ use super::clamp_to_bounds;
 
 /// Tensor-based result from dual annealing.
 #[derive(Debug, Clone)]
-pub struct DualAnnealingTensorResult<R: Runtime> {
+pub struct DualAnnealingTensorResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -37,7 +37,7 @@ pub fn dual_annealing_impl<R, C, F>(
     options: &GlobalOptions,
 ) -> OptimizeResult<DualAnnealingTensorResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -155,8 +155,11 @@ where
             }
         })?;
 
+        // Use larger perturbation factor so exploration doesn't collapse too early.
+        // scale goes from 1.0 → ~0, so step_factor keeps steps meaningful longer.
+        let step_factor = scale.sqrt() * 0.5;
         let delta = client
-            .mul_scalar(&delta_unscaled, scale * 0.1)
+            .mul_scalar(&delta_unscaled, step_factor)
             .map_err(|e| OptimizeError::NumericalError {
                 message: format!("dual_annealing: delta - {}", e),
             })?;
@@ -228,6 +231,21 @@ where
                 converged: true,
             });
         }
+    }
+
+    // Final local search even when max_iter exhausted
+    let local_result = nelder_mead_impl(client, &f, &x_best, &local_opts)?;
+    nfev += local_result.nfev;
+
+    let x_final = clamp_to_bounds(client, &local_result.x, lower_bounds, upper_bounds)?;
+    let f_final = f(&x_final).map_err(|e| OptimizeError::NumericalError {
+        message: format!("dual_annealing: final eval - {}", e),
+    })?;
+    nfev += 1;
+
+    if f_final < f_best {
+        x_best = x_final;
+        f_best = f_final;
     }
 
     Ok(DualAnnealingTensorResult {

@@ -36,7 +36,7 @@ pub fn freqs_impl<R, C>(
     device: &R::Device,
 ) -> Result<FreqsResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: BinaryOps<R>
         + UnaryOps<R>
         + ReduceOps<R>
@@ -127,7 +127,7 @@ fn evaluate_polynomial_at_jw<R, C>(
     device: &R::Device,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: BinaryOps<R>
         + UnaryOps<R>
         + ReduceOps<R>

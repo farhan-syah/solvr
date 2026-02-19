@@ -1,4 +1,5 @@
 //! Trust-region constrained optimization algorithm trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -9,7 +10,7 @@ use crate::optimize::error::OptimizeResult;
 use super::types::{Bounds, ConstrainedOptions, ConstrainedResult, Constraint};
 
 /// Trait for trust-region constrained optimization.
-pub trait TrustConstrAlgorithms<R: Runtime> {
+pub trait TrustConstrAlgorithms<R: Runtime<DType = DType>> {
     /// Trust-region constrained optimization (trust-constr).
     ///
     /// Two-mode algorithm:

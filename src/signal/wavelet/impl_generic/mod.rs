@@ -1,4 +1,5 @@
 //! Generic implementations of wavelet transform algorithms.
+use crate::DType;
 
 use super::traits::{CwtResult, Dwt2dResult, DwtResult, ExtensionMode, WavedecResult};
 use super::types::Wavelet;
@@ -15,7 +16,7 @@ pub fn dwt_impl<R, C>(
     mode: ExtensionMode,
 ) -> Result<DwtResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let x_data: Vec<f64> = x.to_vec();
@@ -63,7 +64,7 @@ pub fn idwt_impl<R, C>(
     mode: ExtensionMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let approx: Vec<f64> = coeffs.approx.to_vec();
@@ -110,7 +111,7 @@ pub fn wavedec_impl<R, C>(
     level: usize,
 ) -> Result<WavedecResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     if level == 0 {
@@ -143,7 +144,7 @@ pub fn waverec_impl<R, C>(
     mode: ExtensionMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let mut current = coeffs.approx.clone();
@@ -168,7 +169,7 @@ pub fn dwt2_impl<R, C>(
     mode: ExtensionMode,
 ) -> Result<Dwt2dResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let shape = x.shape();
@@ -256,7 +257,7 @@ pub fn idwt2_impl<R, C>(
     mode: ExtensionMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let shape = coeffs.ll.shape();
@@ -337,7 +338,7 @@ pub fn cwt_impl<R, C>(
     wavelet: &Wavelet,
 ) -> Result<CwtResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let x_data: Vec<f64> = x.to_vec();

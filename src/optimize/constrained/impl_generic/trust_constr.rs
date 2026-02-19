@@ -31,7 +31,7 @@ pub fn trust_constr_impl<R, C, F>(
     options: &ConstrainedOptions,
 ) -> OptimizeResult<ConstrainedResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -65,7 +65,7 @@ fn equality_sqp<R, C, F>(
     n: usize,
 ) -> OptimizeResult<ConstrainedResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -234,7 +234,7 @@ fn barrier_method<R, C, F>(
     n: usize,
 ) -> OptimizeResult<ConstrainedResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -322,7 +322,7 @@ fn barrier_inner_solve<R, C, F, G>(
     n: usize,
 ) -> OptimizeResult<(Tensor<R>, f64, usize, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
     G: Fn(&Tensor<R>) -> Result<f64>,
@@ -408,7 +408,7 @@ where
 
 /// Compute log-barrier penalty: -mu * sum(log(c_i(x))) for inequality constraints.
 /// Note: This function extracts constraint values at the evaluation boundary.
-fn compute_barrier_penalty<R: Runtime>(
+fn compute_barrier_penalty<R: Runtime<DType = DType>>(
     x: &Tensor<R>,
     constraints: &[Constraint<'_, R>],
     bounds: &Bounds<R>,
@@ -463,7 +463,7 @@ fn clamp_interior<R, C>(
     margin: f64,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let mut result = x.clone();
@@ -517,7 +517,7 @@ fn eval_eq_constraints<R, C>(
     eps: f64,
 ) -> OptimizeResult<(Option<Tensor<R>>, Option<Tensor<R>>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let eq_constraints: Vec<&Constraint<'_, R>> = constraints
@@ -588,7 +588,7 @@ fn compute_trust_step<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     // Cauchy point for the trust region
@@ -655,7 +655,7 @@ fn compute_predicted_reduction<R, C>(
     n: usize,
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Predicted reduction: -g'd - 0.5 * d'Bd
@@ -693,7 +693,7 @@ fn sr1_update<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // SR1: B_new = B + (y - B*s)(y - B*s)' / (y - B*s)'s
@@ -765,7 +765,7 @@ where
         })
 }
 
-fn compute_max_violation_all<R: Runtime>(
+fn compute_max_violation_all<R: Runtime<DType = DType>>(
     x: &Tensor<R>,
     constraints: &[Constraint<'_, R>],
     bounds: &Bounds<R>,

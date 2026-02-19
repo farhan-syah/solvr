@@ -1,6 +1,7 @@
 //! Hilbert transform for computing analytic signal.
 //!
 //! Uses numr tensor ops - backend-optimized (SIMD on CPU, kernels on GPU).
+use crate::DType;
 
 use crate::signal::traits::analysis::HilbertResult;
 use numr::algorithm::fft::{FftAlgorithms, FftDirection, FftNormalization};
@@ -20,7 +21,7 @@ use numr::tensor::Tensor;
 /// where H{x(t)} is the Hilbert transform of x(t).
 pub fn hilbert_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<HilbertResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R>
         + ComplexOps<R>
         + ScalarOps<R>

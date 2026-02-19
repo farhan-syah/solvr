@@ -1,4 +1,5 @@
 //! Simulated annealing algorithm trait.
+use crate::DType;
 
 use super::GlobalOptions;
 use numr::error::Result;
@@ -7,7 +8,7 @@ use numr::tensor::Tensor;
 
 /// Tensor-based result from simulated annealing.
 #[derive(Debug, Clone)]
-pub struct SimulatedAnnealingResult<R: Runtime> {
+pub struct SimulatedAnnealingResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -16,7 +17,7 @@ pub struct SimulatedAnnealingResult<R: Runtime> {
 }
 
 /// Simulated annealing algorithm trait.
-pub trait SimulatedAnnealingAlgorithms<R: Runtime> {
+pub trait SimulatedAnnealingAlgorithms<R: Runtime<DType = DType>> {
     /// Simulated annealing global optimizer.
     ///
     /// Uses probabilistic acceptance of worse solutions to escape local minima.

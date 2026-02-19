@@ -30,7 +30,7 @@ pub fn slsqp_impl<R, C, F>(
     options: &ConstrainedOptions,
 ) -> OptimizeResult<ConstrainedResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -232,7 +232,7 @@ fn evaluate_constraints<R, C>(
     nfev: &mut usize,
 ) -> OptimizeResult<(Option<Tensor<R>>, Option<Tensor<R>>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     if indices.is_empty() {
@@ -314,7 +314,7 @@ fn add_bound_constraints<R, C>(
     n: usize,
 ) -> OptimizeResult<(Option<Tensor<R>>, Option<Tensor<R>>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let mut a_parts: Vec<Tensor<R>> = Vec::new();
@@ -395,7 +395,7 @@ fn compute_max_violation<R, C>(
     c_ineq: Option<&Tensor<R>>,
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let mut max_viol = 0.0f64;
@@ -456,7 +456,7 @@ fn merit_line_search<R, C, F>(
     _options: &ConstrainedOptions,
 ) -> OptimizeResult<(Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -526,7 +526,7 @@ fn compute_merit<R, C, F>(
     mu: f64,
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -596,7 +596,7 @@ fn bfgs_update<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let sy = tensor_dot(client, s, y).map_err(|e| OptimizeError::NumericalError {
@@ -728,7 +728,7 @@ where
 /// Apply bounds to a point by clamping.
 fn apply_bounds<R, C>(client: &C, x: &Tensor<R>, bounds: &Bounds<R>) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let mut result = x.clone();

@@ -1,6 +1,7 @@
 //! Signal resampling using FFT-based method.
 //!
 //! Uses numr tensor ops - backend-optimized (SIMD on CPU, kernels on GPU).
+use crate::DType;
 
 use numr::algorithm::fft::{FftAlgorithms, FftDirection, FftNormalization};
 use numr::error::{Error, Result};
@@ -23,7 +24,7 @@ use numr::tensor::Tensor;
 /// This preserves frequency content while changing the sample rate.
 pub fn resample_impl<R, C>(client: &C, x: &Tensor<R>, num: usize, den: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R>
         + ComplexOps<R>
         + ScalarOps<R>

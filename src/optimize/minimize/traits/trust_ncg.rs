@@ -1,4 +1,5 @@
 //! Trust-NCG algorithm trait.
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -13,7 +14,7 @@ use crate::optimize::error::OptimizeResult;
 /// Uses CG to approximately solve the trust region subproblem. Handles
 /// negative curvature by truncating at the trust region boundary.
 /// Memory: O(n) per iteration.
-pub trait TrustNcgAlgorithms<R: Runtime> {
+pub trait TrustNcgAlgorithms<R: Runtime<DType = DType>> {
     fn trust_ncg<F>(
         &self,
         f: F,

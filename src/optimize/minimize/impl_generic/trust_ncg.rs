@@ -7,6 +7,7 @@
 //! 1. Negative curvature is encountered (d^T H d <= 0)
 //! 2. The iterates hit the trust region boundary (||p|| >= delta)
 //! 3. CG converges (||r|| < tol)
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -28,7 +29,7 @@ struct SteihaugCG;
 
 impl<R, C, F> SubproblemSolver<R, C, F> for SteihaugCG
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -55,7 +56,7 @@ pub fn trust_ncg_impl<R, C, F>(
     options: &TrustRegionOptions,
 ) -> OptimizeResult<TrustRegionResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -77,7 +78,7 @@ fn steihaug_toint_cg<R, C, F>(
     trust_radius: f64,
 ) -> OptimizeResult<SubproblemResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -234,7 +235,7 @@ fn move_to_boundary<R, C>(
     trust_radius: f64,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let p_dot_p = tensor_dot(client, p, p).map_err(|e| OptimizeError::NumericalError {

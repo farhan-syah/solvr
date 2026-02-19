@@ -1,4 +1,5 @@
 //! Truncated Normal distribution.
+use crate::DType;
 
 use super::special::{self, INV_SQRT_2PI, LN_SQRT_2PI};
 use crate::stats::distribution::{ContinuousDistribution, Distribution};
@@ -332,7 +333,11 @@ impl ContinuousDistribution for TruncatedNormal {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -353,7 +358,11 @@ impl ContinuousDistribution for TruncatedNormal {
         client.mul_scalar(&numerator, 1.0 / denom)
     }
 
-    fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -370,7 +379,11 @@ impl ContinuousDistribution for TruncatedNormal {
         client.add_scalar(&neg_half_z_sq, constant)
     }
 
-    fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -396,7 +409,11 @@ impl ContinuousDistribution for TruncatedNormal {
         client.minimum(&clamped, &one)
     }
 
-    fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -422,7 +439,11 @@ impl ContinuousDistribution for TruncatedNormal {
         client.minimum(&clamped, &one)
     }
 
-    fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -430,7 +451,11 @@ impl ContinuousDistribution for TruncatedNormal {
         client.log(&cdf)
     }
 
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -452,7 +477,11 @@ impl ContinuousDistribution for TruncatedNormal {
         client.add_scalar(&scaled, self.mu)
     }
 
-    fn isf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn isf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

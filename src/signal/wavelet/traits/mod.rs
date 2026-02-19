@@ -1,4 +1,5 @@
 //! Wavelet transform algorithm traits.
+use crate::DType;
 
 use super::types::Wavelet;
 use numr::error::Result;
@@ -6,7 +7,7 @@ use numr::runtime::Runtime;
 use numr::tensor::Tensor;
 
 /// Discrete wavelet transform algorithms.
-pub trait DwtAlgorithms<R: Runtime> {
+pub trait DwtAlgorithms<R: Runtime<DType = DType>> {
     /// Compute single-level discrete wavelet transform.
     ///
     /// # Algorithm
@@ -78,7 +79,7 @@ pub trait DwtAlgorithms<R: Runtime> {
 }
 
 /// Continuous wavelet transform algorithms.
-pub trait CwtAlgorithms<R: Runtime> {
+pub trait CwtAlgorithms<R: Runtime<DType = DType>> {
     /// Compute continuous wavelet transform.
     ///
     /// # Algorithm
@@ -119,7 +120,7 @@ pub enum ExtensionMode {
 
 /// Result from single-level DWT.
 #[derive(Debug, Clone)]
-pub struct DwtResult<R: Runtime> {
+pub struct DwtResult<R: Runtime<DType = DType>> {
     /// Approximation coefficients (low-pass).
     pub approx: Tensor<R>,
     /// Detail coefficients (high-pass).
@@ -128,14 +129,14 @@ pub struct DwtResult<R: Runtime> {
 
 /// Result from multi-level wavelet decomposition.
 #[derive(Debug, Clone)]
-pub struct WavedecResult<R: Runtime> {
+pub struct WavedecResult<R: Runtime<DType = DType>> {
     /// Approximation coefficients at the coarsest level.
     pub approx: Tensor<R>,
     /// Detail coefficients at each level (finest to coarsest).
     pub details: Vec<Tensor<R>>,
 }
 
-impl<R: Runtime> WavedecResult<R> {
+impl<R: Runtime<DType = DType>> WavedecResult<R> {
     /// Get the number of decomposition levels.
     pub fn num_levels(&self) -> usize {
         self.details.len()
@@ -153,7 +154,7 @@ impl<R: Runtime> WavedecResult<R> {
 
 /// Result from 2D DWT.
 #[derive(Debug, Clone)]
-pub struct Dwt2dResult<R: Runtime> {
+pub struct Dwt2dResult<R: Runtime<DType = DType>> {
     /// LL (low-low) - approximation.
     pub ll: Tensor<R>,
     /// LH (low-high) - horizontal detail.
@@ -166,7 +167,7 @@ pub struct Dwt2dResult<R: Runtime> {
 
 /// Result from continuous wavelet transform.
 #[derive(Debug, Clone)]
-pub struct CwtResult<R: Runtime> {
+pub struct CwtResult<R: Runtime<DType = DType>> {
     /// CWT coefficients (real part), shape [num_scales, signal_length].
     pub coeffs_real: Tensor<R>,
     /// CWT coefficients (imaginary part), shape [num_scales, signal_length].
@@ -175,7 +176,7 @@ pub struct CwtResult<R: Runtime> {
     pub scales: Tensor<R>,
 }
 
-impl<R: Runtime> CwtResult<R> {
+impl<R: Runtime<DType = DType>> CwtResult<R> {
     /// Get magnitude of CWT coefficients.
     pub fn magnitude(&self) -> Result<Tensor<R>> {
         let re: Vec<f64> = self.coeffs_real.to_vec();

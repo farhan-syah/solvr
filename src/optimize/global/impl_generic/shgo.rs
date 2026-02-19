@@ -14,7 +14,7 @@ use crate::optimize::global::GlobalOptions;
 
 /// SHGO result type.
 #[derive(Debug, Clone)]
-pub struct ShgoTensorResult<R: Runtime> {
+pub struct ShgoTensorResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub local_minima: Vec<(Tensor<R>, f64)>,
@@ -51,7 +51,7 @@ const PRIMES: &[usize] = &[
 /// Generates a point in [0,1]^n using different prime bases for each dimension.
 fn halton_sequence<R, C>(client: &C, dim: usize, index: usize) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let mut values = Vec::with_capacity(dim);
@@ -81,7 +81,7 @@ fn refine_candidate<R, C, F>(
     tol: f64,
 ) -> OptimizeResult<(Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -209,7 +209,7 @@ fn clamp_to_bounds<R, C>(
     upper: &Tensor<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>,
 {
     let clamped = client
@@ -232,7 +232,7 @@ fn is_duplicate<R, C>(
     threshold: f64,
 ) -> OptimizeResult<bool>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     for (x_existing, _) in local_minima {
@@ -278,7 +278,7 @@ pub fn shgo_impl<R, C, F>(
     options: &GlobalOptions,
 ) -> OptimizeResult<ShgoTensorResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {

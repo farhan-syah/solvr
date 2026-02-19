@@ -1,6 +1,7 @@
 //! System response traits.
 //!
 //! Provides algorithms for computing impulse and step responses of digital filters.
+use crate::DType;
 
 use crate::signal::filter::types::TransferFunction;
 use numr::error::Result;
@@ -11,7 +12,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing system responses MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait SystemResponseAlgorithms<R: Runtime> {
+pub trait SystemResponseAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the impulse response of a digital filter.
     ///
     /// # Algorithm
@@ -63,7 +64,7 @@ pub trait SystemResponseAlgorithms<R: Runtime> {
 
 /// Result from impulse response computation.
 #[derive(Debug, Clone)]
-pub struct ImpulseResponse<R: Runtime> {
+pub struct ImpulseResponse<R: Runtime<DType = DType>> {
     /// Time indices (sample numbers).
     pub t: Tensor<R>,
     /// Impulse response samples.
@@ -72,7 +73,7 @@ pub struct ImpulseResponse<R: Runtime> {
 
 /// Result from step response computation.
 #[derive(Debug, Clone)]
-pub struct StepResponse<R: Runtime> {
+pub struct StepResponse<R: Runtime<DType = DType>> {
     /// Time indices (sample numbers).
     pub t: Tensor<R>,
     /// Step response samples.

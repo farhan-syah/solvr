@@ -1,4 +1,5 @@
 //! Finite difference method traits for PDE solving.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -13,7 +14,7 @@ use crate::pde::types::{
 /// Provides solvers for elliptic (Poisson), parabolic (heat), and hyperbolic
 /// (wave) PDEs using sparse stencil discretization and iterative solvers.
 #[allow(clippy::too_many_arguments)]
-pub trait FiniteDifferenceAlgorithms<R: Runtime> {
+pub trait FiniteDifferenceAlgorithms<R: Runtime<DType = DType>> {
     /// Solve the Poisson equation: -nabla^2 u = f on a 2D grid.
     ///
     /// Assembles 5-point Laplacian stencil as sparse CSR matrix and solves

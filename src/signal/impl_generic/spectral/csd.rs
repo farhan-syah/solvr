@@ -1,6 +1,7 @@
 //! Cross spectral density estimation using Welch's method.
 //!
 //! Uses numr tensor ops - backend-optimized (SIMD on CPU, kernels on GPU).
+use crate::DType;
 
 use crate::signal::impl_generic::helpers::{
     DetrendMode, detrend_tensor_impl, extract_segments_impl,
@@ -23,7 +24,7 @@ pub fn csd_impl<R, C>(
     params: WelchParams<R>,
 ) -> Result<CsdResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R>
         + ComplexOps<R>
         + ScalarOps<R>

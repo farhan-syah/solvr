@@ -3,6 +3,7 @@
 //! Separable filters (Gaussian, uniform) are decomposed into sequential 1D
 //! passes along each axis, using numr's conv1d in (N,C,L) format.
 //! Min/max/percentile filters use a separable approach with rank operations.
+use crate::DType;
 
 use super::boundary::pad_axis_impl;
 use super::kernels::{gaussian_kernel_1d, uniform_kernel_1d};
@@ -47,7 +48,7 @@ fn convolve_along_axis<R, C>(
     mode: BoundaryMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R> + ScalarOps<R> + ShapeOps<R> + RuntimeClient<R>,
 {
     let shape = input.shape().to_vec();
@@ -114,7 +115,7 @@ pub fn gaussian_filter_impl<R, C>(
     truncate: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R> + ScalarOps<R> + ShapeOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     let dtype = input.dtype();
@@ -162,7 +163,7 @@ pub fn uniform_filter_impl<R, C>(
     mode: BoundaryMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R> + ScalarOps<R> + ShapeOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     let dtype = input.dtype();
@@ -201,7 +202,7 @@ pub fn minimum_filter_impl<R, C>(
     mode: BoundaryMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + ReduceOps<R> + SortingOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     let dtype = input.dtype();
@@ -236,7 +237,7 @@ pub fn maximum_filter_impl<R, C>(
     mode: BoundaryMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + ReduceOps<R> + SortingOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     let dtype = input.dtype();
@@ -272,7 +273,7 @@ pub fn percentile_filter_impl<R, C>(
     mode: BoundaryMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + ReduceOps<R> + SortingOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     if !(0.0..=100.0).contains(&percentile) {
@@ -344,7 +345,7 @@ fn rank_filter_axis_impl<R, C>(
     op: RankOp,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + ReduceOps<R> + SortingOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     let half = window_size / 2;

@@ -2,6 +2,7 @@
 //!
 //! Provides algorithms for converting between transfer function and state-space
 //! representations.
+use crate::DType;
 
 use crate::signal::filter::types::{StateSpace, TransferFunction};
 use numr::error::Result;
@@ -11,7 +12,7 @@ use numr::runtime::Runtime;
 ///
 /// All backends implementing state-space conversions MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait StateSpaceConversions<R: Runtime> {
+pub trait StateSpaceConversions<R: Runtime<DType = DType>> {
     /// Convert transfer function to controllable canonical state-space form.
     ///
     /// # Algorithm

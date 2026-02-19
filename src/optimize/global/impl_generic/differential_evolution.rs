@@ -16,7 +16,7 @@ use super::{clamp_to_bounds, validate_bounds};
 
 /// Tensor-based result from differential evolution.
 #[derive(Debug, Clone)]
-pub struct DifferentialEvolutionTensorResult<R: Runtime> {
+pub struct DifferentialEvolutionTensorResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -36,7 +36,7 @@ pub fn differential_evolution_impl<R, C, F>(
     options: &GlobalOptions,
 ) -> OptimizeResult<DifferentialEvolutionTensorResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -166,7 +166,7 @@ fn init_population<R, C>(
     n: usize,
 ) -> OptimizeResult<Vec<Tensor<R>>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let mut population = Vec::with_capacity(pop_size);
@@ -201,7 +201,7 @@ where
 /// Evaluate all individuals in population.
 fn evaluate_population<R, F>(f: &F, population: &[Tensor<R>]) -> OptimizeResult<Vec<f64>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
     let mut fitness = Vec::with_capacity(population.len());
@@ -227,7 +227,7 @@ fn crossover<R, C>(
     indices: &Tensor<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     // Generate random mask [n] in [0, 1)
@@ -310,7 +310,7 @@ fn select_random_indices<R, C>(
     exclude: usize,
 ) -> OptimizeResult<(usize, usize, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     // Generate 6 random values to select 3 distinct indices (with buffer for collision retry).

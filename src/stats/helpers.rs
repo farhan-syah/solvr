@@ -11,7 +11,7 @@ use numr::tensor::Tensor;
 /// Extract a scalar f64 from a 0-D or 1-element tensor.
 ///
 /// Works with any Runtime backend.
-pub fn extract_scalar<R: Runtime>(t: &Tensor<R>) -> Result<f64> {
+pub fn extract_scalar<R: Runtime<DType = DType>>(t: &Tensor<R>) -> Result<f64> {
     if t.numel() != 1 {
         return Err(Error::InvalidArgument {
             arg: "tensor",
@@ -41,7 +41,7 @@ pub fn extract_scalar<R: Runtime>(t: &Tensor<R>) -> Result<f64> {
 /// Uses scatter to assign ranks on-device — no GPU↔CPU transfers.
 pub fn compute_ranks<R, C>(client: &C, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let x_contig = x.contiguous();
@@ -63,7 +63,7 @@ where
 /// Compute median of a 1-D tensor on-device (single scalar transfer at end).
 pub fn tensor_median_scalar<R, C>(client: &C, x: &Tensor<R>) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let sorted = client.sort(x, 0, false)?;

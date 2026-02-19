@@ -1,6 +1,7 @@
 //! Simple periodogram computation.
 //!
 //! Uses numr tensor ops - backend-optimized (SIMD on CPU, kernels on GPU).
+use crate::DType;
 
 use crate::signal::impl_generic::helpers::{DetrendMode, detrend_tensor_impl, power_spectrum_impl};
 use crate::signal::impl_generic::spectral::helpers::generate_window;
@@ -20,7 +21,7 @@ pub fn periodogram_impl<R, C>(
     params: PeriodogramParams<R>,
 ) -> Result<PeriodogramResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R>
         + ComplexOps<R>
         + ScalarOps<R>

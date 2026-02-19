@@ -1,4 +1,5 @@
 //! Poisson equation solver: -nabla^2 u = f on 2D grid with Dirichlet BCs.
+use crate::DType;
 
 use numr::algorithm::iterative::IterativeSolvers;
 use numr::ops::{ScalarOps, TensorOps};
@@ -24,7 +25,7 @@ pub fn poisson_impl<R, C>(
     options: &FdmOptions,
 ) -> PdeResult<FdmResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + IterativeSolvers<R> + RuntimeClient<R>,
 {
     let nx = grid.nx;

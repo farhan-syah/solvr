@@ -12,6 +12,7 @@
 //! All polynomial coefficients use **descending power order** (highest power first):
 //! - `H(z) = (b[0] + b[1]z^-1 + ... + b[M]z^-M) / (a[0] + a[1]z^-1 + ... + a[N]z^-N)`
 //! - This matches SciPy's convention for filter functions.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -28,14 +29,14 @@ use numr::tensor::Tensor;
 ///
 /// The denominator is typically normalized so that `a[0] = 1`.
 #[derive(Debug, Clone)]
-pub struct TransferFunction<R: Runtime> {
+pub struct TransferFunction<R: Runtime<DType = DType>> {
     /// Numerator coefficients in descending power order.
     pub b: Tensor<R>,
     /// Denominator coefficients in descending power order.
     pub a: Tensor<R>,
 }
 
-impl<R: Runtime> TransferFunction<R> {
+impl<R: Runtime<DType = DType>> TransferFunction<R> {
     /// Create a new transfer function from numerator and denominator coefficients.
     ///
     /// # Arguments
@@ -71,7 +72,7 @@ impl<R: Runtime> TransferFunction<R> {
 /// Zeros and poles are stored as separate real and imaginary tensors.
 /// Complex conjugate pairs are handled automatically during conversions.
 #[derive(Debug, Clone)]
-pub struct ZpkFilter<R: Runtime> {
+pub struct ZpkFilter<R: Runtime<DType = DType>> {
     /// Real parts of zeros `[num_zeros]`.
     pub zeros_real: Tensor<R>,
     /// Imaginary parts of zeros `[num_zeros]`.
@@ -84,7 +85,7 @@ pub struct ZpkFilter<R: Runtime> {
     pub gain: f64,
 }
 
-impl<R: Runtime> ZpkFilter<R> {
+impl<R: Runtime<DType = DType>> ZpkFilter<R> {
     /// Create a new ZPK filter.
     pub fn new(
         zeros_real: Tensor<R>,
@@ -132,13 +133,13 @@ impl<R: Runtime> ZpkFilter<R> {
 /// SOS representation is more numerically stable than transfer function
 /// for high-order filters, as it avoids computing high-degree polynomials.
 #[derive(Debug, Clone)]
-pub struct SosFilter<R: Runtime> {
+pub struct SosFilter<R: Runtime<DType = DType>> {
     /// Second-order sections [num_sections, 6].
     /// Each row: [b0, b1, b2, a0, a1, a2]
     pub sections: Tensor<R>,
 }
 
-impl<R: Runtime> SosFilter<R> {
+impl<R: Runtime<DType = DType>> SosFilter<R> {
     /// Create a new SOS filter from sections tensor.
     ///
     /// # Arguments
@@ -189,7 +190,7 @@ pub enum FilterOutput {
 /// Contains the poles and zeros of an analog prototype filter
 /// (lowpass with cutoff at 1 rad/s).
 #[derive(Debug, Clone)]
-pub struct AnalogPrototype<R: Runtime> {
+pub struct AnalogPrototype<R: Runtime<DType = DType>> {
     /// Real parts of analog zeros.
     pub zeros_real: Tensor<R>,
     /// Imaginary parts of analog zeros.
@@ -202,7 +203,7 @@ pub struct AnalogPrototype<R: Runtime> {
     pub gain: f64,
 }
 
-impl<R: Runtime> AnalogPrototype<R> {
+impl<R: Runtime<DType = DType>> AnalogPrototype<R> {
     /// Create a new analog prototype.
     pub fn new(
         zeros_real: Tensor<R>,
@@ -243,7 +244,7 @@ impl<R: Runtime> AnalogPrototype<R> {
 /// - C: p × n (output matrix)
 /// - D: p × m (feedthrough matrix)
 #[derive(Debug, Clone)]
-pub struct StateSpace<R: Runtime> {
+pub struct StateSpace<R: Runtime<DType = DType>> {
     /// State matrix (n × n).
     pub a: Tensor<R>,
     /// Input matrix (n × m).
@@ -254,7 +255,7 @@ pub struct StateSpace<R: Runtime> {
     pub d: Tensor<R>,
 }
 
-impl<R: Runtime> StateSpace<R> {
+impl<R: Runtime<DType = DType>> StateSpace<R> {
     /// Create a new state-space system.
     ///
     /// # Arguments
@@ -295,14 +296,14 @@ impl<R: Runtime> StateSpace<R> {
 ///
 /// Wraps a system representation with a sampling time for discrete-time analysis.
 #[derive(Debug, Clone)]
-pub struct DiscreteTimeSystem<R: Runtime> {
+pub struct DiscreteTimeSystem<R: Runtime<DType = DType>> {
     /// System representation.
     pub system: SystemRepresentation<R>,
     /// Sampling time (seconds). None for continuous-time.
     pub dt: Option<f64>,
 }
 
-impl<R: Runtime> DiscreteTimeSystem<R> {
+impl<R: Runtime<DType = DType>> DiscreteTimeSystem<R> {
     /// Create a new discrete-time system.
     pub fn new(system: SystemRepresentation<R>, dt: Option<f64>) -> Self {
         Self { system, dt }
@@ -318,7 +319,7 @@ impl<R: Runtime> DiscreteTimeSystem<R> {
 ///
 /// Allows a system to be represented in any of the standard forms.
 #[derive(Debug, Clone)]
-pub enum SystemRepresentation<R: Runtime> {
+pub enum SystemRepresentation<R: Runtime<DType = DType>> {
     /// Transfer function (numerator, denominator polynomials).
     TransferFunction(TransferFunction<R>),
     /// Zero-pole-gain representation.

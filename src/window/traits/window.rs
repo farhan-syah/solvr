@@ -25,7 +25,7 @@ use numr::tensor::Tensor;
 /// let window = client.hann_window(1024, DType::F32, &device)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-pub trait WindowFunctions<R: Runtime> {
+pub trait WindowFunctions<R: Runtime<DType = DType>> {
     /// Generate a Hann (Hanning) window.
     ///
     /// The Hann window is a general-purpose window with good frequency resolution

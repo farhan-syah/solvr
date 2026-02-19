@@ -1,6 +1,7 @@
 //! 2D heat equation solver: du/dt = alpha * nabla^2 u + source.
 //!
 //! Method of lines: spatial FDM discretization -> ODE system -> time integration.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -31,7 +32,7 @@ pub fn heat_2d_impl<R, C>(
     _options: &FdmOptions,
 ) -> PdeResult<TimeResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     R::Client: SparseOps<R>,
     C: TensorOps<R> + ScalarOps<R> + IntegrationAlgorithms<R> + RuntimeClient<R>,
 {

@@ -1,4 +1,5 @@
 //! SHGO (Simplicial Homology Global Optimization) trait.
+use crate::DType;
 
 use super::GlobalOptions;
 use numr::error::Result;
@@ -7,7 +8,7 @@ use numr::tensor::Tensor;
 
 /// Result from SHGO optimization.
 #[derive(Debug, Clone)]
-pub struct ShgoResult<R: Runtime> {
+pub struct ShgoResult<R: Runtime<DType = DType>> {
     /// Global minimum point.
     pub x: Tensor<R>,
     /// Global minimum value.
@@ -21,7 +22,7 @@ pub struct ShgoResult<R: Runtime> {
 }
 
 /// SHGO algorithm trait.
-pub trait ShgoAlgorithms<R: Runtime> {
+pub trait ShgoAlgorithms<R: Runtime<DType = DType>> {
     /// Simplicial Homology Global Optimization.
     ///
     /// Finds the global minimum by sampling the domain, building a simplicial

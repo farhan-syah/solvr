@@ -1,4 +1,5 @@
 //! Pareto distribution.
+use crate::DType;
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{ContinuousDistribution, Distribution};
@@ -203,7 +204,11 @@ impl ContinuousDistribution for Pareto {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -215,7 +220,11 @@ impl ContinuousDistribution for Pareto {
         client.mul_scalar(&inv_power, self.shape * scale_alpha)
     }
 
-    fn log_pdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     {
@@ -226,7 +235,11 @@ impl ContinuousDistribution for Pareto {
         client.add_scalar(&term1, constant)
     }
 
-    fn cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -240,7 +253,11 @@ impl ContinuousDistribution for Pareto {
         client.add_scalar(&neg_power, 1.0)
     }
 
-    fn sf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -251,7 +268,11 @@ impl ContinuousDistribution for Pareto {
         client.exp(&client.mul_scalar(&ln_scale_minus_ln_x, self.shape)?)
     }
 
-    fn log_cdf_tensor<R: Runtime, C>(&self, x: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        x: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -260,7 +281,11 @@ impl ContinuousDistribution for Pareto {
         client.log(&cdf)
     }
 
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -273,7 +298,11 @@ impl ContinuousDistribution for Pareto {
         client.mul_scalar(&denom_inv, self.scale)
     }
 
-    fn isf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn isf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

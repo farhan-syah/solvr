@@ -11,6 +11,7 @@
 #![allow(clippy::manual_div_ceil, clippy::manual_is_multiple_of)]
 // Allow many arguments for filter design functions that match scipy's signature
 #![allow(clippy::too_many_arguments)]
+use crate::DType;
 
 use super::bilinear::{bilinear_zpk_impl, prewarp};
 use super::conversions::zpk2tf_impl;
@@ -38,7 +39,7 @@ pub fn buttap_impl<R, C>(
     device: &R::Device,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if order == 0 {
@@ -81,7 +82,7 @@ pub fn butter_impl<R, C>(
     device: &R::Device,
 ) -> Result<IirDesignResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FilterConversions<R>
         + PolynomialAlgorithms<R>
         + ScalarOps<R>
@@ -112,7 +113,7 @@ pub fn cheb1ap_impl<R, C>(
     device: &R::Device,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if order == 0 {
@@ -185,7 +186,7 @@ pub fn cheby1_impl<R, C>(
     device: &R::Device,
 ) -> Result<IirDesignResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FilterConversions<R>
         + PolynomialAlgorithms<R>
         + ScalarOps<R>
@@ -212,7 +213,7 @@ pub fn cheb2ap_impl<R, C>(
     device: &R::Device,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if order == 0 {
@@ -297,7 +298,7 @@ pub fn cheby2_impl<R, C>(
     device: &R::Device,
 ) -> Result<IirDesignResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FilterConversions<R>
         + PolynomialAlgorithms<R>
         + ScalarOps<R>
@@ -326,7 +327,7 @@ pub fn ellipap_impl<R, C>(
     device: &R::Device,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if order == 0 {
@@ -423,7 +424,7 @@ pub fn ellip_impl<R, C>(
     device: &R::Device,
 ) -> Result<IirDesignResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FilterConversions<R>
         + PolynomialAlgorithms<R>
         + ScalarOps<R>
@@ -450,7 +451,7 @@ pub fn besselap_impl<R, C>(
     device: &R::Device,
 ) -> Result<AnalogPrototype<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if order == 0 {
@@ -568,7 +569,7 @@ pub fn design_iir_filter<R, C>(
     _device: &R::Device,
 ) -> Result<IirDesignResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FilterConversions<R>
         + PolynomialAlgorithms<R>
         + ScalarOps<R>

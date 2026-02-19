@@ -1,4 +1,5 @@
 //! Convolution and cross-correlation trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -78,7 +79,7 @@ impl ConvMode {
 ///
 /// All backends implementing convolution algorithms MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait ConvolutionAlgorithms<R: Runtime> {
+pub trait ConvolutionAlgorithms<R: Runtime<DType = DType>> {
     /// 1D convolution using FFT.
     ///
     /// # Arguments

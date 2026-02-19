@@ -7,6 +7,7 @@
 //!
 //! The CG inner loop is "truncated" - we don't solve to full precision,
 //! which is more efficient and provides regularization.
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -28,7 +29,7 @@ pub fn newton_cg_impl<R, C, F>(
     options: &NewtonCGOptions,
 ) -> OptimizeResult<NewtonCGResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -157,7 +158,7 @@ fn evaluate_with_gradient<R, C, F>(
     x: &Tensor<R>,
 ) -> OptimizeResult<(f64, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -177,7 +178,7 @@ fn compute_hvp<R, C, F>(
     v: &Tensor<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -203,7 +204,7 @@ fn cg_solve_hvp<R, C, F>(
     dtype: numr::dtype::DType,
 ) -> OptimizeResult<(Tensor<R>, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -338,7 +339,7 @@ where
 /// extract scalars at each iteration. This is unavoidable for the algorithm.
 fn tensor_dot<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let prod = client
@@ -370,7 +371,7 @@ fn backtracking_line_search<R, C, F>(
     grad: &Tensor<R>,
 ) -> OptimizeResult<(Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,

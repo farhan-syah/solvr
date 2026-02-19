@@ -1,4 +1,5 @@
 //! Shared sparse iterative solver dispatch.
+use crate::DType;
 
 use numr::algorithm::iterative::{
     BiCgStabOptions, CgOptions, GmresOptions, IterativeSolvers, PreconditionerType,
@@ -11,7 +12,7 @@ use crate::pde::error::{PdeError, PdeResult};
 use crate::pde::types::{FdmOptions, Preconditioner, SparseSolver};
 
 /// Result from sparse solve dispatch.
-pub struct SparsesolveResult<R: Runtime> {
+pub struct SparsesolveResult<R: Runtime<DType = DType>> {
     pub solution: Tensor<R>,
     pub iterations: usize,
     pub residual_norm: f64,
@@ -26,7 +27,7 @@ pub fn solve_sparse_system<R, C>(
     context: &str,
 ) -> PdeResult<SparsesolveResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: IterativeSolvers<R>,
 {
     let preconditioner = match options.preconditioner {

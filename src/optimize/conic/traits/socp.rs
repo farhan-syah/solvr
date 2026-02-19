@@ -2,6 +2,7 @@
 //!
 //! Solves: min c'*x
 //!         s.t. ||A_i*x + b_i|| <= c_i'*x + d_i  for each cone constraint
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -10,7 +11,7 @@ use crate::optimize::error::OptimizeResult;
 
 /// A second-order cone constraint: ||A*x + b|| <= c'*x + d
 #[derive(Debug, Clone)]
-pub struct SocConstraint<R: Runtime> {
+pub struct SocConstraint<R: Runtime<DType = DType>> {
     /// Matrix A `[m_i, n]`
     pub a: Tensor<R>,
     /// Vector b `[m_i]`
@@ -41,7 +42,7 @@ impl Default for SocpOptions {
 
 /// Result of SOCP solver.
 #[derive(Debug, Clone)]
-pub struct SocpResult<R: Runtime> {
+pub struct SocpResult<R: Runtime<DType = DType>> {
     /// Solution vector.
     pub x: Tensor<R>,
     /// Optimal objective value.
@@ -53,7 +54,7 @@ pub struct SocpResult<R: Runtime> {
 }
 
 /// Trait for SOCP algorithms.
-pub trait SocpAlgorithms<R: Runtime> {
+pub trait SocpAlgorithms<R: Runtime<DType = DType>> {
     /// Solve a second-order cone program.
     ///
     /// min  c'*x

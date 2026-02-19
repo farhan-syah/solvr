@@ -10,7 +10,7 @@ use numr::tensor::Tensor;
 /// Internal helper to avoid duplication between tensor_norm and compute_cost.
 fn sum_squared<R, C>(client: &C, x: &Tensor<R>) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let x_sq = client.mul(x, x)?;
@@ -22,7 +22,7 @@ where
 /// Compute the L2 norm of a 1D tensor: ||x|| = sqrt(sum(x_i^2)).
 pub fn tensor_norm<R, C>(client: &C, x: &Tensor<R>) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     sum_squared(client, x).map(|sq| sq.sqrt())
@@ -31,7 +31,7 @@ where
 /// Compute dot product of two 1D tensors.
 pub fn tensor_dot<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let prod = client.mul(a, b)?;
@@ -54,7 +54,7 @@ pub fn finite_difference_gradient<R, C, F>(
     eps: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -89,7 +89,7 @@ where
 /// Add two tensors element-wise.
 pub fn tensor_add<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     client.add(a, b)
@@ -98,7 +98,7 @@ where
 /// Subtract two tensors element-wise.
 pub fn tensor_sub<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     client.sub(a, b)
@@ -107,7 +107,7 @@ where
 /// Scale tensor by a scalar.
 pub fn tensor_scale<R, C>(client: &C, x: &Tensor<R>, s: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + RuntimeClient<R>,
 {
     client.mul_scalar(x, s)
@@ -119,7 +119,7 @@ pub const SINGULAR_THRESHOLD: f64 = 1e-12;
 /// Compute the squared L2 norm (cost) of a 1D tensor: ||x||^2 = sum(x_i^2).
 pub fn compute_cost<R, C>(client: &C, x: &Tensor<R>) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     sum_squared(client, x)
@@ -141,7 +141,7 @@ pub fn finite_difference_jacobian<R, C, F>(
     eps: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {

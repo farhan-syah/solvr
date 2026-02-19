@@ -14,7 +14,7 @@
 //!
 //! Therefore, these implementations are **explicitly CPU-only**:
 //! - No GPU↔CPU transfers (data stays on CPU)
-//! - No generic `R: Runtime` abstraction
+//! - No generic `R: Runtime<DType = DType>` abstraction
 //! - Direct `CpuRuntime` types throughout
 //!
 //! For GPU users who need IIR filtering, transfer data to CPU explicitly,

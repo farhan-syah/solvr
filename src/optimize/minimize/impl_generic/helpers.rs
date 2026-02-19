@@ -1,4 +1,5 @@
 //! Shared helper functions for multivariate minimization.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -24,7 +25,7 @@ pub fn backtracking_line_search_tensor<R, C, F>(
     grad: &Tensor<R>,
 ) -> OptimizeResult<(Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -78,7 +79,7 @@ pub fn line_search_tensor<R, C, F>(
     fx: f64,
 ) -> OptimizeResult<(Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -209,7 +210,7 @@ pub fn hvp_reverse_over_reverse<R, C>(
     v: &Tensor<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
 {
@@ -285,7 +286,7 @@ pub fn hvp_from_fn<R, C, F>(
     v: &Tensor<R>,
 ) -> OptimizeResult<(f64, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> Result<Var<R>>,
@@ -338,7 +339,7 @@ pub fn gradient_from_fn<R, C, F>(
     x: &Tensor<R>,
 ) -> OptimizeResult<(f64, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> Result<Var<R>>,

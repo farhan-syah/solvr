@@ -1,4 +1,5 @@
 //! Regression analysis algorithms.
+use crate::DType;
 
 use super::LinregressResult;
 use numr::error::Result;
@@ -9,7 +10,7 @@ use numr::tensor::Tensor;
 /// Regression analysis algorithms for tensors.
 ///
 /// Provides methods for fitting regression models to tensor data.
-pub trait RegressionAlgorithms<R: Runtime>: TensorOps<R> {
+pub trait RegressionAlgorithms<R: Runtime<DType = DType>>: TensorOps<R> {
     /// Simple linear regression.
     ///
     /// Fits y = slope * x + intercept using ordinary least squares.

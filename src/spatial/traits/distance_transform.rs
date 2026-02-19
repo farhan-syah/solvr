@@ -1,4 +1,5 @@
 //! Distance transform algorithm traits.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -17,7 +18,7 @@ pub enum DistanceTransformMetric {
 }
 
 /// Algorithmic contract for distance transform operations.
-pub trait DistanceTransformAlgorithms<R: Runtime> {
+pub trait DistanceTransformAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the distance transform of a binary array.
     ///
     /// For each background pixel (zero), computes the distance to the nearest

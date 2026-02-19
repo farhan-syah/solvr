@@ -1,4 +1,5 @@
 //! Generic implementations for linear programming algorithms.
+use crate::DType;
 
 mod milp;
 mod simplex;
@@ -11,7 +12,7 @@ use numr::tensor::Tensor;
 
 /// Tensor-based linear constraints.
 #[derive(Debug, Clone)]
-pub struct TensorLinearConstraints<R: Runtime> {
+pub struct TensorLinearConstraints<R: Runtime<DType = DType>> {
     /// Inequality constraint matrix (A_ub * x <= b_ub)
     pub a_ub: Option<Tensor<R>>,
     /// Inequality constraint bounds

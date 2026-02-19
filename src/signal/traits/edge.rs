@@ -2,6 +2,7 @@
 //!
 //! Provides algorithms for detecting edges in N-dimensional arrays using
 //! derivative-based filters (Sobel, Prewitt, Laplace).
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -11,7 +12,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing edge detection MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait EdgeDetectionAlgorithms<R: Runtime> {
+pub trait EdgeDetectionAlgorithms<R: Runtime<DType = DType>> {
     /// Apply Sobel filter along the given axis.
     ///
     /// Computes an approximation of the gradient along one axis using a Sobel

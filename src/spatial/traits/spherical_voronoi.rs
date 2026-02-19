@@ -3,6 +3,7 @@
 //! Computes the Voronoi diagram on the surface of a sphere from a set of
 //! generator points. Uses 3D convex hull as dual: each hull face's circumcenter
 //! (projected to the sphere) becomes a Voronoi vertex.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 
 /// Spherical Voronoi diagram result.
 #[derive(Debug, Clone)]
-pub struct SphericalVoronoi<R: Runtime> {
+pub struct SphericalVoronoi<R: Runtime<DType = DType>> {
     /// Generator points on the sphere `[n, 3]`.
     pub points: Tensor<R>,
 
@@ -34,7 +35,7 @@ pub struct SphericalVoronoi<R: Runtime> {
 }
 
 /// Algorithmic contract for spherical Voronoi diagram operations.
-pub trait SphericalVoronoiAlgorithms<R: Runtime> {
+pub trait SphericalVoronoiAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the spherical Voronoi diagram.
     ///
     /// # Arguments

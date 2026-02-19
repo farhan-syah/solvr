@@ -1,4 +1,5 @@
 //! Mixed-integer linear programming trait and types.
+use crate::DType;
 
 use super::simplex::{LinProgOptions, LinProgTensorConstraints};
 use numr::error::Result;
@@ -32,7 +33,7 @@ impl Default for MilpOptions {
 
 /// Result from tensor-based mixed-integer linear programming.
 #[derive(Debug, Clone)]
-pub struct MilpTensorResult<R: Runtime> {
+pub struct MilpTensorResult<R: Runtime<DType = DType>> {
     /// Optimal solution vector.
     pub x: Tensor<R>,
     /// Optimal objective value.
@@ -48,7 +49,7 @@ pub struct MilpTensorResult<R: Runtime> {
 }
 
 /// Algorithmic contract for mixed-integer linear programming.
-pub trait MilpAlgorithms<R: Runtime>:
+pub trait MilpAlgorithms<R: Runtime<DType = DType>>:
     TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>
 {
     /// Solve a mixed-integer linear programming problem using branch-and-bound.

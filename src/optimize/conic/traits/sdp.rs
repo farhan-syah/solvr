@@ -3,6 +3,7 @@
 //! Solves: min trace(C*X)
 //!         s.t. trace(A_i*X) = b_i  for each constraint
 //!              X >= 0 (positive semidefinite)
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -29,7 +30,7 @@ impl Default for SdpOptions {
 
 /// Result of SDP solver.
 #[derive(Debug, Clone)]
-pub struct SdpResult<R: Runtime> {
+pub struct SdpResult<R: Runtime<DType = DType>> {
     /// Solution matrix X `[n, n]`.
     pub x: Tensor<R>,
     /// Optimal objective value.
@@ -43,7 +44,7 @@ pub struct SdpResult<R: Runtime> {
 }
 
 /// Trait for SDP algorithms.
-pub trait SdpAlgorithms<R: Runtime> {
+pub trait SdpAlgorithms<R: Runtime<DType = DType>> {
     /// Solve a semidefinite program.
     ///
     /// min  trace(C*X)

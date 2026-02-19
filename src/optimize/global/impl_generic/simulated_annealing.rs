@@ -15,7 +15,7 @@ use super::{clamp_to_bounds, validate_bounds};
 
 /// Tensor-based result from simulated annealing.
 #[derive(Debug, Clone)]
-pub struct SimulatedAnnealingTensorResult<R: Runtime> {
+pub struct SimulatedAnnealingTensorResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -34,7 +34,7 @@ pub fn simulated_annealing_impl<R, C, F>(
     options: &GlobalOptions,
 ) -> OptimizeResult<SimulatedAnnealingTensorResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {

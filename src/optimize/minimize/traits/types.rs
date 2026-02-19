@@ -1,4 +1,5 @@
 //! Types for multivariate minimization algorithms.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -32,7 +33,7 @@ impl Default for MinimizeOptions {
 
 /// Result of tensor-based minimization.
 #[derive(Debug, Clone)]
-pub struct TensorMinimizeResult<R: Runtime> {
+pub struct TensorMinimizeResult<R: Runtime<DType = DType>> {
     /// Solution vector.
     pub x: Tensor<R>,
     /// Function value at solution.

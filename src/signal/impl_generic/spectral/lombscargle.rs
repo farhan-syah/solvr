@@ -5,6 +5,7 @@
 //! Note: Lomb-Scargle is inherently O(N*M) where N is signal length and M is
 //! number of frequencies. GPU can help parallelize across frequencies, but
 //! the algorithm structure limits potential speedup compared to FFT-based methods.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::ops::{ReduceOps, ScalarOps, TensorOps, UtilityOps};
@@ -24,7 +25,7 @@ pub fn lombscargle_impl<R, C>(
     normalize: bool,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + ReduceOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     let n_samples = t.shape()[0];

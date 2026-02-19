@@ -1,6 +1,7 @@
 //! Generic Voronoi diagram implementation.
 //!
 //! Computes Voronoi as dual of Delaunay triangulation.
+use crate::DType;
 
 use crate::spatial::impl_generic::delaunay::delaunay_impl;
 use crate::spatial::traits::delaunay::Delaunay;
@@ -15,7 +16,7 @@ use std::collections::HashSet;
 /// Compute Voronoi diagram.
 pub fn voronoi_impl<R, C>(client: &C, points: &Tensor<R>) -> Result<Voronoi<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     validate_points_dtype(points.dtype(), "voronoi")?;
@@ -28,7 +29,7 @@ where
 /// Compute Voronoi diagram from existing Delaunay triangulation.
 pub fn voronoi_from_delaunay_impl<R, C>(_client: &C, tri: &Delaunay<R>) -> Result<Voronoi<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let d = tri.points.shape()[1];
@@ -203,7 +204,7 @@ pub fn voronoi_find_region_impl<R, C>(
     query: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + DistanceOps<R> + IndexingOps<R> + RuntimeClient<R>,
 {
     // Compute distances from each query point to all generators

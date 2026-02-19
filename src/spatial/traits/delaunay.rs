@@ -3,6 +3,7 @@
 //! Computes the Delaunay triangulation of a point set. The Delaunay triangulation
 //! maximizes the minimum angle of all triangles and has important properties
 //! for interpolation and mesh generation.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 
 /// Delaunay triangulation result.
 #[derive(Debug, Clone)]
-pub struct Delaunay<R: Runtime> {
+pub struct Delaunay<R: Runtime<DType = DType>> {
     /// Original points `[n, d]`.
     pub points: Tensor<R>,
 
@@ -35,7 +36,7 @@ pub struct Delaunay<R: Runtime> {
 /// Algorithmic contract for Delaunay triangulation operations.
 ///
 /// All backends implementing Delaunay algorithms MUST implement this trait.
-pub trait DelaunayAlgorithms<R: Runtime> {
+pub trait DelaunayAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the Delaunay triangulation of a point set.
     ///
     /// # Arguments

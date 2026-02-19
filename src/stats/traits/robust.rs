@@ -1,4 +1,5 @@
 //! Robust statistics algorithms.
+use crate::DType;
 
 use super::RobustRegressionResult;
 use numr::error::Result;
@@ -9,7 +10,7 @@ use numr::tensor::Tensor;
 /// Robust statistics algorithms for tensors.
 ///
 /// These methods are resistant to outliers and violations of distributional assumptions.
-pub trait RobustStatisticsAlgorithms<R: Runtime>: TensorOps<R> {
+pub trait RobustStatisticsAlgorithms<R: Runtime<DType = DType>>: TensorOps<R> {
     /// Trimmed mean.
     ///
     /// Computes the mean after discarding a fraction of values from both tails.

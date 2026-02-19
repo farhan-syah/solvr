@@ -1,6 +1,7 @@
 //! Helper functions for spectral analysis algorithms.
 //!
 //! Window generation for spectral analysis. Uses Tensor operations where possible.
+use crate::DType;
 
 use crate::signal::traits::spectral::SpectralWindow;
 use numr::runtime::Runtime;
@@ -12,7 +13,7 @@ use std::f64::consts::PI;
 /// Window generation is a setup operation (not hot path) and happens once per
 /// spectral computation. The coefficients are computed analytically and placed
 /// directly on the target device.
-pub fn generate_window<R: Runtime>(
+pub fn generate_window<R: Runtime<DType = DType>>(
     window: &SpectralWindow<R>,
     length: usize,
     device: &R::Device,

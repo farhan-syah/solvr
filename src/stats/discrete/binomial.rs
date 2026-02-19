@@ -1,4 +1,5 @@
 //! Binomial distribution.
+use crate::DType;
 
 use super::log_binom;
 use crate::stats::continuous::special;
@@ -205,7 +206,11 @@ impl DiscreteDistribution for Binomial {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -215,7 +220,11 @@ impl DiscreteDistribution for Binomial {
         client.exp(&log_pmf)
     }
 
-    fn log_pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -257,7 +266,11 @@ impl DiscreteDistribution for Binomial {
         client.add(&result, &n_minus_k_times_ln_q)
     }
 
-    fn cdf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -282,7 +295,11 @@ impl DiscreteDistribution for Binomial {
         client.sub_scalar(&client.mul_scalar(&betainc_val, -1.0)?, -1.0)
     }
 
-    fn sf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -304,7 +321,11 @@ impl DiscreteDistribution for Binomial {
         client.betainc(&k_plus_1, &n_minus_k, &p_tensor)
     }
 
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

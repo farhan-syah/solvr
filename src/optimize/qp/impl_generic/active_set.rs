@@ -25,7 +25,7 @@ pub fn active_set_qp_impl<R, C>(
     options: &QpOptions,
 ) -> OptimizeResult<QpResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + LinearAlgebraAlgorithms<R>
@@ -340,7 +340,7 @@ fn compute_qp_objective<R, C>(
     n: usize,
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let x_col = x
@@ -375,7 +375,7 @@ fn compute_max_step<R, C>(
     active_set: &[bool],
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let Some(a) = a_ineq else { return Ok(1.0) };
@@ -446,7 +446,7 @@ fn activate_binding<R, C>(
     tol: f64,
 ) -> OptimizeResult<()>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let Some(a) = a_ineq else { return Ok(()) };
@@ -497,7 +497,7 @@ fn build_working_set<R, C>(
     _n: usize,
 ) -> OptimizeResult<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let mut a_parts: Vec<Tensor<R>> = Vec::new();

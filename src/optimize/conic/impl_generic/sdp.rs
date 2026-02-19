@@ -26,7 +26,7 @@ pub fn sdp_impl<R, C>(
     options: &SdpOptions,
 ) -> OptimizeResult<SdpResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let shape = c_mat.shape();
@@ -201,7 +201,7 @@ where
 /// Compute trace(A*X) where both A and X are matrices.
 fn compute_trace_product<R, C>(client: &C, a: &Tensor<R>, x: &Tensor<R>) -> Result<f64, String>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let product = client.matmul(a, x).map_err(|e| e.to_string())?;
@@ -211,7 +211,7 @@ where
 /// Compute trace of a matrix.
 fn trace_matrix<R, C>(client: &C, matrix: &Tensor<R>) -> Result<f64, String>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let shape = matrix.shape();
@@ -228,7 +228,7 @@ where
 /// Compute objective: trace(C*X).
 fn compute_objective<R, C>(client: &C, c: &Tensor<R>, x: &Tensor<R>) -> Result<f64, String>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     compute_trace_product(client, c, x)

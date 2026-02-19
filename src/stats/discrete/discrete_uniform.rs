@@ -1,4 +1,5 @@
 //! Discrete Uniform distribution.
+use crate::DType;
 
 use crate::stats::error::{StatsError, StatsResult};
 use crate::stats::{DiscreteDistribution, Distribution};
@@ -190,7 +191,11 @@ impl DiscreteDistribution for DiscreteUniform {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -203,7 +208,11 @@ impl DiscreteDistribution for DiscreteUniform {
         client.fill(shape, pmf_const, k.dtype())
     }
 
-    fn log_pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -214,7 +223,11 @@ impl DiscreteDistribution for DiscreteUniform {
         client.fill(shape, log_pmf_const, k.dtype())
     }
 
-    fn cdf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -233,7 +246,11 @@ impl DiscreteDistribution for DiscreteUniform {
         client.clamp(&cdf_val, 0.0, 1.0)
     }
 
-    fn sf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -242,7 +259,11 @@ impl DiscreteDistribution for DiscreteUniform {
         client.sub_scalar(&client.mul_scalar(&cdf, -1.0)?, -1.0)
     }
 
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

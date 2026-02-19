@@ -26,7 +26,7 @@ pub fn levenberg_marquardt_impl<R, C, F>(
     options: &RootOptions,
 ) -> OptimizeResult<TensorRootResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -185,7 +185,7 @@ where
 /// No from_slice - uses fill() to create lambda vector.
 fn add_lambda_identity<R, C>(client: &C, a: &Tensor<R>, lambda: f64) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let n = a.shape()[0];

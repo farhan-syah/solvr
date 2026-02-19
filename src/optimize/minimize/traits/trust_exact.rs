@@ -1,4 +1,5 @@
 //! Trust-Exact algorithm trait.
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -13,7 +14,7 @@ use crate::optimize::error::OptimizeResult;
 /// Solves the subproblem by finding lambda such that ||(H+lambda*I)^{-1}g|| = delta.
 /// Uses Cholesky factorizations. Handles the "hard case".
 /// Memory: O(n^2) for full Hessian.
-pub trait TrustExactAlgorithms<R: Runtime> {
+pub trait TrustExactAlgorithms<R: Runtime<DType = DType>> {
     fn trust_exact<F>(
         &self,
         f: F,

@@ -22,7 +22,7 @@ pub fn halfspace_intersection_impl<R, C>(
     interior_point: &Tensor<R>,
 ) -> Result<HalfspaceIntersection<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>

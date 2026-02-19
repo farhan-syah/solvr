@@ -3,6 +3,7 @@
 //! Converts to first-order system [u, v] where v = du/dt:
 //!   du/dt = v
 //!   dv/dt = c^2 * nabla^2 u + source
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -31,7 +32,7 @@ pub fn wave_impl<R, C>(
     _options: &FdmOptions,
 ) -> PdeResult<TimeResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     R::Client: SparseOps<R>,
     C: TensorOps<R> + ScalarOps<R> + IntegrationAlgorithms<R> + RuntimeClient<R>,
 {

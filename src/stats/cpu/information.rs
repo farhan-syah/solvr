@@ -1,7 +1,8 @@
 //! CPU implementation of information theory algorithms.
 
 use crate::stats::impl_generic::{
-    differential_entropy_impl, entropy_impl, kl_divergence_impl, mutual_information_impl,
+    cross_entropy_impl, differential_entropy_impl, entropy_impl, kl_divergence_impl,
+    mutual_information_impl, nll_loss_impl,
 };
 use crate::stats::traits::InformationTheoryAlgorithms;
 use numr::error::Result;
@@ -34,6 +35,23 @@ impl InformationTheoryAlgorithms<CpuRuntime> for CpuClient {
         base: Option<f64>,
     ) -> Result<Tensor<CpuRuntime>> {
         mutual_information_impl(self, x, y, bins, base)
+    }
+
+    fn cross_entropy(
+        &self,
+        pk: &Tensor<CpuRuntime>,
+        qk: &Tensor<CpuRuntime>,
+        base: Option<f64>,
+    ) -> Result<Tensor<CpuRuntime>> {
+        cross_entropy_impl(self, pk, qk, base)
+    }
+
+    fn nll_loss(
+        &self,
+        log_probs: &Tensor<CpuRuntime>,
+        targets: &Tensor<CpuRuntime>,
+    ) -> Result<Tensor<CpuRuntime>> {
+        nll_loss_impl(self, log_probs, targets)
     }
 }
 
@@ -126,6 +144,84 @@ mod tests {
         let val = extract_scalar(&result).unwrap();
         // MI should be positive for correlated data
         assert!(val > 0.0);
+    }
+
+    #[test]
+    fn test_cross_entropy_same() {
+        let (client, device) = setup();
+        // Cross-entropy of P with itself = entropy of P
+        let pk = Tensor::<CpuRuntime>::from_slice(&[0.25f64, 0.25, 0.25, 0.25], &[4], &device);
+        let ce = extract_scalar(&client.cross_entropy(&pk, &pk, None).unwrap()).unwrap();
+        let h = extract_scalar(&client.entropy(&pk, None).unwrap()).unwrap();
+        assert!((ce - h).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_cross_entropy_different() {
+        let (client, device) = setup();
+        let pk = Tensor::<CpuRuntime>::from_slice(&[0.9f64, 0.1], &[2], &device);
+        let qk = Tensor::<CpuRuntime>::from_slice(&[0.5f64, 0.5], &[2], &device);
+
+        let ce = extract_scalar(&client.cross_entropy(&pk, &qk, None).unwrap()).unwrap();
+        let h = extract_scalar(&client.entropy(&pk, None).unwrap()).unwrap();
+        // Cross-entropy >= entropy (Gibbs inequality)
+        assert!(ce >= h - 1e-10);
+    }
+
+    #[test]
+    fn test_cross_entropy_bits() {
+        let (client, device) = setup();
+        // H(P, Q) with uniform P and uniform Q in bits should be 1
+        let pk = Tensor::<CpuRuntime>::from_slice(&[0.5f64, 0.5], &[2], &device);
+        let ce = extract_scalar(&client.cross_entropy(&pk, &pk, Some(2.0)).unwrap()).unwrap();
+        assert!((ce - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_nll_loss_basic() {
+        use numr::ops::ActivationOps;
+
+        let (client, device) = setup();
+        // 3 samples, 4 classes
+        let logits = Tensor::<CpuRuntime>::from_slice(
+            &[
+                1.0f64, 2.0, 3.0, 4.0, // sample 0: class 3 has highest
+                4.0, 3.0, 2.0, 1.0, // sample 1: class 0 has highest
+                1.0, 1.0, 1.0, 1.0, // sample 2: uniform
+            ],
+            &[3, 4],
+            &device,
+        );
+        let log_probs = client.log_softmax(&logits, -1).unwrap();
+        let targets = Tensor::<CpuRuntime>::from_slice(&[3.0f64, 0.0, 2.0], &[3], &device);
+
+        let loss = extract_scalar(&client.nll_loss(&log_probs, &targets).unwrap()).unwrap();
+        // Loss should be positive (negative of negative log prob)
+        assert!(loss > 0.0);
+        // When targets match the highest logit, loss should be relatively small
+        assert!(loss < 2.0);
+    }
+
+    #[test]
+    fn test_nll_loss_perfect() {
+        use numr::ops::ActivationOps;
+
+        let (client, device) = setup();
+        // Perfect predictions: very high logit at target class
+        let logits = Tensor::<CpuRuntime>::from_slice(
+            &[
+                -100.0f64, -100.0, 100.0, -100.0, // sample 0: class 2
+                100.0, -100.0, -100.0, -100.0, // sample 1: class 0
+            ],
+            &[2, 4],
+            &device,
+        );
+        let log_probs = client.log_softmax(&logits, -1).unwrap();
+        let targets = Tensor::<CpuRuntime>::from_slice(&[2.0f64, 0.0], &[2], &device);
+
+        let loss = extract_scalar(&client.nll_loss(&log_probs, &targets).unwrap()).unwrap();
+        // Near-perfect predictions → loss ≈ 0
+        assert!(loss.abs() < 1e-5);
     }
 
     #[test]

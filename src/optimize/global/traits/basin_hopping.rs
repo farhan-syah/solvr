@@ -1,4 +1,5 @@
 //! Basin-hopping algorithm trait.
+use crate::DType;
 
 use super::GlobalOptions;
 use numr::error::Result;
@@ -7,7 +8,7 @@ use numr::tensor::Tensor;
 
 /// Tensor-based result from basin-hopping.
 #[derive(Debug, Clone)]
-pub struct BasinHoppingResult<R: Runtime> {
+pub struct BasinHoppingResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -16,7 +17,7 @@ pub struct BasinHoppingResult<R: Runtime> {
 }
 
 /// Basin-hopping algorithm trait.
-pub trait BasinHoppingAlgorithms<R: Runtime> {
+pub trait BasinHoppingAlgorithms<R: Runtime<DType = DType>> {
     /// Basin-hopping global optimizer.
     ///
     /// Combines local minimization with random perturbations to escape local minima.

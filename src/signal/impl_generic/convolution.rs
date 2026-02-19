@@ -1,6 +1,7 @@
 //! Generic convolution and correlation implementations.
 //!
 //! FFT-based 1D and 2D convolution/correlation using the overlap-save method.
+use crate::DType;
 
 use super::helpers::{complex_mul_impl, reverse_1d_impl, reverse_2d_impl};
 use super::padding::{pad_1d_to_length_impl, pad_2d_to_shape_impl};
@@ -22,7 +23,7 @@ pub fn convolve_impl<R, C>(
     mode: ConvMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let dtype = signal.dtype();
@@ -90,7 +91,7 @@ pub fn convolve2d_impl<R, C>(
     mode: ConvMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let dtype = signal.dtype();
@@ -164,7 +165,7 @@ pub fn correlate_impl<R, C>(
     mode: ConvMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Correlation is convolution with reversed kernel
@@ -180,7 +181,7 @@ pub fn correlate2d_impl<R, C>(
     mode: ConvMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Correlation is convolution with reversed kernel (flip both dims)

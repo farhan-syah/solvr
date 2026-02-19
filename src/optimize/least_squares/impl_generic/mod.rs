@@ -1,4 +1,5 @@
 //! Generic implementations of least squares algorithms.
+use crate::DType;
 
 mod bounded;
 mod leastsq;
@@ -11,7 +12,7 @@ use numr::tensor::Tensor;
 
 /// Result from tensor-based least squares optimization.
 #[derive(Debug, Clone)]
-pub struct TensorLeastSquaresResult<R: Runtime> {
+pub struct TensorLeastSquaresResult<R: Runtime<DType = DType>> {
     /// The optimal parameters found
     pub x: Tensor<R>,
     /// Residual vector at solution

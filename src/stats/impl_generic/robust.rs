@@ -1,4 +1,5 @@
 //! Generic robust statistics implementations.
+use crate::DType;
 
 use crate::stats::helpers::{extract_scalar, tensor_median_scalar};
 use crate::stats::traits::{RobustRegressionResult, validate_stats_dtype};
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 /// Generic implementation of trimmed mean.
 pub fn trim_mean_impl<R, C>(client: &C, x: &Tensor<R>, proportiontocut: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -54,7 +55,7 @@ pub fn winsorized_mean_impl<R, C>(
     proportiontocut: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -98,7 +99,7 @@ where
 /// Generic implementation of median absolute deviation.
 pub fn median_abs_deviation_impl<R, C>(client: &C, x: &Tensor<R>, scale: bool) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -143,7 +144,7 @@ pub fn theilslopes_impl<R, C>(
     y: &Tensor<R>,
 ) -> Result<RobustRegressionResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -251,7 +252,7 @@ pub fn siegelslopes_impl<R, C>(
     y: &Tensor<R>,
 ) -> Result<RobustRegressionResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;

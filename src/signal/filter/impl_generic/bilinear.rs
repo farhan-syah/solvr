@@ -4,6 +4,7 @@
 //! using the bilinear transformation.
 //!
 //! All operations are fully tensorized - data stays on device with no GPU<->CPU transfers.
+use crate::DType;
 
 use crate::signal::filter::types::{AnalogPrototype, ZpkFilter};
 use numr::error::Result;
@@ -42,7 +43,7 @@ pub fn bilinear_zpk_impl<R, C>(
     fs: f64,
 ) -> Result<ZpkFilter<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + ShapeOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let device = analog.zeros_real.device();
@@ -158,7 +159,7 @@ fn bilinear_transform_tensor<R, C>(
     fs2: f64,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // z = (1 + s/fs2) / (1 - s/fs2)

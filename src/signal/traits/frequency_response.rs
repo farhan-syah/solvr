@@ -4,6 +4,7 @@
 
 // Allow non-snake_case for `worN` parameter - follows SciPy's naming convention
 #![allow(non_snake_case)]
+use crate::DType;
 
 use crate::signal::filter::types::SosFilter;
 use numr::error::Result;
@@ -14,7 +15,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing frequency response MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait FrequencyResponseAlgorithms<R: Runtime> {
+pub trait FrequencyResponseAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the frequency response of a digital filter.
     ///
     /// # Algorithm
@@ -98,14 +99,14 @@ pub trait FrequencyResponseAlgorithms<R: Runtime> {
 
 /// Specification for frequency points in freqz.
 #[derive(Debug, Clone)]
-pub enum FreqzSpec<R: Runtime> {
+pub enum FreqzSpec<R: Runtime<DType = DType>> {
     /// Number of equally spaced frequency points.
     NumPoints(usize),
     /// Specific frequency values (normalized, in radians).
     Frequencies(Tensor<R>),
 }
 
-impl<R: Runtime> Default for FreqzSpec<R> {
+impl<R: Runtime<DType = DType>> Default for FreqzSpec<R> {
     fn default() -> Self {
         FreqzSpec::NumPoints(512)
     }
@@ -113,7 +114,7 @@ impl<R: Runtime> Default for FreqzSpec<R> {
 
 /// Result from frequency response computation.
 #[derive(Debug, Clone)]
-pub struct FreqzResult<R: Runtime> {
+pub struct FreqzResult<R: Runtime<DType = DType>> {
     /// Normalized angular frequencies (radians/sample).
     pub w: Tensor<R>,
     /// Complex frequency response (magnitude and phase).
@@ -122,7 +123,7 @@ pub struct FreqzResult<R: Runtime> {
     pub h_imag: Tensor<R>,
 }
 
-impl<R: Runtime> FreqzResult<R> {
+impl<R: Runtime<DType = DType>> FreqzResult<R> {
     /// Get magnitude response |H(ω)|.
     pub fn magnitude(&self) -> Result<Tensor<R>> {
         let h_re: Vec<f64> = self.h_real.to_vec();

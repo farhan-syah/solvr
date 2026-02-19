@@ -22,7 +22,7 @@ pub fn bfgs_impl<R, C, F>(
     options: &MinimizeOptions,
 ) -> OptimizeResult<TensorMinimizeResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -278,7 +278,7 @@ where
 /// Create an n x n identity matrix using tensor ops.
 fn create_identity_matrix<R, C>(client: &C, n: usize, dtype: DType) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     client
@@ -291,7 +291,7 @@ where
 /// Compute inner product of two vectors: sum(a * b)
 fn tensor_inner_product<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let n = a.shape()[0];

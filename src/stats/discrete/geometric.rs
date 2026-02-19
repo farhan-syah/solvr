@@ -1,4 +1,5 @@
 //! Geometric distribution.
+use crate::DType;
 
 use crate::stats::distribution::{DiscreteDistribution, Distribution};
 use crate::stats::error::{StatsError, StatsResult};
@@ -159,7 +160,11 @@ impl DiscreteDistribution for Geometric {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -170,7 +175,11 @@ impl DiscreteDistribution for Geometric {
         client.exp(&log_pmf)
     }
 
-    fn log_pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -184,7 +193,11 @@ impl DiscreteDistribution for Geometric {
         client.add_scalar(&k_times_log_q, log_p)
     }
 
-    fn cdf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -201,7 +214,11 @@ impl DiscreteDistribution for Geometric {
         client.sub_scalar(&client.mul_scalar(&q_to_k_plus_1, -1.0)?, -1.0)
     }
 
-    fn sf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -214,7 +231,11 @@ impl DiscreteDistribution for Geometric {
         client.exp(&k_plus_1_log_q)
     }
 
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

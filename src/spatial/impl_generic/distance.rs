@@ -2,6 +2,7 @@
 //!
 //! These are thin wrappers around numr's DistanceOps trait, providing
 //! a consistent interface within solvr's spatial module.
+use crate::DType;
 
 use crate::spatial::{validate_matching_dims, validate_points_2d, validate_points_dtype};
 use numr::error::Result;
@@ -19,7 +20,7 @@ pub fn cdist_impl<R, C>(
     metric: DistanceMetric,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R> + RuntimeClient<R>,
 {
     validate_points_dtype(x.dtype(), "cdist")?;
@@ -35,7 +36,7 @@ where
 /// Generic implementation of pdist (pairwise distances within a point set).
 pub fn pdist_impl<R, C>(client: &C, x: &Tensor<R>, metric: DistanceMetric) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R> + RuntimeClient<R>,
 {
     validate_points_dtype(x.dtype(), "pdist")?;
@@ -48,7 +49,7 @@ where
 /// Generic implementation of squareform (condensed to square).
 pub fn squareform_impl<R, C>(client: &C, condensed: &Tensor<R>, n: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R> + RuntimeClient<R>,
 {
     // Delegate to numr's DistanceOps
@@ -58,7 +59,7 @@ where
 /// Generic implementation of squareform_inverse (square to condensed).
 pub fn squareform_inverse_impl<R, C>(client: &C, square: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R> + RuntimeClient<R>,
 {
     // Delegate to numr's DistanceOps

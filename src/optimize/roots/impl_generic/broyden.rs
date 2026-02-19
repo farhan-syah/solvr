@@ -1,4 +1,5 @@
 //! Broyden's method for systems of nonlinear equations using tensor operations.
+use crate::DType;
 
 use numr::algorithm::linalg::LinearAlgebraAlgorithms;
 use numr::error::Result;
@@ -23,7 +24,7 @@ pub fn broyden1_impl<R, C, F>(
     options: &RootOptions,
 ) -> OptimizeResult<TensorRootResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -188,7 +189,7 @@ where
 /// Compute matrix-vector product: A * x where A is [n,n] and x is [n].
 fn matmul_vector<R, C>(client: &C, a: &Tensor<R>, x: &Tensor<R>) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let n = x.shape()[0];
@@ -223,7 +224,7 @@ fn update_jacobian_rank1<R, C>(
     c: f64,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let n = u.shape()[0];

@@ -1,4 +1,5 @@
 //! Spectral method traits for PDE solving.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -7,7 +8,7 @@ use crate::pde::error::PdeResult;
 use crate::pde::types::{BoundarySpec, SpectralResult};
 
 /// Spectral (Chebyshev collocation) algorithms for PDE solving.
-pub trait SpectralAlgorithms<R: Runtime> {
+pub trait SpectralAlgorithms<R: Runtime<DType = DType>> {
     /// 1D spectral: solve -u'' + q(x)u = f(x) on [-1,1] with Chebyshev collocation.
     ///
     /// Builds Chebyshev differentiation matrix D, solves (D^2 - diag(q))u = f

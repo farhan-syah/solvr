@@ -15,7 +15,7 @@ use numr::tensor::Tensor;
 /// in signature for consistency with other impl_generic functions.
 pub fn reverse_1d_impl<R, C>(_client: &C, tensor: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if tensor.ndim() != 1 {
@@ -35,7 +35,7 @@ where
 /// in signature for consistency with other impl_generic functions.
 pub fn reverse_2d_impl<R, C>(_client: &C, tensor: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if tensor.ndim() != 2 {
@@ -55,7 +55,7 @@ where
 /// (a+bi)(c+di) = (ac-bd) + (ad+bc)i
 pub fn complex_mul_impl<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let dtype = a.dtype();
@@ -93,7 +93,7 @@ where
 #[allow(dead_code)]
 pub fn complex_divide_impl<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ComplexOps<R> + RuntimeClient<R>,
 {
     let dtype = a.dtype();
@@ -157,7 +157,7 @@ pub fn detrend_tensor_impl<R, C>(
     mode: DetrendMode,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     match mode {
@@ -244,7 +244,7 @@ pub fn complex_magnitude_pow_impl<R, C>(
     output_dtype: DType,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let dtype = tensor.dtype();
@@ -297,7 +297,7 @@ pub fn extract_segments_impl<R, C>(
     noverlap: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ShapeOps<R> + RuntimeClient<R>,
 {
     if signal.ndim() != 1 {
@@ -348,7 +348,7 @@ where
 /// Uses conj(fft) * fft to get the power spectrum, extracting the real part.
 pub fn power_spectrum_impl<R, C>(client: &C, fft_result: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ComplexOps<R> + RuntimeClient<R>,
 {
     // Power = conj(fft) * fft = |fft|^2

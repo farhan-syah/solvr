@@ -1,4 +1,5 @@
 //! Shared helper functions and types for multivariate minimization.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -11,7 +12,7 @@ use super::utils::tensor_dot;
 
 /// Result of tensor-based minimization.
 #[derive(Debug, Clone)]
-pub struct TensorMinimizeResult<R: Runtime> {
+pub struct TensorMinimizeResult<R: Runtime<DType = DType>> {
     /// Solution vector.
     pub x: Tensor<R>,
     /// Function value at solution.
@@ -36,7 +37,7 @@ pub fn backtracking_line_search_tensor<R, C, F>(
     grad: &Tensor<R>,
 ) -> OptimizeResult<(Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -90,7 +91,7 @@ pub fn line_search_tensor<R, C, F>(
     fx: f64,
 ) -> OptimizeResult<(Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {

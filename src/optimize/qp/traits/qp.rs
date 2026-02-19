@@ -4,6 +4,7 @@
 //!         s.t. A_eq*x = b_eq
 //!              A_ineq*x >= b_ineq
 //!              lower <= x <= upper
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -43,7 +44,7 @@ impl Default for QpOptions {
 
 /// Result of QP solver.
 #[derive(Debug, Clone)]
-pub struct QpResult<R: Runtime> {
+pub struct QpResult<R: Runtime<DType = DType>> {
     /// Solution vector.
     pub x: Tensor<R>,
     /// Optimal objective value.
@@ -59,7 +60,7 @@ pub struct QpResult<R: Runtime> {
 }
 
 /// Trait for quadratic programming.
-pub trait QpAlgorithms<R: Runtime> {
+pub trait QpAlgorithms<R: Runtime<DType = DType>> {
     /// Solve a quadratic program.
     ///
     /// min  0.5*x'*Q*x + c'*x

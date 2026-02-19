@@ -2,6 +2,7 @@
 //!
 //! Computes the convex polytope formed by the intersection of halfspaces.
 //! Each halfspace is defined as n·x + b ≤ 0.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -9,7 +10,7 @@ use numr::tensor::Tensor;
 
 /// Halfspace intersection result.
 #[derive(Debug, Clone)]
-pub struct HalfspaceIntersection<R: Runtime> {
+pub struct HalfspaceIntersection<R: Runtime<DType = DType>> {
     /// Input halfspaces `[m, d+1]`. Each row is `[n_1, ..., n_d, b]`
     /// representing the halfspace n·x + b ≤ 0.
     pub halfspaces: Tensor<R>,
@@ -25,7 +26,7 @@ pub struct HalfspaceIntersection<R: Runtime> {
 }
 
 /// Algorithmic contract for halfspace intersection.
-pub trait HalfspaceIntersectionAlgorithms<R: Runtime> {
+pub trait HalfspaceIntersectionAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the intersection of halfspaces.
     ///
     /// # Arguments

@@ -1,4 +1,5 @@
 //! Generic descriptive statistics implementations.
+use crate::DType;
 
 use crate::stats::helpers::extract_scalar;
 use crate::stats::{TensorDescriptiveStats, validate_stats_dtype};
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 /// Generic implementation of `describe` for any Runtime.
 pub fn describe_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<TensorDescriptiveStats<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -81,7 +82,7 @@ where
 /// Generic implementation of `percentile` for any Runtime.
 pub fn percentile_impl<R, C>(client: &C, x: &Tensor<R>, p: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + StatisticalOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -99,7 +100,7 @@ where
 /// Generic implementation of `iqr` for any Runtime.
 pub fn iqr_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let q1 = percentile_impl(client, x, 25.0)?;
@@ -110,7 +111,7 @@ where
 /// Generic implementation of `skewness` for any Runtime.
 pub fn skewness_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -158,7 +159,7 @@ where
 /// Generic implementation of `kurtosis` for any Runtime.
 pub fn kurtosis_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -206,7 +207,7 @@ where
 /// Generic implementation of `zscore` for any Runtime.
 pub fn zscore_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -237,7 +238,7 @@ where
 /// Generic implementation of `sem` for any Runtime.
 pub fn sem_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;

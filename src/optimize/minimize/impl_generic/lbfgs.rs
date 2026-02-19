@@ -34,6 +34,7 @@
 //! which implicitly computes H_k @ ∇f without forming the matrix H_k.
 //!
 //! Typical values: m = 5-20 (default: 10)
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -75,7 +76,7 @@ pub fn lbfgs_impl<R, C, F>(
     options: &LbfgsOptions,
 ) -> OptimizeResult<TensorMinimizeResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -216,7 +217,7 @@ fn two_loop_recursion<R, C>(
     rho_history: &[f64],
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     if s_history.is_empty() {

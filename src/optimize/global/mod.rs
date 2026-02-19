@@ -3,7 +3,7 @@
 //! Provides methods for finding global minima of functions,
 //! avoiding local minima traps that affect local optimization methods.
 //!
-//! All algorithms use tensor operations and are generic over `R: Runtime`.
+//! All algorithms use tensor operations and are generic over `R: Runtime<DType = DType>`.
 
 pub mod cpu;
 pub mod impl_generic;

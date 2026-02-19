@@ -2,6 +2,7 @@
 //!
 //! Uses linear hat basis functions on an arbitrary node set.
 //! Assembles tridiagonal stiffness matrix, solves with dense solver.
+use crate::DType;
 
 use numr::ops::{LinalgOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -24,7 +25,7 @@ pub fn fem_1d_impl<R, C>(
     _options: &FdmOptions,
 ) -> PdeResult<FemResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + RuntimeClient<R>,
 {
     let n = x_nodes.shape()[0];

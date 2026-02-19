@@ -27,7 +27,7 @@ pub struct LinregressResult {
 /// All numeric fields are returned as tensors to preserve dtype information
 /// and enable further tensor operations on the results.
 #[derive(Debug, Clone)]
-pub struct TensorDescriptiveStats<R: Runtime> {
+pub struct TensorDescriptiveStats<R: Runtime<DType = DType>> {
     /// Number of observations
     pub nobs: usize,
     /// Minimum value (scalar tensor)
@@ -48,7 +48,7 @@ pub struct TensorDescriptiveStats<R: Runtime> {
 
 /// Result of a statistical hypothesis test.
 #[derive(Debug, Clone)]
-pub struct TensorTestResult<R: Runtime> {
+pub struct TensorTestResult<R: Runtime<DType = DType>> {
     /// Test statistic value (scalar tensor)
     pub statistic: Tensor<R>,
     /// P-value: probability of obtaining result at least as extreme (scalar tensor)
@@ -57,7 +57,7 @@ pub struct TensorTestResult<R: Runtime> {
 
 /// Result of robust regression (Theil-Sen or Siegel slopes).
 #[derive(Debug, Clone)]
-pub struct RobustRegressionResult<R: Runtime> {
+pub struct RobustRegressionResult<R: Runtime<DType = DType>> {
     /// Slope estimate (scalar tensor)
     pub slope: Tensor<R>,
     /// Intercept estimate (scalar tensor)

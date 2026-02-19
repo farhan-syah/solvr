@@ -4,6 +4,7 @@
 //! used for extracting convolution results based on output mode.
 //!
 //! All operations use numr's `narrow()` to keep data on device.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::{Runtime, RuntimeClient};
@@ -21,7 +22,7 @@ pub fn slice_last_dim_impl<R, C>(
     len: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     // Use narrow() on last dimension (-1) - data stays on device
@@ -43,7 +44,7 @@ pub fn slice_last_2d_impl<R, C>(
     len_w: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     // Narrow dimension -2 (height), then dimension -1 (width)

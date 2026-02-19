@@ -3,6 +3,7 @@
 //! BallTree is a space-partitioning data structure that uses nested hyperspheres
 //! to organize points. Unlike KDTree which uses axis-aligned splits, BallTree
 //! can handle arbitrary distance metrics efficiently.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -37,7 +38,7 @@ impl Default for BallTreeOptions {
 ///
 /// Stores the tree structure as flat tensors for efficient GPU operations.
 #[derive(Debug, Clone)]
-pub struct BallTree<R: Runtime> {
+pub struct BallTree<R: Runtime<DType = DType>> {
     /// Original point data `[n, d]`.
     pub data: Tensor<R>,
 
@@ -70,7 +71,7 @@ pub struct BallTree<R: Runtime> {
 ///
 /// All backends implementing BallTree algorithms MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait BallTreeAlgorithms<R: Runtime> {
+pub trait BallTreeAlgorithms<R: Runtime<DType = DType>> {
     /// Build a BallTree from a point set.
     ///
     /// # Arguments

@@ -2,6 +2,7 @@
 //!
 //! Provides design functions for Finite Impulse Response (FIR) digital filters
 //! using windowed sinc and frequency sampling methods.
+use crate::DType;
 
 use crate::signal::filter::types::FilterType;
 use numr::error::Result;
@@ -12,7 +13,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing FIR design MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait FirDesignAlgorithms<R: Runtime> {
+pub trait FirDesignAlgorithms<R: Runtime<DType = DType>> {
     /// Design an FIR filter using the window method.
     ///
     /// # Algorithm

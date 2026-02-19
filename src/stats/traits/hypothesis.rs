@@ -1,4 +1,5 @@
 //! Hypothesis testing algorithms.
+use crate::DType;
 
 use super::{LeveneCenter, TensorTestResult};
 use numr::error::Result;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 ///
 /// Provides methods for conducting statistical hypothesis tests on tensor data,
 /// including t-tests, correlation tests, ANOVA, non-parametric tests, and normality tests.
-pub trait HypothesisTestingAlgorithms<R: Runtime>: TensorOps<R> {
+pub trait HypothesisTestingAlgorithms<R: Runtime<DType = DType>>: TensorOps<R> {
     /// One-sample t-test.
     ///
     /// Tests whether the mean of a sample differs from a specified value.

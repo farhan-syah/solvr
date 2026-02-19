@@ -3,6 +3,7 @@
 //! KDTree is a space-partitioning data structure for organizing points in a
 //! k-dimensional space. Enables efficient nearest neighbor queries and
 //! range searches.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -36,7 +37,7 @@ impl Default for KDTreeOptions {
 ///
 /// Stores the tree structure as flat tensors for efficient GPU operations.
 #[derive(Debug, Clone)]
-pub struct KDTree<R: Runtime> {
+pub struct KDTree<R: Runtime<DType = DType>> {
     /// Original point data `[n, d]`.
     pub data: Tensor<R>,
 
@@ -68,7 +69,7 @@ pub struct KDTree<R: Runtime> {
 
 /// Result of k-nearest neighbors query.
 #[derive(Debug, Clone)]
-pub struct KNNResult<R: Runtime> {
+pub struct KNNResult<R: Runtime<DType = DType>> {
     /// Distances to the k nearest neighbors `[n_queries, k]`.
     pub distances: Tensor<R>,
 
@@ -78,7 +79,7 @@ pub struct KNNResult<R: Runtime> {
 
 /// Result of radius search query.
 #[derive(Debug, Clone)]
-pub struct RadiusResult<R: Runtime> {
+pub struct RadiusResult<R: Runtime<DType = DType>> {
     /// Distances to neighbors within radius `[total_neighbors]`.
     pub distances: Tensor<R>,
 
@@ -96,7 +97,7 @@ pub struct RadiusResult<R: Runtime> {
 ///
 /// All backends implementing KDTree algorithms MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait KDTreeAlgorithms<R: Runtime> {
+pub trait KDTreeAlgorithms<R: Runtime<DType = DType>> {
     /// Build a KDTree from a point set.
     ///
     /// # Arguments

@@ -1,4 +1,5 @@
 //! Differential evolution algorithm trait.
+use crate::DType;
 
 use super::GlobalOptions;
 use numr::error::Result;
@@ -7,7 +8,7 @@ use numr::tensor::Tensor;
 
 /// Tensor-based result from differential evolution.
 #[derive(Debug, Clone)]
-pub struct DifferentialEvolutionResult<R: Runtime> {
+pub struct DifferentialEvolutionResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -16,7 +17,7 @@ pub struct DifferentialEvolutionResult<R: Runtime> {
 }
 
 /// Differential evolution algorithm trait.
-pub trait DifferentialEvolutionAlgorithms<R: Runtime> {
+pub trait DifferentialEvolutionAlgorithms<R: Runtime<DType = DType>> {
     /// Differential Evolution global optimizer.
     ///
     /// Population-based optimizer using mutation, crossover, and selection.

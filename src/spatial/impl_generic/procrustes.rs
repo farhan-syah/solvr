@@ -1,6 +1,7 @@
 //! Generic Procrustes analysis implementation.
 //!
 //! Kabsch algorithm for finding optimal rotation between point sets.
+use crate::DType;
 
 use crate::spatial::impl_generic::rotation::rotation_from_matrix_impl;
 use crate::spatial::traits::procrustes::ProcrustesResult;
@@ -23,7 +24,7 @@ pub fn procrustes_impl<R, C>(
     reflection: bool,
 ) -> Result<ProcrustesResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     validate_points_dtype(source.dtype(), "procrustes")?;
@@ -145,7 +146,7 @@ pub fn orthogonal_procrustes_impl<R, C>(
     b: &Tensor<R>,
 ) -> Result<(Tensor<R>, f64)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     if a.shape() != b.shape() {

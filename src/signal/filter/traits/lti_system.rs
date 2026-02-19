@@ -1,6 +1,7 @@
 //! Discrete-time LTI system traits.
 //!
 //! Provides algorithms for simulating discrete-time linear time-invariant systems.
+use crate::DType;
 
 use crate::signal::filter::types::{DiscreteTimeSystem, StateSpace};
 use numr::error::Result;
@@ -11,7 +12,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing DLTI simulation MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait DiscreteTimeLtiAlgorithms<R: Runtime> {
+pub trait DiscreteTimeLtiAlgorithms<R: Runtime<DType = DType>> {
     /// Simulate output of a discrete-time linear system.
     ///
     /// # Algorithm
@@ -59,7 +60,7 @@ pub trait DiscreteTimeLtiAlgorithms<R: Runtime> {
 
 /// Result from dlsim computation.
 #[derive(Debug, Clone)]
-pub struct DlsimResult<R: Runtime> {
+pub struct DlsimResult<R: Runtime<DType = DType>> {
     /// Time indices (sample numbers).
     pub t: Tensor<R>,
     /// Output signal `[n_samples]` or `[n_samples, n_outputs]`.

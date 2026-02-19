@@ -26,7 +26,7 @@ pub fn nelder_mead_impl<R, C, F>(
     options: &MinimizeOptions,
 ) -> OptimizeResult<TensorMinimizeResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -208,7 +208,7 @@ where
 /// No to_vec()/from_slice() - all computation stays on device.
 fn initialize_simplex<R, C>(client: &C, x0: &Tensor<R>, n: usize) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     // Compute deltas: if |x0[j]| > threshold then 0.05*x0[j] else 0.00025
@@ -333,7 +333,7 @@ fn extract_row<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     // narrow(dim=0, start=row, length=1) -> [1, n], then make contiguous and reshape to [n]
@@ -356,7 +356,7 @@ fn compute_centroid<R, C>(
     indices: &[usize],
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let k = indices.len();
@@ -395,7 +395,7 @@ fn reflect_point<R, C>(
     coeff: f64,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // diff = base - point

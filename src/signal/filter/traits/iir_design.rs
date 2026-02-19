@@ -7,6 +7,7 @@
 #![allow(clippy::too_many_arguments)]
 // Allow large enum variant size difference (ZpkFilter is larger than tf/sos)
 #![allow(clippy::large_enum_variant)]
+use crate::DType;
 
 use crate::signal::filter::types::{
     AnalogPrototype, FilterOutput, FilterType, SosFilter, TransferFunction, ZpkFilter,
@@ -25,7 +26,7 @@ use numr::runtime::Runtime;
 /// 1. Design analog prototype (lowpass, cutoff = 1 rad/s)
 /// 2. Apply frequency transformation (LP→HP, LP→BP, LP→BS)
 /// 3. Apply bilinear transform (s-plane → z-plane)
-pub trait IirDesignAlgorithms<R: Runtime> {
+pub trait IirDesignAlgorithms<R: Runtime<DType = DType>> {
     /// Design a Butterworth digital filter.
     ///
     /// The Butterworth filter has maximally flat passband response.
@@ -203,7 +204,7 @@ pub trait IirDesignAlgorithms<R: Runtime> {
 ///
 /// Contains the filter in the requested output format.
 #[derive(Debug, Clone)]
-pub enum IirDesignResult<R: Runtime> {
+pub enum IirDesignResult<R: Runtime<DType = DType>> {
     /// Transfer function coefficients (b, a).
     Ba(TransferFunction<R>),
     /// Zeros, poles, and gain.
@@ -212,7 +213,7 @@ pub enum IirDesignResult<R: Runtime> {
     Sos(SosFilter<R>),
 }
 
-impl<R: Runtime> IirDesignResult<R> {
+impl<R: Runtime<DType = DType>> IirDesignResult<R> {
     /// Get as transfer function, if that's the format.
     pub fn as_ba(&self) -> Option<&TransferFunction<R>> {
         match self {

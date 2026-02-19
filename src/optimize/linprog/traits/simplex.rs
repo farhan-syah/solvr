@@ -1,4 +1,5 @@
 //! Linear programming trait and types.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -27,7 +28,7 @@ impl Default for LinProgOptions {
 
 /// Tensor-based linear constraints.
 #[derive(Debug, Clone)]
-pub struct LinProgTensorConstraints<R: Runtime> {
+pub struct LinProgTensorConstraints<R: Runtime<DType = DType>> {
     /// Inequality constraint matrix (A_ub * x <= b_ub)
     pub a_ub: Option<Tensor<R>>,
     /// Inequality constraint bounds
@@ -44,7 +45,7 @@ pub struct LinProgTensorConstraints<R: Runtime> {
 
 /// Result from tensor-based linear programming.
 #[derive(Debug, Clone)]
-pub struct LinProgTensorResult<R: Runtime> {
+pub struct LinProgTensorResult<R: Runtime<DType = DType>> {
     /// Optimal solution vector
     pub x: Tensor<R>,
     /// Optimal objective value
@@ -63,7 +64,7 @@ pub struct LinProgTensorResult<R: Runtime> {
 ///
 /// All backends implementing linear programming MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait LinProgAlgorithms<R: Runtime> {
+pub trait LinProgAlgorithms<R: Runtime<DType = DType>> {
     /// Solve a linear programming problem using the Simplex method.
     ///
     /// Minimize: c^T * x

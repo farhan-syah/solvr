@@ -1,6 +1,7 @@
 //! Welch's method for power spectral density estimation.
 //!
 //! Uses numr tensor ops - backend-optimized (SIMD on CPU, kernels on GPU).
+use crate::DType;
 
 use crate::signal::impl_generic::helpers::{
     DetrendMode, detrend_tensor_impl, extract_segments_impl, power_spectrum_impl,
@@ -18,7 +19,7 @@ use numr::tensor::Tensor;
 /// Uses batched FFT operations - backend-optimized via numr.
 pub fn welch_impl<R, C>(client: &C, x: &Tensor<R>, params: WelchParams<R>) -> Result<WelchResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R>
         + ComplexOps<R>
         + ScalarOps<R>

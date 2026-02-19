@@ -2,6 +2,7 @@
 //!
 //! Builds Chebyshev differentiation matrix D, solves (D^2 - diag(q))u = f
 //! as a dense linear system.
+use crate::DType;
 
 use numr::ops::{LinalgOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -22,7 +23,7 @@ pub fn spectral_1d_impl<R, C>(
     boundary: &[crate::pde::types::BoundarySpec<R>],
 ) -> PdeResult<SpectralResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + RuntimeClient<R>,
 {
     if n < 2 {

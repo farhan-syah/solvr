@@ -1,6 +1,7 @@
 //! Generic implementations of global optimization algorithms.
 //!
-//! All algorithms use tensor operations and are generic over `R: Runtime`.
+//! All algorithms use tensor operations and are generic over `R: Runtime<DType = DType>`.
+use crate::DType;
 
 pub mod basinhopping;
 pub mod differential_evolution;
@@ -27,7 +28,7 @@ pub(crate) fn validate_bounds<R, C>(
     upper: &Tensor<R>,
 ) -> OptimizeResult<()>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     let violations = client
@@ -61,7 +62,7 @@ pub(crate) fn clamp_to_bounds<R, C>(
     upper: &Tensor<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>,
 {
     let clamped_upper = client

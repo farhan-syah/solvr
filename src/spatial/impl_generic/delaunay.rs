@@ -16,7 +16,7 @@ use std::collections::{HashMap, HashSet};
 /// Compute Delaunay triangulation using Bowyer-Watson algorithm.
 pub fn delaunay_impl<R, C>(_client: &C, points: &Tensor<R>) -> Result<Delaunay<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     validate_points_dtype(points.dtype(), "delaunay")?;
@@ -245,7 +245,7 @@ pub fn delaunay_find_simplex_impl<R, C>(
     query: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -420,7 +420,7 @@ pub fn delaunay_vertex_neighbors_impl<R, C>(
     tri: &Delaunay<R>,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let n = tri.points.shape()[0];

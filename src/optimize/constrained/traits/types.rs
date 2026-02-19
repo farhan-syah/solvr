@@ -1,4 +1,5 @@
 //! Shared types for constrained optimization.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -18,7 +19,7 @@ pub enum ConstraintType {
 ///
 /// For equality constraints: fun(x) = 0
 /// For inequality constraints: fun(x) >= 0
-pub struct Constraint<'a, R: Runtime> {
+pub struct Constraint<'a, R: Runtime<DType = DType>> {
     /// Type of constraint (equality or inequality).
     pub kind: ConstraintType,
     /// Constraint function. Returns a tensor of constraint values.
@@ -30,14 +31,14 @@ pub struct Constraint<'a, R: Runtime> {
 
 /// Variable bounds for constrained optimization.
 #[derive(Debug, Clone)]
-pub struct Bounds<R: Runtime> {
+pub struct Bounds<R: Runtime<DType = DType>> {
     /// Lower bounds (None means -infinity for all variables).
     pub lower: Option<Tensor<R>>,
     /// Upper bounds (None means +infinity for all variables).
     pub upper: Option<Tensor<R>>,
 }
 
-impl<R: Runtime> Default for Bounds<R> {
+impl<R: Runtime<DType = DType>> Default for Bounds<R> {
     fn default() -> Self {
         Self {
             lower: None,
@@ -72,7 +73,7 @@ impl Default for ConstrainedOptions {
 
 /// Result of constrained optimization.
 #[derive(Debug, Clone)]
-pub struct ConstrainedResult<R: Runtime> {
+pub struct ConstrainedResult<R: Runtime<DType = DType>> {
     /// Solution vector.
     pub x: Tensor<R>,
     /// Objective function value at solution.

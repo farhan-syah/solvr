@@ -21,7 +21,7 @@ pub fn socp_impl<R, C>(
     options: &SocpOptions,
 ) -> OptimizeResult<SocpResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let n = cost.shape()[0];
@@ -152,7 +152,7 @@ fn compute_soc_barrier_gradient<R, C>(
     mu: f64,
 ) -> OptimizeResult<(Tensor<R>, bool)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let n = x.shape()[0];
@@ -255,7 +255,7 @@ fn check_cone_feasibility<R, C>(
     constraints: &[SocConstraint<R>],
 ) -> OptimizeResult<bool>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let n = x.shape()[0];

@@ -1,4 +1,5 @@
 //! Shared types for PDE solvers.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -44,7 +45,7 @@ pub struct Grid3D {
 
 /// Boundary condition type.
 #[derive(Debug, Clone)]
-pub enum BoundaryCondition<R: Runtime> {
+pub enum BoundaryCondition<R: Runtime<DType = DType>> {
     /// Fixed values at boundary (Dirichlet).
     Dirichlet(Tensor<R>),
     /// Fixed normal derivative at boundary (Neumann).
@@ -67,7 +68,7 @@ pub enum BoundarySide {
 
 /// A boundary specification: side + condition.
 #[derive(Debug, Clone)]
-pub struct BoundarySpec<R: Runtime> {
+pub struct BoundarySpec<R: Runtime<DType = DType>> {
     pub side: BoundarySide,
     pub condition: BoundaryCondition<R>,
 }
@@ -137,7 +138,7 @@ pub struct TimeDependentOptions {
 
 /// Result of a finite difference steady-state solve.
 #[derive(Debug, Clone)]
-pub struct FdmResult<R: Runtime> {
+pub struct FdmResult<R: Runtime<DType = DType>> {
     /// Solution field (reshaped to grid dimensions).
     pub solution: Tensor<R>,
     /// Number of iterations used by the iterative solver.
@@ -148,7 +149,7 @@ pub struct FdmResult<R: Runtime> {
 
 /// Result of a time-dependent PDE solve.
 #[derive(Debug, Clone)]
-pub struct TimeResult<R: Runtime> {
+pub struct TimeResult<R: Runtime<DType = DType>> {
     /// Time points at which solutions were saved.
     pub times: Tensor<R>,
     /// Solutions at saved timesteps.
@@ -157,7 +158,7 @@ pub struct TimeResult<R: Runtime> {
 
 /// Result of a finite element solve.
 #[derive(Debug, Clone)]
-pub struct FemResult<R: Runtime> {
+pub struct FemResult<R: Runtime<DType = DType>> {
     /// Solution at nodes.
     pub solution: Tensor<R>,
     /// Node coordinates.
@@ -170,7 +171,7 @@ pub struct FemResult<R: Runtime> {
 
 /// Result of a spectral method solve.
 #[derive(Debug, Clone)]
-pub struct SpectralResult<R: Runtime> {
+pub struct SpectralResult<R: Runtime<DType = DType>> {
     /// Solution at collocation nodes.
     pub solution: Tensor<R>,
     /// Collocation node coordinates.

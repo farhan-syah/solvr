@@ -1,6 +1,7 @@
 //! Spectral analysis algorithm traits.
 //!
 //! Provides algorithms for power spectral density estimation.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing spectral analysis MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait SpectralAnalysisAlgorithms<R: Runtime> {
+pub trait SpectralAnalysisAlgorithms<R: Runtime<DType = DType>> {
     /// Estimate power spectral density using Welch's method.
     ///
     /// # Algorithm
@@ -126,7 +127,7 @@ pub trait SpectralAnalysisAlgorithms<R: Runtime> {
 
 /// Window type for spectral analysis.
 #[derive(Debug, Clone)]
-pub enum SpectralWindow<R: Runtime> {
+pub enum SpectralWindow<R: Runtime<DType = DType>> {
     /// Rectangular (no windowing).
     Rectangular,
     /// Hann window.
@@ -142,7 +143,7 @@ pub enum SpectralWindow<R: Runtime> {
 }
 
 #[allow(clippy::derivable_impls)]
-impl<R: Runtime> Default for SpectralWindow<R> {
+impl<R: Runtime<DType = DType>> Default for SpectralWindow<R> {
     fn default() -> Self {
         SpectralWindow::Hann
     }
@@ -172,7 +173,7 @@ pub enum Detrend {
 
 /// Parameters for Welch's method.
 #[derive(Debug, Clone)]
-pub struct WelchParams<R: Runtime> {
+pub struct WelchParams<R: Runtime<DType = DType>> {
     /// Sampling frequency in Hz (default: 1.0).
     pub fs: f64,
     /// Window type (default: Hann).
@@ -195,7 +196,7 @@ pub struct WelchParams<R: Runtime> {
     pub device: R::Device,
 }
 
-impl<R: Runtime> WelchParams<R> {
+impl<R: Runtime<DType = DType>> WelchParams<R> {
     /// Create default Welch parameters with the given device.
     pub fn new(device: R::Device) -> Self {
         Self {
@@ -244,7 +245,7 @@ impl<R: Runtime> WelchParams<R> {
 
 /// Parameters for periodogram.
 #[derive(Debug, Clone)]
-pub struct PeriodogramParams<R: Runtime> {
+pub struct PeriodogramParams<R: Runtime<DType = DType>> {
     /// Sampling frequency in Hz.
     pub fs: f64,
     /// Window type.
@@ -261,7 +262,7 @@ pub struct PeriodogramParams<R: Runtime> {
     pub device: R::Device,
 }
 
-impl<R: Runtime> PeriodogramParams<R> {
+impl<R: Runtime<DType = DType>> PeriodogramParams<R> {
     /// Create default periodogram parameters with the given device.
     pub fn new(device: R::Device) -> Self {
         Self {
@@ -290,7 +291,7 @@ impl<R: Runtime> PeriodogramParams<R> {
 
 /// Result from Welch PSD estimation.
 #[derive(Debug, Clone)]
-pub struct WelchResult<R: Runtime> {
+pub struct WelchResult<R: Runtime<DType = DType>> {
     /// Frequencies in Hz.
     pub freqs: Tensor<R>,
     /// Power spectral density.
@@ -299,7 +300,7 @@ pub struct WelchResult<R: Runtime> {
 
 /// Result from periodogram.
 #[derive(Debug, Clone)]
-pub struct PeriodogramResult<R: Runtime> {
+pub struct PeriodogramResult<R: Runtime<DType = DType>> {
     /// Frequencies in Hz.
     pub freqs: Tensor<R>,
     /// Power spectral density.
@@ -308,7 +309,7 @@ pub struct PeriodogramResult<R: Runtime> {
 
 /// Result from cross spectral density.
 #[derive(Debug, Clone)]
-pub struct CsdResult<R: Runtime> {
+pub struct CsdResult<R: Runtime<DType = DType>> {
     /// Frequencies in Hz.
     pub freqs: Tensor<R>,
     /// Cross spectral density (real part).
@@ -317,7 +318,7 @@ pub struct CsdResult<R: Runtime> {
     pub pxy_imag: Tensor<R>,
 }
 
-impl<R: Runtime> CsdResult<R> {
+impl<R: Runtime<DType = DType>> CsdResult<R> {
     /// Get magnitude of cross spectral density.
     pub fn magnitude(&self) -> Result<Tensor<R>> {
         let re: Vec<f64> = self.pxy_real.to_vec();
@@ -353,7 +354,7 @@ impl<R: Runtime> CsdResult<R> {
 
 /// Result from coherence estimation.
 #[derive(Debug, Clone)]
-pub struct CoherenceResult<R: Runtime> {
+pub struct CoherenceResult<R: Runtime<DType = DType>> {
     /// Frequencies in Hz.
     pub freqs: Tensor<R>,
     /// Magnitude squared coherence (0 to 1).

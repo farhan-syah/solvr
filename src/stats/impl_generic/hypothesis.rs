@@ -63,6 +63,7 @@
 //!   Welch's test relaxes equal variance assumption.
 //! - **Pearson**: Assumes linear relationship and bivariate normality for p-value.
 //! - **Spearman**: Non-parametric, no distributional assumptions on data.
+use crate::DType;
 
 use crate::stats::helpers::{compute_ranks, extract_scalar};
 use crate::stats::traits::LeveneCenter;
@@ -82,7 +83,7 @@ pub fn ttest_1samp_impl<R, C>(
     popmean: f64,
 ) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -121,7 +122,7 @@ where
 /// Generic implementation of independent two-sample t-test (Welch's).
 pub fn ttest_ind_impl<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(a.dtype())?;
@@ -176,7 +177,7 @@ where
 /// Generic implementation of paired t-test.
 pub fn ttest_rel_impl<R, C>(client: &C, a: &Tensor<R>, b: &Tensor<R>) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(a.dtype())?;
@@ -196,7 +197,7 @@ where
 /// Generic implementation of Pearson correlation.
 pub fn pearsonr_impl<R, C>(client: &C, x: &Tensor<R>, y: &Tensor<R>) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -265,7 +266,7 @@ where
 /// Generic implementation of Spearman rank correlation.
 pub fn spearmanr_impl<R, C>(client: &C, x: &Tensor<R>, y: &Tensor<R>) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -287,7 +288,7 @@ where
 /// Generic implementation of one-way ANOVA (F-test).
 pub fn f_oneway_impl<R, C>(client: &C, groups: &[&Tensor<R>]) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     if groups.len() < 2 {
@@ -375,7 +376,7 @@ where
 /// Generic implementation of Kruskal-Wallis H-test.
 pub fn kruskal_impl<R, C>(client: &C, groups: &[&Tensor<R>]) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     if groups.len() < 2 {
@@ -442,7 +443,7 @@ pub fn friedmanchisquare_impl<R, C>(
     groups: &[&Tensor<R>],
 ) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     if groups.len() < 3 {
@@ -525,7 +526,7 @@ where
 /// Generic implementation of Shapiro-Wilk test.
 pub fn shapiro_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -599,7 +600,7 @@ where
 /// Generic implementation of D'Agostino-Pearson normaltest.
 pub fn normaltest_impl<R, C>(client: &C, x: &Tensor<R>) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -674,7 +675,7 @@ pub fn levene_impl<R, C>(
     center: LeveneCenter,
 ) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     if groups.len() < 2 {
@@ -771,7 +772,7 @@ where
 /// Generic implementation of Bartlett's test.
 pub fn bartlett_impl<R, C>(client: &C, groups: &[&Tensor<R>]) -> Result<TensorTestResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     if groups.len() < 2 {

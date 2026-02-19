@@ -2,6 +2,7 @@
 //!
 //! EDT uses the Felzenszwalb & Huttenlocher separable parabola envelope algorithm.
 //! CDT uses iterative pad+narrow+minimum propagation (fully on-device).
+use crate::DType;
 
 use crate::spatial::traits::distance_transform::DistanceTransformMetric;
 use numr::error::{Error, Result};
@@ -18,7 +19,7 @@ pub fn distance_transform_impl<R, C>(
     metric: DistanceTransformMetric,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R>
         + BinaryOps<R>
         + UnaryOps<R>
@@ -45,7 +46,7 @@ where
 /// which is acceptable per solvr's transfer policy.
 pub fn distance_transform_edt_impl<R, C>(_client: &C, input: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R>
         + UnaryOps<R>
         + CompareOps<R>
@@ -167,7 +168,7 @@ fn pad_single_axis<R, C>(
     value: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ShapeOps<R> + RuntimeClient<R>,
 {
     let ndim = tensor.ndim();
@@ -191,7 +192,7 @@ fn chamfer_distance_impl<R, C>(
     _chessboard: bool,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R>
         + BinaryOps<R>
         + UnaryOps<R>

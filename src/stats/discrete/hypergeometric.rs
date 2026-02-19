@@ -1,4 +1,5 @@
 //! Hypergeometric distribution.
+use crate::DType;
 
 use crate::stats::discrete::log_binom;
 use crate::stats::error::{StatsError, StatsResult};
@@ -282,7 +283,11 @@ impl DiscreteDistribution for Hypergeometric {
     // Tensor Methods - All computation stays on device using numr ops
     // ========================================================================
 
-    fn pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -292,7 +297,11 @@ impl DiscreteDistribution for Hypergeometric {
         client.exp(&log_pmf)
     }
 
-    fn log_pmf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn log_pmf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -351,7 +360,11 @@ impl DiscreteDistribution for Hypergeometric {
         client.sub(&result, &log_c_n_n)
     }
 
-    fn cdf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn cdf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -372,7 +385,11 @@ impl DiscreteDistribution for Hypergeometric {
         client.mul_scalar(&erfc_val, 0.5)
     }
 
-    fn sf_tensor<R: Runtime, C>(&self, k: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn sf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        k: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {
@@ -381,7 +398,11 @@ impl DiscreteDistribution for Hypergeometric {
         client.sub_scalar(&client.mul_scalar(&cdf, -1.0)?, -1.0)
     }
 
-    fn ppf_tensor<R: Runtime, C>(&self, p: &Tensor<R>, client: &C) -> Result<Tensor<R>>
+    fn ppf_tensor<R: Runtime<DType = DType>, C>(
+        &self,
+        p: &Tensor<R>,
+        client: &C,
+    ) -> Result<Tensor<R>>
     where
         C: TensorOps<R> + ScalarOps<R> + SpecialFunctions<R> + RuntimeClient<R>,
     {

@@ -22,7 +22,7 @@ pub fn pad_1d_to_length_impl<R, C>(
     target_len: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let ndim = tensor.ndim();
@@ -45,7 +45,7 @@ pub fn pad_2d_to_shape_impl<R, C>(
     target_w: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let ndim = tensor.ndim();
@@ -76,7 +76,7 @@ pub fn pad_1d_reflect_impl<R, C>(
     pad_right: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let dtype = tensor.dtype();

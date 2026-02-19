@@ -6,6 +6,7 @@
 #![allow(clippy::too_many_arguments)]
 // Allow large enum variant size difference (ZpkFilter is larger than tf/sos)
 #![allow(clippy::large_enum_variant)]
+use crate::DType;
 
 use crate::signal::filter::traits::iir_design::IirDesignResult;
 use crate::signal::filter::types::{FilterOutput, FilterType};
@@ -31,7 +32,7 @@ pub enum IirDesignType {
 /// Unified IIR filter design algorithms.
 ///
 /// Provides a single interface to design IIR filters of various types.
-pub trait IirFilterAlgorithms<R: Runtime> {
+pub trait IirFilterAlgorithms<R: Runtime<DType = DType>> {
     /// Design an IIR digital filter using the specified method.
     ///
     /// This is a unified interface that dispatches to the appropriate design

@@ -1,4 +1,5 @@
 //! Trust-Krylov algorithm trait.
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -13,7 +14,7 @@ use crate::optimize::error::OptimizeResult;
 /// Uses Lanczos iteration to build a tridiagonal approximation of H,
 /// then solves the trust region subproblem in the reduced Krylov space.
 /// Memory: O(kn) where k is the Lanczos iteration count.
-pub trait TrustKrylovAlgorithms<R: Runtime> {
+pub trait TrustKrylovAlgorithms<R: Runtime<DType = DType>> {
     fn trust_krylov<F>(
         &self,
         f: F,

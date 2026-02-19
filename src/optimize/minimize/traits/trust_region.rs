@@ -3,6 +3,7 @@
 //! Trust region methods minimize f(x) by iteratively solving a subproblem
 //! within a "trust region" ball ||p|| <= delta, then adjusting delta based
 //! on how well the quadratic model predicted the actual reduction.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -38,7 +39,7 @@ impl Default for TrustRegionOptions {
 
 /// Result type for trust region optimization.
 #[derive(Debug, Clone)]
-pub struct TrustRegionResult<R: Runtime> {
+pub struct TrustRegionResult<R: Runtime<DType = DType>> {
     /// Solution vector
     pub x: Tensor<R>,
     /// Function value at solution
@@ -55,7 +56,7 @@ pub struct TrustRegionResult<R: Runtime> {
     pub nfev: usize,
 }
 
-impl<R: Runtime> From<TrustRegionResult<R>> for TensorMinimizeResult<R> {
+impl<R: Runtime<DType = DType>> From<TrustRegionResult<R>> for TensorMinimizeResult<R> {
     fn from(result: TrustRegionResult<R>) -> Self {
         TensorMinimizeResult {
             x: result.x,

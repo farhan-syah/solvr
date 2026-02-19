@@ -17,7 +17,7 @@ use super::clamp_to_bounds;
 
 /// Tensor-based result from basin-hopping.
 #[derive(Debug, Clone)]
-pub struct BasinHoppingTensorResult<R: Runtime> {
+pub struct BasinHoppingTensorResult<R: Runtime<DType = DType>> {
     pub x: Tensor<R>,
     pub fun: f64,
     pub iterations: usize,
@@ -38,7 +38,7 @@ pub fn basinhopping_impl<R, C, F>(
     options: &GlobalOptions,
 ) -> OptimizeResult<BasinHoppingTensorResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {

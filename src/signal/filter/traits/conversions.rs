@@ -2,6 +2,7 @@
 //!
 //! Provides conversions between transfer function (b, a), zero-pole-gain (zpk),
 //! and second-order sections (sos) representations.
+use crate::DType;
 
 use crate::signal::filter::types::{SosFilter, TransferFunction, ZpkFilter};
 use numr::error::Result;
@@ -11,7 +12,7 @@ use numr::runtime::Runtime;
 ///
 /// All backends implementing filter conversions MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait FilterConversions<R: Runtime> {
+pub trait FilterConversions<R: Runtime<DType = DType>> {
     /// Convert transfer function to zeros, poles, and gain.
     ///
     /// # Algorithm

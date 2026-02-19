@@ -1,4 +1,5 @@
 //! Least squares optimization trait and types.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -33,7 +34,7 @@ impl Default for LeastSquaresOptions {
 
 /// Result from tensor-based least squares optimization.
 #[derive(Debug, Clone)]
-pub struct LeastSquaresTensorResult<R: Runtime> {
+pub struct LeastSquaresTensorResult<R: Runtime<DType = DType>> {
     /// The optimal parameters found
     pub x: Tensor<R>,
     /// Residual vector at solution
@@ -52,7 +53,7 @@ pub struct LeastSquaresTensorResult<R: Runtime> {
 ///
 /// All backends implementing least squares MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait LeastSquaresAlgorithms<R: Runtime> {
+pub trait LeastSquaresAlgorithms<R: Runtime<DType = DType>> {
     /// Levenberg-Marquardt algorithm for nonlinear least squares.
     ///
     /// Minimizes ||f(x)||^2 where f: R^n -> R^m.

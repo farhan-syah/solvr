@@ -18,7 +18,7 @@ use numr::tensor::Tensor;
 /// Uses tensor operations throughout - data stays on device.
 pub fn convex_hull_impl<R, C>(client: &C, points: &Tensor<R>) -> Result<ConvexHull<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -60,7 +60,7 @@ where
 /// 4. Repeat until returning to start
 fn convex_hull_2d_tensor<R, C>(client: &C, points: &Tensor<R>) -> Result<ConvexHull<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -243,7 +243,7 @@ where
 /// 3. Update face list incrementally
 fn convex_hull_3d_tensor<R, C>(client: &C, points: &Tensor<R>) -> Result<ConvexHull<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -473,7 +473,7 @@ fn orient_faces_outward<R, C>(
     centroid: &Tensor<R>,
 ) -> Result<()>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + IndexingOps<R> + RuntimeClient<R>,
 {
     let device = points.device();
@@ -536,7 +536,7 @@ fn find_visible_faces_tensor<R, C>(
     point: &Tensor<R>,
 ) -> Result<Vec<usize>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + CompareOps<R>
@@ -655,7 +655,7 @@ fn compute_3d_hull_metrics<R, C>(
     faces: &[[i64; 3]],
 ) -> Result<(f64, f64)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + IndexingOps<R> + RuntimeClient<R>,
 {
     let device = points.device();
@@ -757,7 +757,7 @@ pub fn convex_hull_contains_impl<R, C>(
     points: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -785,7 +785,7 @@ fn convex_hull_contains_2d_tensor<R, C>(
     points: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -880,7 +880,7 @@ fn convex_hull_contains_3d_tensor<R, C>(
     points: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>

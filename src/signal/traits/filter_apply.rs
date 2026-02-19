@@ -1,6 +1,7 @@
 //! Filter application traits.
 //!
 //! Provides algorithms for applying digital filters to signals.
+use crate::DType;
 
 use crate::signal::filter::types::SosFilter;
 use numr::error::Result;
@@ -11,7 +12,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing filter application MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait FilterApplicationAlgorithms<R: Runtime> {
+pub trait FilterApplicationAlgorithms<R: Runtime<DType = DType>> {
     /// Apply an IIR or FIR filter using Direct Form II transposed.
     ///
     /// # Algorithm
@@ -117,7 +118,7 @@ pub trait FilterApplicationAlgorithms<R: Runtime> {
 
 /// Result from lfilter containing output and final state.
 #[derive(Debug, Clone)]
-pub struct LfilterResult<R: Runtime> {
+pub struct LfilterResult<R: Runtime<DType = DType>> {
     /// Filtered output signal.
     pub y: Tensor<R>,
     /// Final filter state (can be used as zi for next call).
@@ -126,7 +127,7 @@ pub struct LfilterResult<R: Runtime> {
 
 /// Result from sosfilt containing output and final state.
 #[derive(Debug, Clone)]
-pub struct SosfiltResult<R: Runtime> {
+pub struct SosfiltResult<R: Runtime<DType = DType>> {
     /// Filtered output signal.
     pub y: Tensor<R>,
     /// Final filter state `[n_sections, 2]`.

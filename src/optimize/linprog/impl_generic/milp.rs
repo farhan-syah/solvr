@@ -1,4 +1,5 @@
 //! Tensor-based mixed-integer linear programming via branch-and-bound.
+use crate::DType;
 
 use super::{TensorLinProgResult, TensorLinearConstraints, simplex_impl};
 use crate::optimize::error::{OptimizeError, OptimizeResult};
@@ -9,7 +10,7 @@ use numr::tensor::Tensor;
 
 /// Result from tensor-based MILP.
 #[derive(Debug, Clone)]
-pub struct TensorMilpResult<R: Runtime> {
+pub struct TensorMilpResult<R: Runtime<DType = DType>> {
     /// Optimal solution vector.
     pub x: Tensor<R>,
     /// Optimal objective value.
@@ -46,7 +47,7 @@ pub fn milp_impl<R, C>(
     options: &MilpOptionsInternal,
 ) -> OptimizeResult<TensorMilpResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     let n = c.shape()[0];

@@ -1,4 +1,5 @@
 //! Anderson mixing trait for fixed-point iteration acceleration.
+use crate::DType;
 
 use crate::optimize::roots::{RootOptions, RootTensorResult};
 use numr::error::Result;
@@ -31,7 +32,7 @@ impl Default for AndersonOptions {
 /// Given g(x) such that the fixed point x* = g(x*), Anderson mixing
 /// finds x* by combining previous iterates using least-squares to
 /// minimize the residual F(x) = g(x) - x.
-pub trait AndersonAlgorithms<R: Runtime> {
+pub trait AndersonAlgorithms<R: Runtime<DType = DType>> {
     /// Solve F(x) = g(x) - x = 0 using Anderson mixing.
     ///
     /// # Arguments

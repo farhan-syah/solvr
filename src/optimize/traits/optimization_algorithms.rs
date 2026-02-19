@@ -1,4 +1,5 @@
 //! Unified optimization algorithms trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -28,7 +29,7 @@ use crate::optimize::scalar::{MinimizeResult, RootResult, ScalarOptions};
 /// let result = client.bisect(|x| x * x - 4.0, 0.0, 3.0, &ScalarOptions::default())?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-pub trait OptimizationAlgorithms<R: Runtime> {
+pub trait OptimizationAlgorithms<R: Runtime<DType = DType>> {
     /// Bisection method for scalar root finding.
     ///
     /// Finds a root of `f` in the interval [a, b].

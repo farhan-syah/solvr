@@ -4,6 +4,7 @@
 
 // Allow non-snake_case for `worN` parameter - follows SciPy's naming convention
 #![allow(non_snake_case)]
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -13,7 +14,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing analog frequency response MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait AnalogResponseAlgorithms<R: Runtime> {
+pub trait AnalogResponseAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the frequency response of an analog filter.
     ///
     /// # Algorithm
@@ -50,7 +51,7 @@ pub trait AnalogResponseAlgorithms<R: Runtime> {
 
 /// Result from analog frequency response computation.
 #[derive(Debug, Clone)]
-pub struct FreqsResult<R: Runtime> {
+pub struct FreqsResult<R: Runtime<DType = DType>> {
     /// Angular frequencies (rad/s).
     pub w: Tensor<R>,
     /// Real part of complex frequency response.
@@ -59,7 +60,7 @@ pub struct FreqsResult<R: Runtime> {
     pub h_imag: Tensor<R>,
 }
 
-impl<R: Runtime> FreqsResult<R> {
+impl<R: Runtime<DType = DType>> FreqsResult<R> {
     /// Get magnitude response |H(jω)|.
     pub fn magnitude(&self) -> Result<Tensor<R>> {
         let h_re: Vec<f64> = self.h_real.to_vec();

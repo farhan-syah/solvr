@@ -28,7 +28,7 @@ pub fn cobyla_impl<R, C, F>(
     options: &ConstrainedOptions,
 ) -> OptimizeResult<ConstrainedResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -232,7 +232,7 @@ fn evaluate_all_constraints<R, C>(
     _client: &C,
 ) -> OptimizeResult<Vec<f64>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let mut all_vals = Vec::new();
@@ -279,7 +279,7 @@ fn max_violation_from_vec(c_vals: &[f64]) -> f64 {
     c_vals.iter().map(|&v| (-v).max(0.0)).fold(0.0f64, f64::max)
 }
 
-fn update_best<R: Runtime>(
+fn update_best<R: Runtime<DType = DType>>(
     points: &[Tensor<R>],
     fvals: &[f64],
     cvals: &[Vec<f64>],
@@ -314,7 +314,7 @@ fn build_linear_models<R, C>(
     n: usize,
 ) -> OptimizeResult<(Vec<f64>, Vec<Vec<f64>>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let x0_vals: Vec<f64> = points[0].to_vec();
@@ -366,7 +366,7 @@ fn find_trial_point<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Simple approach: steepest descent direction projected onto feasible set
@@ -424,7 +424,7 @@ fn rebuild_simplex<R, C, F>(
     nfev: &mut usize,
 ) -> OptimizeResult<()>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -495,7 +495,7 @@ fn apply_bounds_cobyla<R, C>(
     bounds: &Bounds<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let mut result = x.clone();

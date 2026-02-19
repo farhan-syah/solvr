@@ -4,6 +4,7 @@
 //! All computation stays on device - no GPU->CPU->GPU roundtrips.
 
 #![allow(clippy::too_many_arguments)]
+use crate::DType;
 
 mod istft;
 
@@ -32,7 +33,7 @@ pub fn stft_impl<R, C>(
     _normalized: bool,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + WindowFunctions<R> + TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let dtype = signal.dtype();
@@ -125,7 +126,7 @@ fn stft_single<R, C>(
     freq_bins: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let signal_len = signal.shape()[0];
@@ -187,7 +188,7 @@ fn stft_batched<R, C>(
     freq_bins: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // Reshape signal to [batch_size, signal_len]
@@ -247,7 +248,7 @@ pub fn spectrogram_impl<R, C>(
     power: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + WindowFunctions<R> + TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let stft_result = stft_impl(client, signal, n_fft, hop_length, window, true, false)?;

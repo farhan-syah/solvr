@@ -1,6 +1,7 @@
 //! Signal analysis algorithm traits.
 //!
 //! Provides algorithms for signal analysis and transformation.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing signal analysis MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait SignalAnalysisAlgorithms<R: Runtime> {
+pub trait SignalAnalysisAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the analytic signal using the Hilbert transform.
     ///
     /// # Algorithm
@@ -105,14 +106,14 @@ pub trait SignalAnalysisAlgorithms<R: Runtime> {
 
 /// Result from Hilbert transform.
 #[derive(Debug, Clone)]
-pub struct HilbertResult<R: Runtime> {
+pub struct HilbertResult<R: Runtime<DType = DType>> {
     /// Real part (original signal).
     pub real: Tensor<R>,
     /// Imaginary part (Hilbert transform).
     pub imag: Tensor<R>,
 }
 
-impl<R: Runtime> HilbertResult<R> {
+impl<R: Runtime<DType = DType>> HilbertResult<R> {
     /// Get instantaneous amplitude (envelope).
     ///
     /// Computes `sqrt(real² + imag²)`.
@@ -261,7 +262,7 @@ impl PeakParams {
 
 /// Result from peak finding.
 #[derive(Debug, Clone)]
-pub struct PeakResult<R: Runtime> {
+pub struct PeakResult<R: Runtime<DType = DType>> {
     /// Indices of detected peaks.
     pub indices: Vec<usize>,
     /// Heights at peak locations.

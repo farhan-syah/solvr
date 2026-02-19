@@ -1,6 +1,7 @@
 //! Local extrema detection algorithm traits.
 //!
 //! Provides algorithms for finding local minima and maxima in signals.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -18,7 +19,7 @@ pub enum ExtremumMode {
 
 /// Result from extrema detection.
 #[derive(Debug, Clone)]
-pub struct ExtremaResult<R: Runtime> {
+pub struct ExtremaResult<R: Runtime<DType = DType>> {
     /// Indices of detected extrema.
     pub indices: Vec<usize>,
     /// Values at extrema locations.
@@ -29,7 +30,7 @@ pub struct ExtremaResult<R: Runtime> {
 ///
 /// All backends implementing extrema detection MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait ExtremaAlgorithms<R: Runtime> {
+pub trait ExtremaAlgorithms<R: Runtime<DType = DType>> {
     /// Find local minima in a 1D signal.
     ///
     /// A point is a local minimum if it's smaller than all points within

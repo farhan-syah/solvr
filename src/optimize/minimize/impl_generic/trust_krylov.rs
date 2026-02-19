@@ -3,6 +3,7 @@
 //! Uses Lanczos iteration to build a tridiagonal approximation T of the Hessian H,
 //! then solves the trust region subproblem in the reduced Krylov space.
 //! The solution is mapped back to the full space using the Lanczos vectors.
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -24,7 +25,7 @@ struct KrylovSolver;
 
 impl<R, C, F> SubproblemSolver<R, C, F> for KrylovSolver
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -49,7 +50,7 @@ pub fn trust_krylov_impl<R, C, F>(
     options: &TrustRegionOptions,
 ) -> OptimizeResult<TrustRegionResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -70,7 +71,7 @@ fn gltr_subproblem<R, C, F>(
     trust_radius: f64,
 ) -> OptimizeResult<SubproblemResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,

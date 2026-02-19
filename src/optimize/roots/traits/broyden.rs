@@ -1,4 +1,5 @@
 //! Broyden's method trait for systems of nonlinear equations.
+use crate::DType;
 
 use crate::optimize::roots::{RootOptions, RootTensorResult};
 use numr::error::Result;
@@ -8,7 +9,7 @@ use numr::tensor::Tensor;
 /// Broyden's method (rank-1 update) for systems of nonlinear equations.
 ///
 /// A quasi-Newton method that approximates the Jacobian using rank-1 updates.
-pub trait Broyden1Algorithms<R: Runtime> {
+pub trait Broyden1Algorithms<R: Runtime<DType = DType>> {
     /// Solve F(x) = 0 using Broyden's method.
     ///
     /// # Arguments

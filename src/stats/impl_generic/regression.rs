@@ -66,6 +66,7 @@
 //! 4. **Normality**: Residuals are normally distributed (for valid p-values)
 //!
 //! Violations may require robust regression methods (not implemented here).
+use crate::DType;
 
 use crate::stats::helpers::extract_scalar;
 use crate::stats::{ContinuousDistribution, LinregressResult, StudentT, validate_stats_dtype};
@@ -77,7 +78,7 @@ use numr::tensor::Tensor;
 /// Generic implementation of linear regression.
 pub fn linregress_impl<R, C>(client: &C, x: &Tensor<R>, y: &Tensor<R>) -> Result<LinregressResult>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;

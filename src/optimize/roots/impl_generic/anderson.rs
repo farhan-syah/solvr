@@ -11,6 +11,7 @@
 //! 2. Solve min ||F @ theta - f_k||^2 via least squares
 //! 3. x_{k+1} = (1 - alpha) * sum(theta_i * x_i) + alpha * sum(theta_i * g(x_i))
 //!    where coefficients sum to 1
+use crate::DType;
 
 use std::collections::VecDeque;
 
@@ -34,7 +35,7 @@ pub fn anderson_impl<R, C, G>(
     options: &AndersonOptions,
 ) -> OptimizeResult<TensorRootResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     G: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {

@@ -3,6 +3,7 @@
 //! Provides quaternion-based rotations with conversions to/from rotation matrices
 //! and Euler angles. Quaternions are used internally for numerical stability and
 //! efficient composition.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -30,7 +31,7 @@ pub enum EulerOrder {
 ///
 /// Quaternions are stored as `[w, x, y, z]` where w is the scalar part.
 #[derive(Debug, Clone)]
-pub struct Rotation<R: Runtime> {
+pub struct Rotation<R: Runtime<DType = DType>> {
     /// Unit quaternions `[n, 4]` where each row is `[w, x, y, z]`.
     /// For a single rotation, shape is `[4]`.
     /// For batch rotations, shape is `[n, 4]`.
@@ -43,7 +44,7 @@ pub struct Rotation<R: Runtime> {
 /// Algorithmic contract for rotation operations.
 ///
 /// All backends implementing rotation algorithms MUST implement this trait.
-pub trait RotationAlgorithms<R: Runtime> {
+pub trait RotationAlgorithms<R: Runtime<DType = DType>> {
     /// Create a rotation from a quaternion `[w, x, y, z]`.
     ///
     /// # Arguments

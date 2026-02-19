@@ -30,7 +30,7 @@ pub fn balltree_build_impl<R, C>(
     options: BallTreeOptions,
 ) -> Result<BallTree<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -151,7 +151,7 @@ fn build_ball_node_tensor<R, C>(
     point_indices: &mut Vec<i64>,
 ) -> Result<i64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -276,7 +276,7 @@ pub fn balltree_query_impl<R, C>(
     k: usize,
 ) -> Result<KNNResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + DistanceOps<R> + SortingOps<R> + RuntimeClient<R>,
 {
     validate_points_dtype(query.dtype(), "balltree_query")?;
@@ -307,7 +307,7 @@ pub fn balltree_query_radius_impl<R, C>(
     radius: f64,
 ) -> Result<RadiusResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + DistanceOps<R>

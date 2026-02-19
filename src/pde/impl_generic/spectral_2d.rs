@@ -2,6 +2,7 @@
 //!
 //! Uses tensor product of 1D Chebyshev differentiation matrices:
 //! D_xx = D^2 kron I, D_yy = I kron D^2.
+use crate::DType;
 
 use numr::ops::{LinalgOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -21,7 +22,7 @@ pub fn spectral_2d_impl<R, C>(
     boundary: &[BoundarySpec<R>],
 ) -> PdeResult<SpectralResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + RuntimeClient<R>,
 {
     if nx < 2 || ny < 2 {
@@ -116,7 +117,9 @@ where
     })
 }
 
-fn extract_spectral_2d_bc_value<R: Runtime>(boundary: &[BoundarySpec<R>]) -> PdeResult<f64> {
+fn extract_spectral_2d_bc_value<R: Runtime<DType = DType>>(
+    boundary: &[BoundarySpec<R>],
+) -> PdeResult<f64> {
     if let Some(spec) = boundary.first() {
         match &spec.condition {
             BoundaryCondition::Dirichlet(vals) => {

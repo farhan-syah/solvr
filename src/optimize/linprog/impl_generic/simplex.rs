@@ -24,6 +24,7 @@
 //!
 //! ## Future Improvements:
 //! - Build initial tableau using tensor concatenation instead of scalar loops
+use crate::DType;
 
 use numr::ops::{CompareOps, ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -36,7 +37,7 @@ use super::TensorLinearConstraints;
 
 /// Result from tensor-based linear programming.
 #[derive(Debug, Clone)]
-pub struct TensorLinProgResult<R: Runtime> {
+pub struct TensorLinProgResult<R: Runtime<DType = DType>> {
     /// Optimal solution vector
     pub x: Tensor<R>,
     /// Optimal objective value
@@ -65,7 +66,7 @@ pub fn simplex_impl<R, C>(
     options: &LinProgOptions,
 ) -> OptimizeResult<TensorLinProgResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     let n_orig = c.shape()[0];
@@ -212,7 +213,7 @@ where
 }
 
 /// Extract bounds from constraints, defaulting to [0, inf).
-fn extract_bounds<R: Runtime>(
+fn extract_bounds<R: Runtime<DType = DType>>(
     constraints: &TensorLinearConstraints<R>,
     n: usize,
 ) -> (Vec<f64>, Vec<f64>) {
@@ -230,7 +231,7 @@ fn extract_bounds<R: Runtime>(
 }
 
 /// Extract inequality constraint data as flat vectors.
-fn extract_inequality_data<R: Runtime>(
+fn extract_inequality_data<R: Runtime<DType = DType>>(
     constraints: &TensorLinearConstraints<R>,
 ) -> OptimizeResult<(Vec<f64>, Vec<f64>)> {
     match (&constraints.a_ub, &constraints.b_ub) {
@@ -243,7 +244,7 @@ fn extract_inequality_data<R: Runtime>(
 }
 
 /// Extract equality constraint data as flat vectors.
-fn extract_equality_data<R: Runtime>(
+fn extract_equality_data<R: Runtime<DType = DType>>(
     constraints: &TensorLinearConstraints<R>,
 ) -> OptimizeResult<(Vec<f64>, Vec<f64>)> {
     match (&constraints.a_eq, &constraints.b_eq) {
@@ -386,7 +387,7 @@ fn find_pivot_column_tensor<R, C>(
     tol: f64,
 ) -> OptimizeResult<Option<usize>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     // Extract objective row (last row, excluding RHS column)
@@ -446,7 +447,7 @@ fn find_pivot_row_tensor<R, C>(
     tol: f64,
 ) -> OptimizeResult<Option<usize>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + CompareOps<R> + RuntimeClient<R>,
 {
     // Extract pivot column (constraint rows only) as 1D tensor
@@ -557,7 +558,7 @@ fn pivot_tensor<R, C>(
     _n_cols: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Extract pivot element
@@ -672,7 +673,7 @@ where
 }
 
 /// Check if solution is feasible (no artificial variables in basis with nonzero value).
-fn check_feasibility<R: Runtime>(
+fn check_feasibility<R: Runtime<DType = DType>>(
     tableau: &Tensor<R>,
     basis: &[usize],
     n_orig: usize,
@@ -709,7 +710,7 @@ fn make_result<R, C>(
     message: &str,
 ) -> OptimizeResult<TensorLinProgResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let data: Vec<f64> = tableau.to_vec();
@@ -770,7 +771,7 @@ fn solve_unconstrained<R, C>(
     n_orig: usize,
 ) -> OptimizeResult<TensorLinProgResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let mut x = vec![0.0; n_orig];

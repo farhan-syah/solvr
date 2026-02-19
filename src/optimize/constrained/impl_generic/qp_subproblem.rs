@@ -15,7 +15,7 @@ use numr::tensor::Tensor;
 use crate::optimize::error::{OptimizeError, OptimizeResult};
 
 /// Result of QP subproblem.
-pub struct QpSubproblemResult<R: Runtime> {
+pub struct QpSubproblemResult<R: Runtime<DType = DType>> {
     /// Search direction.
     pub d: Tensor<R>,
     /// Lagrange multipliers for equality constraints.
@@ -44,7 +44,7 @@ pub fn qp_subproblem_impl<R, C>(
     c_ineq: Option<&Tensor<R>>,
 ) -> OptimizeResult<QpSubproblemResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let n = g.shape()[0];
@@ -285,7 +285,7 @@ fn solve_equality_qp<R, C>(
     m: usize,
 ) -> OptimizeResult<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     let size = n + m;
@@ -386,7 +386,7 @@ fn build_active_constraints<R, C>(
     _n: usize,
 ) -> OptimizeResult<(Option<Tensor<R>>, Option<Tensor<R>>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let m_eq = a_eq.map_or(0, |a| a.shape()[0]);

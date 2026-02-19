@@ -4,6 +4,7 @@
 //! - Sobel/Prewitt: derivative kernel along target axis, smoothing kernel along others
 //! - Laplace: sum of second-difference kernels along each axis
 //! - LoG: Gaussian smooth then Laplace
+use crate::DType;
 
 use crate::signal::impl_generic::boundary::pad_axis_impl;
 use crate::signal::impl_generic::kernels::{edge_kernel_1d, laplace_kernel_1d};
@@ -26,7 +27,7 @@ fn separable_edge_filter_impl<R, C>(
     kind: &str,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R>
         + ScalarOps<R>
         + ShapeOps<R>
@@ -78,7 +79,7 @@ fn convolve_along_axis_simple<R, C>(
     axis: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R> + ScalarOps<R> + ShapeOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let shape = input.shape().to_vec();
@@ -135,7 +136,7 @@ where
 /// Generic Sobel filter implementation.
 pub fn sobel_impl<R, C>(client: &C, input: &Tensor<R>, axis: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R>
         + ScalarOps<R>
         + ShapeOps<R>
@@ -151,7 +152,7 @@ where
 /// Generic Prewitt filter implementation.
 pub fn prewitt_impl<R, C>(client: &C, input: &Tensor<R>, axis: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R>
         + ScalarOps<R>
         + ShapeOps<R>
@@ -169,7 +170,7 @@ where
 /// Computes sum of second-difference [1, -2, 1] convolutions along each axis.
 pub fn laplace_impl<R, C>(client: &C, input: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R> + ScalarOps<R> + ShapeOps<R> + TensorOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     validate_signal_dtype(input.dtype(), "laplace")?;
@@ -203,7 +204,7 @@ where
 /// Applies Gaussian smoothing then Laplacian.
 pub fn gaussian_laplace_impl<R, C>(client: &C, input: &Tensor<R>, sigma: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R>
         + ScalarOps<R>
         + ShapeOps<R>
@@ -238,7 +239,7 @@ pub fn gaussian_gradient_magnitude_impl<R, C>(
     sigma: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ConvOps<R>
         + ScalarOps<R>
         + ShapeOps<R>

@@ -1,6 +1,7 @@
 //! Generic spherical Voronoi diagram implementation.
 //!
 //! Algorithm: 3D convex hull → dual → circumcenters projected to sphere.
+use crate::DType;
 
 use crate::spatial::impl_generic::convex_hull::convex_hull_impl;
 use crate::spatial::traits::spherical_voronoi::SphericalVoronoi;
@@ -21,7 +22,7 @@ pub fn spherical_voronoi_impl<R, C>(
     center: Option<&Tensor<R>>,
 ) -> Result<SphericalVoronoi<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + ReduceOps<R>
@@ -143,7 +144,7 @@ pub fn spherical_voronoi_sort_regions_impl<R, C>(
     sv: &SphericalVoronoi<R>,
 ) -> Result<SphericalVoronoi<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let n = sv.points.shape()[0];
@@ -247,7 +248,7 @@ pub fn spherical_voronoi_region_areas_impl<R, C>(
     sv: &SphericalVoronoi<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let n = sv.points.shape()[0];

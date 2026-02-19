@@ -12,6 +12,7 @@
 //! 4. Use dogleg combination within trust region
 //! 5. Update trust region based on actual vs predicted reduction
 //! 6. Apply Broyden rank-1 update to Jacobian (avoid full FD recomputation)
+use crate::DType;
 
 use numr::algorithm::linalg::LinearAlgebraAlgorithms;
 use numr::error::Result;
@@ -33,7 +34,7 @@ pub fn powell_hybrid_impl<R, C, F>(
     options: &RootOptions,
 ) -> OptimizeResult<TensorRootResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {

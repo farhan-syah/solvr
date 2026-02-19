@@ -2,6 +2,7 @@
 //!
 //! Provides algorithms for N-dimensional filtering of arrays (Gaussian, uniform,
 //! minimum, maximum, percentile filters with configurable boundary handling).
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -29,7 +30,7 @@ pub enum BoundaryMode {
 ///
 /// All backends implementing N-D filtering MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait NdFilterAlgorithms<R: Runtime> {
+pub trait NdFilterAlgorithms<R: Runtime<DType = DType>> {
     /// Apply a Gaussian filter to an N-dimensional array.
     ///
     /// Implements separable Gaussian filtering: applies 1D Gaussian convolution

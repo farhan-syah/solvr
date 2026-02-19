@@ -1,4 +1,5 @@
 //! SLSQP (Sequential Least Squares Programming) algorithm trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -9,7 +10,7 @@ use crate::optimize::error::OptimizeResult;
 use super::types::{Bounds, ConstrainedOptions, ConstrainedResult, Constraint};
 
 /// Trait for SLSQP constrained optimization.
-pub trait SlsqpAlgorithms<R: Runtime> {
+pub trait SlsqpAlgorithms<R: Runtime<DType = DType>> {
     /// Sequential Least Squares Programming (SLSQP).
     ///
     /// Minimizes a scalar objective function subject to equality and inequality

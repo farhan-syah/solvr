@@ -6,6 +6,7 @@
 //! 3. Updates trust region radius based on the ratio
 //!
 //! Different subproblem solvers (NCG, exact, Krylov) plug into this framework.
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -20,7 +21,7 @@ use super::helpers::{gradient_from_fn, hvp_from_fn};
 use super::utils::{tensor_dot, tensor_norm};
 
 /// Result from a trust region subproblem solver.
-pub struct SubproblemResult<R: Runtime> {
+pub struct SubproblemResult<R: Runtime<DType = DType>> {
     /// The step p to take
     pub step: Tensor<R>,
     /// Whether the step hits the trust region boundary
@@ -30,7 +31,7 @@ pub struct SubproblemResult<R: Runtime> {
 }
 
 /// Trait for trust region subproblem solvers.
-pub trait SubproblemSolver<R: Runtime, C, F> {
+pub trait SubproblemSolver<R: Runtime<DType = DType>, C, F> {
     /// Solve the trust region subproblem.
     ///
     /// Find p that approximately minimizes g^T p + 0.5 p^T H p subject to ||p|| <= delta.
@@ -63,7 +64,7 @@ pub fn trust_region_loop<R, C, F, S>(
     solver: &S,
 ) -> OptimizeResult<TrustRegionResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -220,7 +221,7 @@ pub fn compute_predicted_reduction<R, C>(
     h_step: &Tensor<R>,
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // g^T p
@@ -254,7 +255,7 @@ pub fn compute_hvp_for_subproblem<R, C, F>(
     v: &Tensor<R>,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,

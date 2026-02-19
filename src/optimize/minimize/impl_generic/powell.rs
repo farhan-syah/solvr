@@ -22,7 +22,7 @@ pub fn powell_impl<R, C, F>(
     options: &MinimizeOptions,
 ) -> OptimizeResult<TensorMinimizeResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<f64>,
 {
@@ -113,7 +113,7 @@ where
 /// Create an n x n identity matrix using tensor ops.
 fn create_identity_matrix<R, C>(client: &C, n: usize) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     client
@@ -126,7 +126,7 @@ where
 /// Extract row i from a 2D tensor as a 1D tensor using narrow().
 fn extract_row<R, C>(_client: &C, matrix: &Tensor<R>, row: usize) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let n = matrix.shape()[1];
@@ -154,7 +154,7 @@ fn update_direction_set<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     // Reshape new_direction to [1, n] for concatenation

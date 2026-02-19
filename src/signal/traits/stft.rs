@@ -1,4 +1,5 @@
 //! Short-Time Fourier Transform trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -8,7 +9,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing STFT algorithms MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait StftAlgorithms<R: Runtime> {
+pub trait StftAlgorithms<R: Runtime<DType = DType>> {
     /// Short-Time Fourier Transform.
     ///
     /// # Arguments

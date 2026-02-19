@@ -1,4 +1,5 @@
 //! Generic information theory implementations.
+use crate::DType;
 
 use crate::stats::helpers::extract_scalar;
 use crate::stats::validate_stats_dtype;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 /// Generic implementation of Shannon entropy.
 pub fn entropy_impl<R, C>(client: &C, pk: &Tensor<R>, base: Option<f64>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(pk.dtype())?;
@@ -54,7 +55,7 @@ where
 /// `max(x[i+k] - x[i], x[i] - x[i-k])`, avoiding O(n²) pairwise distances.
 pub fn differential_entropy_impl<R, C>(client: &C, x: &Tensor<R>, k: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -132,7 +133,7 @@ pub fn kl_divergence_impl<R, C>(
     base: Option<f64>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(pk.dtype())?;
@@ -187,7 +188,7 @@ pub fn mutual_information_impl<R, C>(
     base: Option<f64>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     validate_stats_dtype(x.dtype())?;
@@ -301,4 +302,105 @@ where
     mi = mi.max(0.0);
 
     Ok(Tensor::<R>::full_scalar(&[], dtype, mi, device))
+}
+
+/// Generic implementation of cross-entropy.
+///
+/// H(p, q) = -Σ p(x) log(q(x))
+pub fn cross_entropy_impl<R, C>(
+    client: &C,
+    pk: &Tensor<R>,
+    qk: &Tensor<R>,
+    base: Option<f64>,
+) -> Result<Tensor<R>>
+where
+    R: Runtime<DType = DType>,
+    C: TensorOps<R> + RuntimeClient<R>,
+{
+    validate_stats_dtype(pk.dtype())?;
+    validate_stats_dtype(qk.dtype())?;
+
+    if pk.numel() != qk.numel() {
+        return Err(Error::InvalidArgument {
+            arg: "pk/qk",
+            reason: "distributions must have equal length".to_string(),
+        });
+    }
+
+    let pk_contig = pk.contiguous();
+    let qk_contig = qk.contiguous();
+
+    // H(p, q) = -Σ p * log(q)
+    let epsilon = Tensor::<R>::full_scalar(qk_contig.shape(), qk.dtype(), 1e-300, client.device());
+    let qk_safe = client.maximum(&qk_contig, &epsilon)?;
+    let log_qk = client.log(&qk_safe)?;
+
+    let terms = client.mul(&pk_contig, &log_qk)?;
+
+    let all_dims: Vec<usize> = (0..terms.ndim()).collect();
+    let sum = extract_scalar(&client.sum(&terms, &all_dims, false)?)?;
+    let mut h = -sum;
+
+    if let Some(b) = base {
+        h /= b.ln();
+    }
+
+    Ok(Tensor::<R>::full_scalar(
+        &[],
+        pk.dtype(),
+        h,
+        client.device(),
+    ))
+}
+
+/// Generic implementation of negative log-likelihood loss.
+///
+/// NLL = -mean(log_probs[i, targets[i]]) for i in 0..N
+pub fn nll_loss_impl<R, C>(
+    client: &C,
+    log_probs: &Tensor<R>,
+    targets: &Tensor<R>,
+) -> Result<Tensor<R>>
+where
+    R: Runtime<DType = DType>,
+    C: TensorOps<R> + RuntimeClient<R>,
+{
+    validate_stats_dtype(log_probs.dtype())?;
+
+    let shape = log_probs.shape();
+    if shape.len() != 2 {
+        return Err(Error::InvalidArgument {
+            arg: "log_probs",
+            reason: format!("expected 2-D tensor [N, C], got {}-D", shape.len()),
+        });
+    }
+    if targets.ndim() != 1 || targets.shape()[0] != shape[0] {
+        return Err(Error::InvalidArgument {
+            arg: "targets",
+            reason: format!(
+                "expected 1-D tensor of length {}, got shape {:?}",
+                shape[0],
+                targets.shape()
+            ),
+        });
+    }
+
+    let n = shape[0];
+    let dtype = log_probs.dtype();
+    let device = client.device();
+
+    // Cast targets to I64 for gather
+    let targets_i64 = client.cast(targets, numr::dtype::DType::I64)?;
+    let targets_2d = targets_i64.reshape(&[n, 1])?;
+
+    // Gather log_probs at target indices: gather(log_probs, dim=1, index=targets)
+    let selected = client.gather(log_probs, 1, &targets_2d)?; // [N, 1]
+
+    // Negate and mean
+    let neg_selected = client.neg(&selected)?;
+    let all_dims: Vec<usize> = (0..neg_selected.ndim()).collect();
+    let sum = extract_scalar(&client.sum(&neg_selected, &all_dims, false)?)?;
+    let loss = sum / n as f64;
+
+    Ok(Tensor::<R>::full_scalar(&[], dtype, loss, device))
 }

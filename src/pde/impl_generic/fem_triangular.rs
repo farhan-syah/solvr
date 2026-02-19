@@ -2,6 +2,7 @@
 //!
 //! Uses linear triangular basis functions with sparse global assembly.
 //! Element stiffness matrices are computed from vertex coordinates.
+use crate::DType;
 
 use numr::algorithm::iterative::IterativeSolvers;
 use numr::error::Result;
@@ -33,7 +34,7 @@ pub fn fem_triangular_impl<R, C>(
     options: &FdmOptions,
 ) -> PdeResult<FemResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + IterativeSolvers<R> + RuntimeClient<R>,
 {
     let node_shape = nodes.shape();
@@ -188,7 +189,7 @@ where
 }
 
 /// Convert COO with duplicate entries to CSR (sum duplicates).
-fn coo_to_csr_with_dup<R: Runtime>(
+fn coo_to_csr_with_dup<R: Runtime<DType = DType>>(
     row_indices: &Tensor<R>,
     col_indices: &Tensor<R>,
     values: &Tensor<R>,

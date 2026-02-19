@@ -1,4 +1,5 @@
 //! Shared boundary condition extraction helpers.
+use crate::DType;
 
 use numr::runtime::Runtime;
 
@@ -9,7 +10,7 @@ use crate::pde::types::{BoundaryCondition, BoundarySide, BoundarySpec};
 ///
 /// Returns `(left, right)` values. Only Dirichlet BCs are supported;
 /// Neumann and Periodic produce an error with the given `solver_name` context.
-pub fn extract_dirichlet_1d_bcs<R: Runtime>(
+pub fn extract_dirichlet_1d_bcs<R: Runtime<DType = DType>>(
     boundary: &[BoundarySpec<R>],
     solver_name: &str,
 ) -> PdeResult<(f64, f64)> {
@@ -45,7 +46,7 @@ pub fn extract_dirichlet_1d_bcs<R: Runtime>(
 /// Extract a single Dirichlet scalar from the first boundary spec.
 ///
 /// Used by solvers that apply a uniform value to all boundary nodes.
-pub fn extract_dirichlet_scalar<R: Runtime>(
+pub fn extract_dirichlet_scalar<R: Runtime<DType = DType>>(
     boundary: &[BoundarySpec<R>],
     solver_name: &str,
 ) -> PdeResult<f64> {
@@ -67,7 +68,7 @@ pub fn extract_dirichlet_scalar<R: Runtime>(
 /// Extract 2D boundary values as a flat array `[nx*ny]` from BoundarySpec.
 ///
 /// Handles per-side Dirichlet values for 2D grids with row-major layout.
-pub fn extract_boundary_values_2d<R: Runtime>(
+pub fn extract_boundary_values_2d<R: Runtime<DType = DType>>(
     boundary: &[BoundarySpec<R>],
     nx: usize,
     ny: usize,

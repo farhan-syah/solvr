@@ -1,4 +1,5 @@
 //! Shared helper functions for root-finding algorithms.
+use crate::DType;
 
 use numr::autograd::DualTensor;
 use numr::error::Result as NumrResult;
@@ -19,7 +20,7 @@ use crate::optimize::error::{OptimizeError, OptimizeResult};
 /// numr errors to OptimizeError for use in optimization algorithms.
 pub fn jacobian_forward_impl<R, C, F>(client: &C, f: F, x: &Tensor<R>) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &C) -> NumrResult<DualTensor<R>>,
 {
@@ -36,7 +37,7 @@ pub fn jvp_impl<R, C, F>(
     v: &Tensor<R>,
 ) -> OptimizeResult<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: FnOnce(&[DualTensor<R>], &C) -> NumrResult<DualTensor<R>>,
 {

@@ -16,6 +16,7 @@
 //! - BFGS: O(n²) for inverse Hessian approximation
 //! - L-BFGS: O(mn) for m correction pairs
 //! - Newton-CG: O(n) per iteration (no Hessian storage)
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result as NumrResult;
@@ -61,7 +62,7 @@ impl Default for NewtonCGOptions {
 
 /// Result type for Newton-CG optimization (extends base result).
 #[derive(Debug, Clone)]
-pub struct NewtonCGResult<R: Runtime> {
+pub struct NewtonCGResult<R: Runtime<DType = DType>> {
     /// Solution vector
     pub x: Tensor<R>,
     /// Function value at solution
@@ -80,7 +81,7 @@ pub struct NewtonCGResult<R: Runtime> {
     pub grad_norm: f64,
 }
 
-impl<R: Runtime> From<NewtonCGResult<R>> for TensorMinimizeResult<R> {
+impl<R: Runtime<DType = DType>> From<NewtonCGResult<R>> for TensorMinimizeResult<R> {
     fn from(result: NewtonCGResult<R>) -> Self {
         TensorMinimizeResult {
             x: result.x,
@@ -96,7 +97,7 @@ impl<R: Runtime> From<NewtonCGResult<R>> for TensorMinimizeResult<R> {
 ///
 /// Newton-CG uses autograd for exact gradients and Hessian-vector products,
 /// enabling quadratic convergence without O(n²) memory.
-pub trait NewtonCGAlgorithms<R: Runtime> {
+pub trait NewtonCGAlgorithms<R: Runtime<DType = DType>> {
     /// Newton-CG (Truncated Newton) optimization with autograd.
     ///
     /// Minimizes a scalar function f: ℝⁿ → ℝ using Newton's method with

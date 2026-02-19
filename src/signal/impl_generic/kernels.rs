@@ -46,7 +46,7 @@ pub fn gaussian_kernel_1d<R, C>(
     dtype: DType,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + UnaryOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     if sigma <= 0.0 {
@@ -154,7 +154,7 @@ where
 /// 1D uniform kernel tensor with all elements equal to 1/size
 pub fn uniform_kernel_1d<R, C>(client: &C, size: usize, dtype: DType) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     if size == 0 {
@@ -203,7 +203,7 @@ pub fn edge_kernel_1d<R, C>(
     dtype: DType,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + UnaryOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     if derivative {
@@ -250,7 +250,7 @@ where
 /// 1D Laplacian kernel [1, -2, 1]
 pub fn laplace_kernel_1d<R, C>(client: &C, dtype: DType) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + UnaryOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     // Create [1, -2, 1] kernel

@@ -1,4 +1,5 @@
 //! Spectrogram trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -8,7 +9,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing spectrogram algorithms MUST implement this trait using
 /// the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait SpectrogramAlgorithms<R: Runtime> {
+pub trait SpectrogramAlgorithms<R: Runtime<DType = DType>> {
     /// Compute power spectrogram from signal.
     ///
     /// A spectrogram is the magnitude of the STFT raised to a power.

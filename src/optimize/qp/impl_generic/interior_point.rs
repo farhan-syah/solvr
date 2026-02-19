@@ -29,7 +29,7 @@ pub fn interior_point_qp_impl<R, C>(
     options: &QpOptions,
 ) -> OptimizeResult<QpResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + LinearAlgebraAlgorithms<R>
@@ -369,7 +369,7 @@ fn solve_equality_only_qp<R, C>(
     _options: &QpOptions,
 ) -> OptimizeResult<QpResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     if m_eq == 0 {
@@ -497,7 +497,7 @@ fn compute_objective<R, C>(
     n: usize,
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let x_col = x
@@ -530,7 +530,7 @@ fn compute_step_length<R>(
     dz: &Tensor<R>,
 ) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
 {
     // This function computes the maximum step length to maintain s > 0 and z > 0.
     // We need: alpha <= -tau * s[i] / ds[i] when ds[i] < 0

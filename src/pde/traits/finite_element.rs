@@ -1,4 +1,5 @@
 //! Finite element method traits for PDE solving.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -7,7 +8,7 @@ use crate::pde::error::PdeResult;
 use crate::pde::types::{BoundarySpec, FdmOptions, FemResult};
 
 /// Finite element method algorithms for PDE solving.
-pub trait FiniteElementAlgorithms<R: Runtime> {
+pub trait FiniteElementAlgorithms<R: Runtime<DType = DType>> {
     /// 1D FEM: -d/dx(du/dx) + q(x)u = f(x) on interval defined by x_nodes.
     ///
     /// Uses linear hat basis functions, assembles tridiagonal stiffness matrix,

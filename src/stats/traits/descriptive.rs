@@ -1,4 +1,5 @@
 //! Descriptive statistics algorithms.
+use crate::DType;
 
 use super::TensorDescriptiveStats;
 use numr::error::Result;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 ///
 /// Provides methods for computing comprehensive statistical summaries
 /// of tensor data, including central tendency, dispersion, and shape measures.
-pub trait DescriptiveStatisticsAlgorithms<R: Runtime>: TensorOps<R> {
+pub trait DescriptiveStatisticsAlgorithms<R: Runtime<DType = DType>>: TensorOps<R> {
     /// Compute comprehensive descriptive statistics for a 1D tensor.
     ///
     /// Returns min, max, mean, variance, std, skewness, and kurtosis as tensors.

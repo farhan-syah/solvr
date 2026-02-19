@@ -3,6 +3,7 @@
 //! Procrustes analysis finds the optimal transformation (rotation, translation,
 //! and optionally scaling) that best aligns two sets of corresponding points.
 //! Uses the Kabsch algorithm (SVD-based) for finding the optimal rotation.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -12,7 +13,7 @@ use super::rotation::Rotation;
 
 /// Result of Procrustes analysis.
 #[derive(Debug, Clone)]
-pub struct ProcrustesResult<R: Runtime> {
+pub struct ProcrustesResult<R: Runtime<DType = DType>> {
     /// Optimal rotation to align source to target.
     pub rotation: Rotation<R>,
 
@@ -35,7 +36,7 @@ pub struct ProcrustesResult<R: Runtime> {
 /// Algorithmic contract for Procrustes analysis.
 ///
 /// All backends implementing Procrustes algorithms MUST implement this trait.
-pub trait ProcrustesAlgorithms<R: Runtime> {
+pub trait ProcrustesAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the optimal rotation, translation, and optional scaling
     /// to align source points to target points.
     ///

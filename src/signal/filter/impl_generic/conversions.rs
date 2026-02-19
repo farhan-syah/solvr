@@ -5,6 +5,7 @@
 //! Note: SOS conversions (tf2sos, zpk2sos, sos2tf, sos2zpk) are CPU-only because they
 //! involve inherently sequential algorithms (pole/zero pairing, quadratic root finding)
 //! with tiny data sizes. See cpu/conversions.rs for implementations.
+use crate::DType;
 
 use crate::signal::filter::types::{TransferFunction, ZpkFilter};
 use numr::algorithm::polynomial::PolynomialAlgorithms;
@@ -20,7 +21,7 @@ use numr::tensor::Tensor;
 /// which is acceptable at the API boundary.
 pub fn tf2zpk_impl<R, C>(client: &C, tf: &TransferFunction<R>) -> Result<ZpkFilter<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: PolynomialAlgorithms<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let b = &tf.b;
@@ -89,7 +90,7 @@ where
 /// All operations are tensor-based.
 pub fn zpk2tf_impl<R, C>(client: &C, zpk: &ZpkFilter<R>) -> Result<TransferFunction<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: PolynomialAlgorithms<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = zpk.zeros_real.device();

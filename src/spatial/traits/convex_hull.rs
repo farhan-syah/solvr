@@ -2,6 +2,7 @@
 //!
 //! Computes the convex hull of a set of points. Uses Graham scan for 2D
 //! and Quickhull for 3D and higher dimensions.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -9,7 +10,7 @@ use numr::tensor::Tensor;
 
 /// Convex hull result.
 #[derive(Debug, Clone)]
-pub struct ConvexHull<R: Runtime> {
+pub struct ConvexHull<R: Runtime<DType = DType>> {
     /// Original points `[n, d]`.
     pub points: Tensor<R>,
 
@@ -46,7 +47,7 @@ pub struct ConvexHull<R: Runtime> {
 /// Algorithmic contract for convex hull operations.
 ///
 /// All backends implementing convex hull algorithms MUST implement this trait.
-pub trait ConvexHullAlgorithms<R: Runtime> {
+pub trait ConvexHullAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the convex hull of a point set.
     ///
     /// # Arguments

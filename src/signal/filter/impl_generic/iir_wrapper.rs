@@ -4,6 +4,7 @@
 
 // Allow many arguments for filter design functions that match scipy's signature
 #![allow(clippy::too_many_arguments)]
+use crate::DType;
 
 use super::prototypes::{butter_impl, cheby1_impl, cheby2_impl, design_iir_filter, ellip_impl};
 use crate::signal::filter::traits::conversions::FilterConversions;
@@ -32,7 +33,7 @@ pub fn iirfilter_impl<R, C>(
     device: &R::Device,
 ) -> Result<IirDesignResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FilterConversions<R>
         + PolynomialAlgorithms<R>
         + ScalarOps<R>

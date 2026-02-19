@@ -1,4 +1,5 @@
 //! Mesh processing trait definitions.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -6,7 +7,7 @@ use numr::tensor::Tensor;
 
 /// A triangle mesh.
 #[derive(Debug, Clone)]
-pub struct Mesh<R: Runtime> {
+pub struct Mesh<R: Runtime<DType = DType>> {
     /// Vertex positions, shape [n_vertices, n_dims].
     pub vertices: Tensor<R>,
     /// Triangle indices, shape [n_triangles, 3] (I64 dtype).
@@ -40,7 +41,7 @@ pub enum SmoothingMethod {
 }
 
 /// Mesh processing algorithms.
-pub trait MeshAlgorithms<R: Runtime> {
+pub trait MeshAlgorithms<R: Runtime<DType = DType>> {
     /// Triangulate a simple polygon (ear clipping algorithm).
     ///
     /// # Arguments

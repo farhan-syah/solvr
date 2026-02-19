@@ -2,6 +2,7 @@
 //!
 //! This trait wraps numr's `DistanceOps` to provide a consistent interface
 //! within the solvr spatial module.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -14,7 +15,7 @@ pub use numr::ops::DistanceMetric;
 ///
 /// All backends implementing distance algorithms MUST implement this trait.
 /// The trait delegates to numr's `DistanceOps` for the actual computation.
-pub trait DistanceAlgorithms<R: Runtime> {
+pub trait DistanceAlgorithms<R: Runtime<DType = DType>> {
     /// Compute pairwise distances between two point sets.
     ///
     /// Given two sets of points X and Y, computes the distance between

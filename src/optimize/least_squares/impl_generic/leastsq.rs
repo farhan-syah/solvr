@@ -27,7 +27,7 @@ pub fn leastsq_impl<R, C, F>(
     options: &LeastSquaresOptions,
 ) -> OptimizeResult<TensorLeastSquaresResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -195,7 +195,7 @@ where
 /// Wrappers for shared utility functions with OptimizeError mapping.
 fn compute_cost<R, C>(client: &C, fx: &Tensor<R>) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     utils_compute_cost(client, fx).map_err(|e| OptimizeError::NumericalError {
@@ -205,7 +205,7 @@ where
 
 fn tensor_norm<R, C>(client: &C, v: &Tensor<R>) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     utils_tensor_norm(client, v).map_err(|e| OptimizeError::NumericalError {
@@ -223,7 +223,7 @@ fn finite_difference_jacobian<R, C, F>(
     eps: f64,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -243,7 +243,7 @@ fn add_scaled_diagonal<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     // Extract diagonal using numr's diag

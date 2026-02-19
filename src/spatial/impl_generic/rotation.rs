@@ -13,7 +13,7 @@ use numr::tensor::Tensor;
 /// Create rotation from quaternion.
 pub fn rotation_from_quat_impl<R, C>(client: &C, quaternion: &Tensor<R>) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     let shape = quaternion.shape();
@@ -45,7 +45,7 @@ where
 /// 2x2 matrices are treated as rotations in the XY plane (around Z axis).
 pub fn rotation_from_matrix_impl<R, C>(_client: &C, matrix: &Tensor<R>) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     let shape = matrix.shape();
@@ -155,7 +155,7 @@ pub fn rotation_from_euler_impl<R, C>(
     order: EulerOrder,
 ) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     let shape = angles.shape();
@@ -248,7 +248,7 @@ pub fn rotation_from_axis_angle_impl<R, C>(
     angle: &Tensor<R>,
 ) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     let axis_shape = axis.shape();
@@ -297,7 +297,7 @@ where
 /// Create rotation from rotation vector.
 pub fn rotation_from_rotvec_impl<R, C>(_client: &C, rotvec: &Tensor<R>) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     let shape = rotvec.shape();
@@ -346,7 +346,7 @@ where
 /// Convert rotation to quaternion.
 pub fn rotation_as_quat_impl<R, C>(_client: &C, rot: &Rotation<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     Ok(rot.quaternions.clone())
@@ -355,7 +355,7 @@ where
 /// Convert rotation to matrix.
 pub fn rotation_as_matrix_impl<R, C>(_client: &C, rot: &Rotation<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let quat_data: Vec<f64> = rot.quaternions.to_vec();
@@ -416,7 +416,7 @@ pub fn rotation_as_euler_impl<R, C>(
     order: EulerOrder,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let quat_data: Vec<f64> = rot.quaternions.to_vec();
@@ -482,7 +482,7 @@ where
 /// Convert rotation to rotation vector.
 pub fn rotation_as_rotvec_impl<R, C>(_client: &C, rot: &Rotation<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let quat_data: Vec<f64> = rot.quaternions.to_vec();
@@ -530,7 +530,7 @@ pub fn rotation_apply_impl<R, C>(
     vectors: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Convert to matrix and apply
@@ -578,7 +578,7 @@ pub fn rotation_compose_impl<R, C>(
     r2: &Rotation<R>,
 ) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let q1_data: Vec<f64> = r1.quaternions.to_vec();
@@ -633,7 +633,7 @@ where
 /// Compute inverse rotation.
 pub fn rotation_inverse_impl<R, C>(_client: &C, rot: &Rotation<R>) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let quat_data: Vec<f64> = rot.quaternions.to_vec();
@@ -673,7 +673,7 @@ pub fn rotation_slerp_impl<R, C>(
     t: f64,
 ) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let q1_data: Vec<f64> = r1.quaternions.to_vec();
@@ -751,7 +751,7 @@ where
 /// Create identity rotation.
 pub fn rotation_identity_impl<R, C>(client: &C, n: Option<usize>) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let device = client.device();
@@ -784,7 +784,7 @@ where
 /// Create random rotation(s).
 pub fn rotation_random_impl<R, C>(client: &C, n: Option<usize>) -> Result<Rotation<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RandomOps<R> + RuntimeClient<R>,
 {
     let count = n.unwrap_or(1);
@@ -802,7 +802,7 @@ where
 /// Compute rotation magnitude (angle).
 pub fn rotation_magnitude_impl<R, C>(_client: &C, rot: &Rotation<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let quat_data: Vec<f64> = rot.quaternions.to_vec();

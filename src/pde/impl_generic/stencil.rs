@@ -2,6 +2,7 @@
 //!
 //! Builds sparse Laplacian matrices from grid specifications.
 //! Stencil assembly is a one-time setup cost at API boundary.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -23,7 +24,7 @@ pub fn assemble_neg_laplacian_2d_dirichlet<R>(
     device: &R::Device,
 ) -> Result<CsrData<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
 {
     let nx = grid.nx;
     let ny = grid.ny;
@@ -124,7 +125,7 @@ where
 /// Used by heat/wave equation solvers where the sign is handled externally.
 pub fn assemble_laplacian_2d<R>(grid: &Grid2D, device: &R::Device) -> Result<CsrData<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
 {
     let nx = grid.nx;
     let ny = grid.ny;
@@ -183,7 +184,7 @@ where
 /// Assemble 3D Laplacian as CSR (7-point stencil).
 pub fn assemble_laplacian_3d<R>(grid: &Grid3D, device: &R::Device) -> Result<CsrData<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
 {
     let nx = grid.nx;
     let ny = grid.ny;
@@ -260,7 +261,7 @@ where
 ///
 /// The stencil assembly produces entries sorted by row (and within each row by column),
 /// so we can build row_ptrs directly without a general sort.
-fn coo_to_csr_sorted<R: Runtime>(
+fn coo_to_csr_sorted<R: Runtime<DType = DType>>(
     row_indices: &Tensor<R>,
     col_indices: &Tensor<R>,
     values: &Tensor<R>,

@@ -28,7 +28,7 @@ struct ExactSolver;
 
 impl<R, C, F> SubproblemSolver<R, C, F> for ExactSolver
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -53,7 +53,7 @@ pub fn trust_exact_impl<R, C, F>(
     options: &TrustRegionOptions,
 ) -> OptimizeResult<TrustRegionResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -75,7 +75,7 @@ fn exact_subproblem<R, C, F>(
     trust_radius: f64,
 ) -> OptimizeResult<SubproblemResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -201,7 +201,7 @@ fn build_full_hessian<R, C, F>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R> + ScalarOps<R>,
     F: Fn(&Var<R>, &C) -> NumrResult<Var<R>>,
@@ -250,7 +250,7 @@ fn try_solve_with_lambda<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinearAlgebraAlgorithms<R> + RuntimeClient<R>,
 {
     // H + lambda * I
@@ -282,7 +282,7 @@ where
 /// Estimate the minimum eigenvalue of the Hessian using Gershgorin circles.
 fn estimate_min_eigenvalue<R, C>(client: &C, hessian: &Tensor<R>) -> OptimizeResult<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Use the diagonal elements and row sums for a Gershgorin-based estimate
@@ -349,7 +349,7 @@ fn hessian_times_vector<R, C>(
     n: usize,
 ) -> OptimizeResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let v_col = v

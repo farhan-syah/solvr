@@ -2,6 +2,7 @@
 
 // Allow non-snake_case for `worN` parameter - follows SciPy's naming convention
 #![allow(non_snake_case)]
+use crate::DType;
 
 use crate::signal::filter::types::SosFilter;
 use crate::signal::traits::frequency_response::{FreqzResult, FreqzSpec};
@@ -21,7 +22,7 @@ pub fn freqz_impl<R, C>(
     device: &R::Device,
 ) -> Result<FreqzResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     // Get frequencies
@@ -107,7 +108,7 @@ pub fn sosfreqz_impl<R, C>(
     device: &R::Device,
 ) -> Result<FreqzResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let n_sections = sos.num_sections();
@@ -211,7 +212,7 @@ pub fn group_delay_impl<R, C>(
     w: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ScalarOps<R> + TensorOps<R> + RuntimeClient<R>,
 {
     let w_data: Vec<f64> = w.to_vec();

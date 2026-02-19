@@ -1,6 +1,7 @@
 //! Wiener filter algorithm traits.
 //!
 //! Provides Wiener filtering for noise reduction in signals and images.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing Wiener filtering MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait WienerAlgorithms<R: Runtime> {
+pub trait WienerAlgorithms<R: Runtime<DType = DType>> {
     /// Apply a 1D Wiener filter for noise reduction.
     ///
     /// The Wiener filter is an optimal linear filter that minimizes the

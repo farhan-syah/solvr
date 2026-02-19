@@ -27,7 +27,7 @@ pub fn istft_impl<R, C>(
     normalized: bool,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + WindowFunctions<R> + TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let dtype = stft_matrix.dtype();
@@ -157,7 +157,7 @@ fn istft_single<R, C>(
     norm: FftNormalization,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();
@@ -235,7 +235,7 @@ fn istft_batched<R, C>(
     norm: FftNormalization,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: FftAlgorithms<R> + TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();

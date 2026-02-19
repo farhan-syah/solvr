@@ -1,6 +1,7 @@
 //! Median filter algorithm traits.
 //!
 //! Provides algorithms for median filtering of signals and images.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -10,7 +11,7 @@ use numr::tensor::Tensor;
 ///
 /// All backends implementing median filtering MUST implement this trait
 /// using the EXACT SAME ALGORITHMS to ensure numerical parity.
-pub trait MedianFilterAlgorithms<R: Runtime> {
+pub trait MedianFilterAlgorithms<R: Runtime<DType = DType>> {
     /// Apply a 1D median filter to a signal.
     ///
     /// For each point, replaces it with the median of the surrounding points
