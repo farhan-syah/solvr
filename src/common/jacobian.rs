@@ -38,6 +38,7 @@
 //! }, &y)?;
 //! # Ok::<(), Box<dyn std::error::Error>>(())
 //! ```
+use crate::DType;
 
 use numr::autograd::{DualTensor, Var, backward, jacobian_forward, jvp, var_mul, var_sum};
 use numr::error::Result;
@@ -82,7 +83,7 @@ use numr::tensor::Tensor;
 /// ```
 pub fn jacobian_autograd<R, C, F>(client: &C, f: F, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -114,7 +115,7 @@ pub fn jvp_autograd<R, C, F>(
     v: &Tensor<R>,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: FnOnce(&[DualTensor<R>], &C) -> Result<DualTensor<R>>,
 {
@@ -173,7 +174,7 @@ pub fn vjp_autograd<R, C, F>(
     v: &Tensor<R>,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &C) -> Result<Var<R>>,
@@ -233,7 +234,7 @@ pub fn vjp_with_params<R, C, F>(
     v: &Tensor<R>,
 ) -> Result<(Tensor<R>, Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &Var<R>, &Var<R>, &C) -> Result<Var<R>>,
