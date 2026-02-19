@@ -1,6 +1,7 @@
 //! Maximum flow via Edmonds-Karp (BFS-based Ford-Fulkerson).
 //!
 //! Implemented sequentially at API boundary.
+use crate::DType;
 
 use std::collections::VecDeque;
 
@@ -23,7 +24,7 @@ pub fn max_flow_impl<R, C>(
     sink: usize,
 ) -> Result<FlowResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     validate_node(source, graph.num_nodes, "max_flow source")?;

@@ -1,4 +1,5 @@
 //! Network flow algorithm traits.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -8,7 +9,7 @@ use super::types::{FlowResult, GraphData, MinCostFlowOptions};
 /// Network flow algorithms.
 ///
 /// Computes maximum flow and minimum cost flow in directed graphs.
-pub trait FlowAlgorithms<R: Runtime> {
+pub trait FlowAlgorithms<R: Runtime<DType = DType>> {
     /// Maximum flow via Edmonds-Karp (BFS-based Ford-Fulkerson).
     ///
     /// Sequential (BFS augmenting paths).

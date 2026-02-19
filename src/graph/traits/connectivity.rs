@@ -1,4 +1,5 @@
 //! Graph connectivity algorithm traits.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -8,7 +9,7 @@ use super::types::{ComponentResult, GraphData};
 /// Graph connectivity algorithms.
 ///
 /// Determines connected components and connectivity properties.
-pub trait ConnectivityAlgorithms<R: Runtime> {
+pub trait ConnectivityAlgorithms<R: Runtime<DType = DType>> {
     /// Find connected components of an undirected graph.
     ///
     /// Uses BFS-based label propagation. Each node gets labeled with its

@@ -1,4 +1,5 @@
 //! Minimum spanning tree algorithm traits.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -9,7 +10,7 @@ use super::types::{GraphData, MSTResult};
 ///
 /// Finds the subset of edges that connects all nodes with minimum total weight.
 /// Only meaningful for undirected graphs.
-pub trait MSTAlgorithms<R: Runtime> {
+pub trait MSTAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the minimum spanning tree using Kruskal's algorithm.
     ///
     /// Sorts edges by weight and greedily adds edges that don't form cycles

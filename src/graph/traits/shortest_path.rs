@@ -1,4 +1,5 @@
 //! Shortest path algorithm traits.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -10,7 +11,7 @@ use super::types::{AllPairsResult, GraphData, PathResult, ShortestPathResult};
 ///
 /// Provides single-source (Dijkstra, Bellman-Ford), all-pairs (Floyd-Warshall, Johnson),
 /// and heuristic (A*) shortest path computation.
-pub trait ShortestPathAlgorithms<R: Runtime> {
+pub trait ShortestPathAlgorithms<R: Runtime<DType = DType>> {
     /// Dijkstra's algorithm for single-source shortest paths.
     ///
     /// Requires non-negative edge weights. Uses priority queue (sequential).

@@ -2,6 +2,7 @@
 //!
 //! GPU-parallel via tensor operations. Builds dense distance matrix, then iterates
 //! using broadcasting and element-wise minimum.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{BinaryOps, CompareOps, ConditionalOps};
@@ -19,7 +20,7 @@ use super::helpers::extract_csr_arrays;
 /// GPU-parallelizable via tensor ops.
 pub fn floyd_warshall_impl<R, C>(client: &C, graph: &GraphData<R>) -> Result<AllPairsResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: BinaryOps<R> + CompareOps<R> + ConditionalOps<R> + RuntimeClient<R>,
 {
     let n = graph.num_nodes;

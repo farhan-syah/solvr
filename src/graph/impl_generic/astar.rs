@@ -2,6 +2,7 @@
 //!
 //! Uses heuristic function to guide search with priority queue.
 //! Implemented sequentially at API boundary.
+use crate::DType;
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -26,7 +27,7 @@ pub fn astar_impl<R, C>(
     heuristic: &Tensor<R>,
 ) -> Result<PathResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     validate_node(source, graph.num_nodes, "astar source")?;

@@ -1,4 +1,5 @@
 //! Shared helper functions for graph algorithms.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::runtime::Runtime;
@@ -13,7 +14,7 @@ pub type CsrArrays = (Vec<i64>, Vec<i64>, Vec<f64>, usize);
 /// Returns (row_ptrs, col_indices, values, num_nodes) as CPU vecs.
 /// This is only used at API boundary for inherently sequential algorithms
 /// (Dijkstra, A*, Tarjan, Kruskal, Ford-Fulkerson).
-pub fn extract_csr_arrays<R: Runtime>(graph: &GraphData<R>) -> Result<CsrArrays> {
+pub fn extract_csr_arrays<R: Runtime<DType = DType>>(graph: &GraphData<R>) -> Result<CsrArrays> {
     let csr = match &graph.adjacency {
         SparseTensor::Csr(csr) => csr,
         _ => {

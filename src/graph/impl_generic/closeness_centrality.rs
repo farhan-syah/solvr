@@ -1,6 +1,7 @@
 //! Closeness centrality: inverse of mean shortest path distance.
 //!
 //! Sequential: runs Dijkstra from each node.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::{Runtime, RuntimeClient};
@@ -17,7 +18,7 @@ use super::helpers::extract_csr_arrays;
 /// Uses Dijkstra from each node.
 pub fn closeness_centrality_impl<R, C>(_client: &C, graph: &GraphData<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let (row_ptrs, col_indices, values, n) = extract_csr_arrays(graph)?;

@@ -1,6 +1,7 @@
 //! PageRank centrality.
 //!
 //! Iterative computation using CSR arrays (sequential).
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::{Runtime, RuntimeClient};
@@ -21,7 +22,7 @@ pub fn pagerank_impl<R, C>(
     options: &PageRankOptions,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let (row_ptrs, col_indices, values, n) = extract_csr_arrays(graph)?;

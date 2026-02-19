@@ -2,6 +2,7 @@
 //!
 //! Uses a binary heap-based priority queue. Requires non-negative edge weights.
 //! Implemented sequentially at API boundary (inherently sequential algorithm).
+use crate::DType;
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -23,7 +24,7 @@ pub fn dijkstra_impl<R, C>(
     source: usize,
 ) -> Result<ShortestPathResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     validate_node(source, graph.num_nodes, "dijkstra source")?;

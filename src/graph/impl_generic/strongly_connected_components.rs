@@ -2,6 +2,7 @@
 //!
 //! For undirected graphs, equivalent to connected_components.
 //! Implemented sequentially at API boundary (DFS-based).
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::{Runtime, RuntimeClient};
@@ -17,7 +18,7 @@ use super::helpers::extract_csr_arrays;
 /// For undirected graphs, equivalent to connected components.
 pub fn tarjan_impl<R, C>(_client: &C, graph: &GraphData<R>) -> Result<ComponentResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     // Extract CSR at API boundary

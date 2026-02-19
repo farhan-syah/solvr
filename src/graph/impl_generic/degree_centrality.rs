@@ -1,6 +1,7 @@
 //! Degree centrality: fraction of nodes each node is connected to.
 //!
 //! GPU-parallel via SpMV with ones vector.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::ops::ScalarOps;
@@ -15,7 +16,7 @@ use crate::graph::traits::types::GraphData;
 /// GPU-parallel via spmv(A, ones).
 pub fn degree_centrality_impl<R, C>(client: &C, graph: &GraphData<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R> + SparseOps<R> + ScalarOps<R>,
 {
     let n = graph.num_nodes;

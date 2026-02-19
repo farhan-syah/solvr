@@ -1,6 +1,7 @@
 //! Minimum cost maximum flow via successive shortest path algorithm.
 //!
 //! Implemented sequentially at API boundary.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::{Runtime, RuntimeClient};
@@ -22,7 +23,7 @@ pub fn min_cost_flow_impl<R, C>(
     options: &MinCostFlowOptions,
 ) -> Result<FlowResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     validate_node(source, graph.num_nodes, "min_cost_flow source")?;

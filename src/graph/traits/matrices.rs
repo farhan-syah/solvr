@@ -1,4 +1,5 @@
 //! Graph matrix construction traits.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -9,7 +10,7 @@ use super::types::GraphData;
 /// Graph matrix construction algorithms.
 ///
 /// Builds standard graph matrices (Laplacian, incidence) from adjacency data.
-pub trait GraphMatrixAlgorithms<R: Runtime> {
+pub trait GraphMatrixAlgorithms<R: Runtime<DType = DType>> {
     /// Compute the graph Laplacian matrix.
     ///
     /// L = D - A, where D is the degree matrix and A is the adjacency matrix.

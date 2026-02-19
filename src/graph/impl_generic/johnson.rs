@@ -2,6 +2,7 @@
 //!
 //! Combines Bellman-Ford reweighting with Dijkstra from each source.
 //! Better than Floyd-Warshall for sparse graphs: O(V^2 log V + VE).
+use crate::DType;
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -20,7 +21,7 @@ use super::helpers::extract_csr_arrays;
 /// Time: O(V^2 log V + VE) for sparse graphs
 pub fn johnson_impl<R, C>(_client: &C, graph: &GraphData<R>) -> Result<AllPairsResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let n = graph.num_nodes;

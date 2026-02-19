@@ -2,6 +2,7 @@
 //!
 //! Uses union-find with path compression and union by rank.
 //! Implemented sequentially at API boundary.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -59,7 +60,7 @@ impl UnionFind {
 /// Time: O(E log E) for sorting + O(E α(V)) for union-find.
 pub fn kruskal_impl<R, C>(_client: &C, graph: &GraphData<R>) -> Result<MSTResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     if graph.directed {

@@ -1,4 +1,5 @@
 //! Graph data types and result structures.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -21,7 +22,7 @@ use numr::tensor::Tensor;
 /// let graph = GraphData::new(adjacency, false);
 /// ```
 #[derive(Debug, Clone)]
-pub struct GraphData<R: Runtime> {
+pub struct GraphData<R: Runtime<DType = DType>> {
     /// CSR sparse adjacency matrix `[n, n]`, weights as values
     pub adjacency: SparseTensor<R>,
     /// Number of nodes in the graph
@@ -30,7 +31,7 @@ pub struct GraphData<R: Runtime> {
     pub directed: bool,
 }
 
-impl<R: Runtime> GraphData<R> {
+impl<R: Runtime<DType = DType>> GraphData<R> {
     /// Create a graph from a sparse adjacency matrix.
     pub fn new(adjacency: SparseTensor<R>, directed: bool) -> Self {
         let num_nodes = adjacency.nrows();
@@ -112,7 +113,7 @@ impl<R: Runtime> GraphData<R> {
 
 /// Result of single-source shortest path algorithms.
 #[derive(Debug, Clone)]
-pub struct ShortestPathResult<R: Runtime> {
+pub struct ShortestPathResult<R: Runtime<DType = DType>> {
     /// Distance from source to each node `[n]`. Infinity for unreachable nodes.
     pub distances: Tensor<R>,
     /// Predecessor of each node on shortest path `[n]`. -1 for source/unreachable.
@@ -121,7 +122,7 @@ pub struct ShortestPathResult<R: Runtime> {
 
 /// Result of all-pairs shortest path algorithms.
 #[derive(Debug, Clone)]
-pub struct AllPairsResult<R: Runtime> {
+pub struct AllPairsResult<R: Runtime<DType = DType>> {
     /// Distance matrix `[n, n]`. `distances[i][j]` = shortest path from i to j.
     pub distances: Tensor<R>,
     /// Predecessor matrix `[n, n]`. `predecessors[i][j]` = previous node on path from i to j.
@@ -130,7 +131,7 @@ pub struct AllPairsResult<R: Runtime> {
 
 /// Result of a specific path query (source to target).
 #[derive(Debug, Clone)]
-pub struct PathResult<R: Runtime> {
+pub struct PathResult<R: Runtime<DType = DType>> {
     /// Total distance from source to target. Infinity if unreachable.
     pub distance: f64,
     /// Node indices along the path `[path_len]`. Empty if unreachable.
@@ -139,7 +140,7 @@ pub struct PathResult<R: Runtime> {
 
 /// Result of minimum spanning tree algorithms.
 #[derive(Debug, Clone)]
-pub struct MSTResult<R: Runtime> {
+pub struct MSTResult<R: Runtime<DType = DType>> {
     /// Edge sources in the MST `[num_mst_edges]`.
     pub sources: Tensor<R>,
     /// Edge targets in the MST `[num_mst_edges]`.
@@ -152,7 +153,7 @@ pub struct MSTResult<R: Runtime> {
 
 /// Result of connected component algorithms.
 #[derive(Debug, Clone)]
-pub struct ComponentResult<R: Runtime> {
+pub struct ComponentResult<R: Runtime<DType = DType>> {
     /// Component label for each node `[n]`.
     pub labels: Tensor<R>,
     /// Number of connected components.
@@ -161,7 +162,7 @@ pub struct ComponentResult<R: Runtime> {
 
 /// Result of max-flow algorithms.
 #[derive(Debug, Clone)]
-pub struct FlowResult<R: Runtime> {
+pub struct FlowResult<R: Runtime<DType = DType>> {
     /// Maximum flow value.
     pub max_flow: f64,
     /// Flow on each edge as a sparse matrix [n, n].

@@ -1,6 +1,7 @@
 //! Graph matrix construction (Laplacian, Adjacency, Incidence).
 //!
 //! GPU-parallel via sparse operations.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -20,7 +21,7 @@ pub fn laplacian_matrix_impl<R, C>(
     normalized: bool,
 ) -> Result<SparseTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: SparseOps<R>,
 {
     // Extract CSR
@@ -131,7 +132,7 @@ where
 /// Return the adjacency matrix (possibly symmetrized for undirected graphs).
 pub fn adjacency_matrix_impl<R, C>(_client: &C, graph: &GraphData<R>) -> Result<SparseTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: SparseOps<R>,
 {
     // For directed graphs, return as-is.
@@ -145,7 +146,7 @@ where
 /// For undirected graphs, arbitrary orientation is assigned.
 pub fn incidence_matrix_impl<R, C>(_client: &C, graph: &GraphData<R>) -> Result<SparseTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: SparseOps<R>,
 {
     // Extract CSR

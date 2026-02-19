@@ -1,6 +1,7 @@
 //! Betweenness centrality via Brandes' algorithm.
 //!
 //! Sequential BFS from each source, accumulates pair dependencies.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::{Runtime, RuntimeClient};
@@ -20,7 +21,7 @@ pub fn betweenness_centrality_impl<R, C>(
     normalized: bool,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let (row_ptrs, col_indices, _values, n) = extract_csr_arrays(graph)?;

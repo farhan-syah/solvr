@@ -1,4 +1,5 @@
 //! Graph centrality algorithm traits.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -9,7 +10,7 @@ use super::types::{EigCentralityOptions, GraphData, PageRankOptions};
 /// Graph centrality algorithms.
 ///
 /// Measures the relative importance of nodes in a graph.
-pub trait CentralityAlgorithms<R: Runtime> {
+pub trait CentralityAlgorithms<R: Runtime<DType = DType>> {
     /// Degree centrality: fraction of nodes each node is connected to.
     ///
     /// GPU-parallel via sparse_sum_rows.

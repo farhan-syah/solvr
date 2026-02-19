@@ -1,6 +1,7 @@
 //! Eigenvector centrality via power iteration.
 //!
 //! GPU-parallel via SpMV iteration.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::ops::{BinaryOps, ReduceOps, ScalarOps, UnaryOps};
@@ -20,7 +21,7 @@ pub fn eigenvector_centrality_impl<R, C>(
     options: &EigCentralityOptions,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R> + SparseOps<R> + BinaryOps<R> + ReduceOps<R> + ScalarOps<R> + UnaryOps<R>,
 {
     let n = graph.num_nodes;

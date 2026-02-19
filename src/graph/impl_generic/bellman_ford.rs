@@ -2,6 +2,7 @@
 //!
 //! Handles negative edge weights and detects negative cycles.
 //! Implemented sequentially (naturally sequential iteration pattern).
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::{Runtime, RuntimeClient};
@@ -20,7 +21,7 @@ pub fn bellman_ford_impl<R, C>(
     source: usize,
 ) -> Result<ShortestPathResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     validate_node(source, graph.num_nodes, "bellman_ford source")?;

@@ -3,6 +3,7 @@
 //! Labels each node with its component ID (smallest node index in component).
 //! Treats directed graphs as undirected (ignores edge direction).
 //! Implemented sequentially at API boundary.
+use crate::DType;
 
 use std::collections::VecDeque;
 
@@ -23,7 +24,7 @@ pub fn connected_components_impl<R, C>(
     graph: &GraphData<R>,
 ) -> Result<ComponentResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     // Extract CSR at API boundary
