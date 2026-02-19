@@ -21,6 +21,7 @@
 //!     unimplemented!()
 //! };
 //! ```
+use crate::DType;
 
 use numr::autograd::DualTensor;
 use numr::error::Result;
@@ -64,7 +65,7 @@ pub fn dae_impl<R, C, F>(
     dae_options: &DAEOptions<R>,
 ) -> IntegrateResult<DAEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -83,7 +84,7 @@ pub fn dae_impl<R, C, F>(
     dae_options: &DAEOptions<R>,
 ) -> IntegrateResult<DAEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + LinalgOps<R>
@@ -108,7 +109,7 @@ fn dae_impl_inner<R, C, F>(
     dae_options: &DAEOptions<R>,
 ) -> IntegrateResult<DAEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + LinalgOps<R>
@@ -372,7 +373,7 @@ fn dae_impl_inner<R, C, F>(
     dae_options: &DAEOptions<R>,
 ) -> IntegrateResult<DAEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -613,7 +614,7 @@ fn dae_newton_iteration<R, C, F>(
     direct_solver: &mut Option<DirectSparseSolver<R>>,
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>, bool, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + LinalgOps<R>
@@ -705,7 +706,7 @@ fn dae_newton_iteration<R, C, F>(
     dae_options: &DAEOptions<R>,
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>, bool, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -766,7 +767,7 @@ fn solve_dae_linear<R, C>(
     direct_solver: &mut Option<DirectSparseSolver<R>>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + LinalgOps<R>
@@ -799,7 +800,7 @@ fn solve_dae_linear<R, C>(
     _dae_options: &DAEOptions<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: LinalgOps<R> + RuntimeClient<R>,
 {
     client.solve(m_dense, b)

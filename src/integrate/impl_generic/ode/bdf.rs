@@ -87,7 +87,7 @@ pub fn bdf_impl<R, C, F>(
     bdf_options: &BDFOptions<R>,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: StiffSolverClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -284,7 +284,7 @@ fn compute_predictor<R, C>(
     h: f64,
 ) -> IntegrateResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     if y_history.is_empty() {
@@ -330,7 +330,7 @@ fn newton_iteration<R, C, F>(
     #[cfg(feature = "sparse")] direct_solver: &mut Option<DirectSparseSolver<R>>,
 ) -> IntegrateResult<(Tensor<R>, bool, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: StiffSolverClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -419,7 +419,7 @@ fn estimate_error<R, C>(
     order: usize,
 ) -> IntegrateResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     let order_idx = (order - 1).min(4);
@@ -460,7 +460,7 @@ fn solve_bdf_linear<R, C>(
     direct_solver: &mut Option<DirectSparseSolver<R>>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: StiffSolverClient<R>,
 {
     if !sparse_config.enabled {
@@ -487,7 +487,7 @@ fn solve_bdf_linear<R, C>(
     _sparse_config: &crate::integrate::ode::SparseJacobianConfig<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: numr::ops::LinalgOps<R> + RuntimeClient<R>,
 {
     client.solve(m_dense, b)

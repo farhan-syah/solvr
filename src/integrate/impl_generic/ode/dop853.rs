@@ -7,6 +7,7 @@
 // Coefficients from Hairer, Norsett & Wanner - preserved exactly as reference
 #![allow(clippy::excessive_precision)]
 // Allow this module to use extensive precision coefficients from the reference implementation
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -142,7 +143,7 @@ fn weighted_sum_12<R, C>(
     h: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     let mut result = client.mul_scalar(h, 0.0)?;
@@ -171,7 +172,7 @@ pub fn dop853_impl<R, C, F>(
     options: &ODEOptions,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -507,7 +508,7 @@ fn build_result_tensors<R, C>(
     y_values: &[Tensor<R>],
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let n_steps = t_values.len();

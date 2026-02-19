@@ -18,6 +18,7 @@
 //! ```text
 //! y(t) = H₀₀(θ)·y_old + H₁₀(θ)·y_new + H₀₁(θ)·h·f_old + H₁₁(θ)·h·f_new
 //! ```
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -28,7 +29,7 @@ use numr::tensor::Tensor;
 ///
 /// Stores the endpoints and derivatives for Hermite interpolation.
 #[derive(Debug, Clone)]
-pub struct DenseOutputStep<R: Runtime> {
+pub struct DenseOutputStep<R: Runtime<DType = DType>> {
     /// Start time of the step.
     pub t_old: f64,
 
@@ -48,7 +49,7 @@ pub struct DenseOutputStep<R: Runtime> {
     pub f_new: Tensor<R>,
 }
 
-impl<R: Runtime> DenseOutputStep<R> {
+impl<R: Runtime<DType = DType>> DenseOutputStep<R> {
     /// Create a new dense output step.
     pub fn new(
         t_old: f64,
@@ -114,7 +115,7 @@ impl<R: Runtime> DenseOutputStep<R> {
 /// ```
 pub fn dense_eval<R, C>(client: &C, step: &DenseOutputStep<R>, t: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let h = step.h();
@@ -188,7 +189,7 @@ pub fn dense_eval_derivative<R, C>(
     t: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let h = step.h();

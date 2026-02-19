@@ -28,7 +28,7 @@ pub fn qmc_impl<R, C, F>(
     options: &QMCOptions,
 ) -> Result<QuadResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + QuasiRandomOps<R> + ReduceOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -102,7 +102,7 @@ fn transform_to_bounds_tensor<R, C>(
     bounds: &[(f64, f64)],
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();

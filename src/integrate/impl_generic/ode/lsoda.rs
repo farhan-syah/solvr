@@ -93,7 +93,7 @@ pub fn lsoda_impl<R, C, F>(
     lsoda_options: &LSODAOptions,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -311,7 +311,7 @@ fn adams_step<R, C, F>(
     options: &ODEOptions,
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -380,7 +380,7 @@ fn bdf_step<R, C, F>(
     options: &ODEOptions,
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {

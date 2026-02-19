@@ -2,6 +2,7 @@
 //!
 //! Manages memory-efficient storage of ODE solution checkpoints
 //! during forward integration for use during backward adjoint pass.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -14,7 +15,7 @@ use crate::integrate::sensitivity::traits::{Checkpoint, CheckpointStrategy};
 /// During backward adjoint integration, the forward solution is reconstructed
 /// by reintegrating between checkpoints as needed.
 #[derive(Debug, Clone)]
-pub struct CheckpointManager<R: Runtime> {
+pub struct CheckpointManager<R: Runtime<DType = DType>> {
     /// Stored checkpoints in forward time order.
     checkpoints: Vec<Checkpoint<R>>,
     /// Target number of checkpoints.
@@ -30,7 +31,7 @@ pub struct CheckpointManager<R: Runtime> {
     checkpoint_times: Vec<f64>,
 }
 
-impl<R: Runtime> CheckpointManager<R> {
+impl<R: Runtime<DType = DType>> CheckpointManager<R> {
     /// Create a new checkpoint manager.
     ///
     /// # Arguments

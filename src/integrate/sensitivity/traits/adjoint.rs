@@ -2,6 +2,7 @@
 //!
 //! Defines the interface for computing parameter gradients via backward
 //! integration of the adjoint ODE.
+use crate::DType;
 
 use numr::autograd::Var;
 use numr::error::Result;
@@ -32,7 +33,7 @@ use crate::integrate::error::IntegrateResult;
 /// The checkpointing approach trades computation for memory:
 /// - O(n_checkpoints) memory instead of O(n_steps)
 /// - Recomputes forward solution between checkpoints during backward pass
-pub trait AdjointSensitivityAlgorithms<R: Runtime> {
+pub trait AdjointSensitivityAlgorithms<R: Runtime<DType = DType>> {
     /// Compute parameter gradients using adjoint sensitivity analysis.
     ///
     /// # Arguments

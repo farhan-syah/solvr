@@ -61,7 +61,7 @@ pub fn compute_jacobian_autograd<R, C, F>(
     y: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -79,7 +79,7 @@ where
 /// For p=2, this is the Euclidean norm.
 pub fn compute_norm<R, C>(client: &C, x: &Tensor<R>, p: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let x_abs = client.abs(x)?;
@@ -95,7 +95,7 @@ where
 /// for control flow decisions (e.g., convergence checks).
 pub fn compute_norm_scalar<R, C>(client: &C, x: &Tensor<R>, p: f64) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let norm_tensor = compute_norm(client, x, p)?;
@@ -109,7 +109,7 @@ where
 /// evaluation (not Jacobian computation).
 pub fn eval_primal<R, C, F>(client: &C, f: &F, t: &Tensor<R>, y: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -141,7 +141,7 @@ pub fn compute_iteration_matrix<R, C>(
     beta: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
     let n = jacobian.shape()[0];

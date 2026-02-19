@@ -2,6 +2,7 @@
 //!
 //! This module contains shared utility functions used by the DAE solver
 //! for error estimation, step control, and result building.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -42,7 +43,7 @@ pub(super) fn compute_predictor_with_yp<R, C>(
     h: f64,
 ) -> IntegrateResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     if y_history.is_empty() || yp_history.is_empty() {
@@ -68,7 +69,7 @@ pub(super) fn compute_yp_from_bdf<R, C>(
     h: f64,
 ) -> IntegrateResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     let order_idx = (order - 1).min(4);
@@ -101,7 +102,7 @@ pub(super) fn estimate_error<R, C>(
     order: usize,
 ) -> IntegrateResult<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     let order_idx = (order - 1).min(4);
@@ -122,7 +123,7 @@ pub(super) fn compute_error<R, C>(
     atol: f64,
 ) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     let y_abs = client.abs(y_new)?;
@@ -148,7 +149,7 @@ pub(super) fn compute_error_with_exclusion<R, C>(
     var_types: &Option<Vec<DAEVariableType>>,
 ) -> Result<f64>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let Some(types) = var_types else {
@@ -244,7 +245,7 @@ pub(super) fn build_dae_result<R, C>(
     return_yp: bool,
 ) -> IntegrateResult<DAEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let n_steps = t_values.len();

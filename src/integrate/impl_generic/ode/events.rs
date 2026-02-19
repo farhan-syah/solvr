@@ -2,6 +2,7 @@
 //!
 //! Provides zero-crossing detection within integration steps and
 //! accurate root refinement using Brent's method with dense output.
+use crate::DType;
 
 use numr::ops::{ScalarOps, TensorOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -15,7 +16,7 @@ use crate::optimize::scalar::{ScalarOptions, brentq};
 use super::dense_output::{DenseOutputStep, dense_eval};
 
 /// Result of checking events within a step.
-pub struct EventCheckResult<R: Runtime> {
+pub struct EventCheckResult<R: Runtime<DType = DType>> {
     /// Events detected in this step (sorted by time).
     pub events: Vec<EventRecord<R>>,
 
@@ -56,7 +57,7 @@ pub fn check_events<R, C, E>(
     opts: &EventOptions,
 ) -> IntegrateResult<EventCheckResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     E: EventFunction<R, C> + ?Sized,
 {
@@ -101,7 +102,7 @@ pub fn evaluate_events<R, C, E>(
     y: &Tensor<R>,
 ) -> IntegrateResult<Vec<f64>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     E: EventFunction<R, C> + ?Sized,
 {
@@ -126,7 +127,7 @@ fn detect_sign_change<R, C, E>(
     opts: &EventOptions,
 ) -> IntegrateResult<Option<EventRecord<R>>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     E: EventFunction<R, C> + ?Sized,
 {
@@ -172,7 +173,7 @@ fn refine_event_time<R, C, E>(
     opts: &EventOptions,
 ) -> IntegrateResult<(f64, Tensor<R>, f64)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     E: EventFunction<R, C> + ?Sized,
 {
@@ -239,7 +240,7 @@ pub fn handle_terminal_event<R, C>(
     event: &EventRecord<R>,
 ) -> IntegrateResult<(f64, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // If the event is at the end of the step, use the step endpoint

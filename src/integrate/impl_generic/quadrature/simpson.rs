@@ -1,6 +1,7 @@
 //! Simpson's rule integration using tensor operations.
 //!
 //! All implementations use numr tensor ops - no scalar loops.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::ops::{ScalarOps, TensorOps};
@@ -18,7 +19,7 @@ pub fn simpson_impl<R, C>(
     dx: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
@@ -49,7 +50,7 @@ where
 /// Simpson's rule with constant spacing using tensor operations.
 fn simpson_constant_spacing<R, C>(client: &C, y: &Tensor<R>, dx: f64, n: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
@@ -129,7 +130,7 @@ fn simpson_variable_spacing<R, C>(
     n: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
@@ -172,7 +173,7 @@ fn simpson_even_intervals<R, C>(
     x_last_dim: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let num_pairs = (n - 1) / 2;
@@ -224,7 +225,7 @@ fn simpson_odd_intervals<R, C>(
     x_last_dim: usize,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     // Simpson's for first n-1 points (n-2 intervals, which is even)

@@ -30,7 +30,7 @@ pub fn monte_carlo_impl<R, C, F>(
     options: &MonteCarloOptions,
 ) -> Result<MonteCarloResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + RandomOps<R>
@@ -83,7 +83,7 @@ fn plain_monte_carlo<R, C, F>(
     seed: Option<u64>,
 ) -> Result<MonteCarloResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + RandomOps<R>
@@ -140,7 +140,7 @@ fn stratified_monte_carlo<R, C, F>(
     seed: Option<u64>,
 ) -> Result<MonteCarloResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + RandomOps<R>
@@ -241,7 +241,7 @@ fn antithetic_monte_carlo<R, C, F>(
     seed: Option<u64>,
 ) -> Result<MonteCarloResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R>
         + ScalarOps<R>
         + RandomOps<R>
@@ -306,7 +306,7 @@ fn transform_to_bounds_tensor<R, C>(
     bounds: &[(f64, f64)],
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();
@@ -334,7 +334,7 @@ fn transform_antithetic_tensor<R, C>(
     bounds: &[(f64, f64)],
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();
@@ -353,7 +353,7 @@ where
 /// Returns scalar values (requires one device-to-host transfer at the end).
 fn compute_mean_variance_tensor<R, C>(client: &C, values: &Tensor<R>) -> Result<(f64, f64)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + ReduceOps<R> + RuntimeClient<R>,
 {
     let n = values.numel();

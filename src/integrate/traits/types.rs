@@ -1,4 +1,5 @@
 //! Types for integration algorithms.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -26,7 +27,7 @@ impl Default for QuadOptions {
 
 /// Result of adaptive quadrature.
 #[derive(Debug, Clone)]
-pub struct QuadResult<R: Runtime> {
+pub struct QuadResult<R: Runtime<DType = DType>> {
     /// Computed integral value (0-D tensor)
     pub integral: Tensor<R>,
     /// Estimated absolute error
@@ -171,7 +172,7 @@ impl MonteCarloOptions {
 
 /// Result of Monte Carlo integration.
 #[derive(Debug, Clone)]
-pub struct MonteCarloResult<R: Runtime> {
+pub struct MonteCarloResult<R: Runtime<DType = DType>> {
     /// Computed integral value (0-D tensor)
     pub integral: Tensor<R>,
     /// Standard error estimate
@@ -278,7 +279,7 @@ impl NQuadOptions {
 
 /// Result of boundary value problem (BVP) solver.
 #[derive(Debug, Clone)]
-pub struct BVPResult<R: Runtime> {
+pub struct BVPResult<R: Runtime<DType = DType>> {
     /// Mesh points where solution was computed (1-D tensor)
     pub x: Tensor<R>,
 
@@ -301,7 +302,7 @@ pub struct BVPResult<R: Runtime> {
     pub message: Option<String>,
 }
 
-impl<R: Runtime> BVPResult<R> {
+impl<R: Runtime<DType = DType>> BVPResult<R> {
     /// Get the solution at the left boundary.
     pub fn y_left(&self) -> Vec<f64> {
         let shape = self.y.shape();
@@ -341,7 +342,7 @@ impl<R: Runtime> BVPResult<R> {
 ///
 /// For Hamiltonian systems with position q and momentum p.
 #[derive(Debug, Clone)]
-pub struct SymplecticResult<R: Runtime> {
+pub struct SymplecticResult<R: Runtime<DType = DType>> {
     /// Time points (1-D tensor)
     pub t: Tensor<R>,
 

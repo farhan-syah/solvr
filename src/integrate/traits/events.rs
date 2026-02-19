@@ -16,7 +16,7 @@
 //! // Detect when y[0] crosses zero (e.g., ball hitting ground)
 //! struct GroundImpact;
 //!
-//! impl<R: Runtime, C> EventFunction<R, C> for GroundImpact
+//! impl<R: Runtime<DType = DType>, C> EventFunction<R, C> for GroundImpact
 //! where
 //!     C: TensorOps<R> + RuntimeClient<R>,
 //! {
@@ -27,6 +27,7 @@
 //!     }
 //! }
 //! ```
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::TensorOps;
@@ -37,7 +38,7 @@ use numr::tensor::Tensor;
 ///
 /// An event function g(t, y) triggers when it crosses zero.
 /// The solver detects sign changes and refines the exact crossing time.
-pub trait EventFunction<R: Runtime, C>: Send + Sync
+pub trait EventFunction<R: Runtime<DType = DType>, C>: Send + Sync
 where
     C: TensorOps<R> + RuntimeClient<R>,
 {
@@ -59,7 +60,7 @@ where
 /// Allows using closures as event functions without defining a struct.
 pub struct EventFn<R, C, F>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&C, f64, &Tensor<R>) -> Result<f64> + Send + Sync,
 {
@@ -69,7 +70,7 @@ where
 
 impl<R, C, F> EventFn<R, C, F>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&C, f64, &Tensor<R>) -> Result<f64> + Send + Sync,
 {
@@ -84,7 +85,7 @@ where
 
 impl<R, C, F> EventFunction<R, C> for EventFn<R, C, F>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&C, f64, &Tensor<R>) -> Result<f64> + Send + Sync,
 {
@@ -98,7 +99,7 @@ where
 /// Manages multiple event functions and their detection parameters.
 pub struct EventSet<'a, R, C>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     /// Event functions.
@@ -109,7 +110,7 @@ where
 
 impl<'a, R, C> EventSet<'a, R, C>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     /// Create a new empty event set.
@@ -157,7 +158,7 @@ where
 
 impl<'a, R, C> Default for EventSet<'a, R, C>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     fn default() -> Self {

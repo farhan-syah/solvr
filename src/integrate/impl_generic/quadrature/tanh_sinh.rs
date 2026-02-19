@@ -2,6 +2,7 @@
 //!
 //! Highly effective for integrals with endpoint singularities.
 //! Uses the transformation x = tanh(π/2 * sinh(t)).
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -28,7 +29,7 @@ pub fn tanh_sinh_impl<R, C, F>(
     options: &TanhSinhOptions,
 ) -> Result<QuadResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {

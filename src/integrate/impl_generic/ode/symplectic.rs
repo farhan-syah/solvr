@@ -2,6 +2,7 @@
 //!
 //! Provides Störmer-Verlet and Leapfrog integrators that preserve the
 //! symplectic structure of Hamiltonian dynamics.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -32,7 +33,7 @@ pub fn verlet_impl<R, C, F>(
     options: &SymplecticOptions,
 ) -> IntegrateResult<SymplecticResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -109,7 +110,7 @@ pub fn leapfrog_impl<R, C, F>(
     options: &SymplecticOptions,
 ) -> IntegrateResult<SymplecticResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -174,7 +175,7 @@ fn build_symplectic_result<R, C>(
     p_values: &[Tensor<R>],
 ) -> IntegrateResult<SymplecticResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let n_steps = t_values.len();

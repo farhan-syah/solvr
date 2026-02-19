@@ -3,6 +3,7 @@
 //! This module provides a single `StiffSolverClient` trait that conditionally
 //! includes `IterativeSolvers` and `SparseOps` when the sparse feature is enabled,
 //! avoiding trait duplication between solvers.
+use crate::DType;
 
 use numr::ops::{LinalgOps, ScalarOps, TensorOps, UtilityOps};
 use numr::runtime::{Runtime, RuntimeClient};
@@ -20,7 +21,7 @@ use numr::sparse::SparseOps;
 /// for GMRES-based sparse linear system solving, `SparseOps` for dense-to-CSR
 /// conversion, and `IndexingOps` for `gather_2d` used by the direct sparse solver.
 #[cfg(feature = "sparse")]
-pub trait StiffSolverClient<R: Runtime>:
+pub trait StiffSolverClient<R: Runtime<DType = DType>>:
     TensorOps<R>
     + ScalarOps<R>
     + LinalgOps<R>
@@ -35,7 +36,7 @@ pub trait StiffSolverClient<R: Runtime>:
 #[cfg(feature = "sparse")]
 impl<R, T> StiffSolverClient<R> for T
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     T: TensorOps<R>
         + ScalarOps<R>
         + LinalgOps<R>
@@ -51,7 +52,7 @@ where
 ///
 /// Without the `sparse` feature, only dense linear algebra is available.
 #[cfg(not(feature = "sparse"))]
-pub trait StiffSolverClient<R: Runtime>:
+pub trait StiffSolverClient<R: Runtime<DType = DType>>:
     TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>
 {
 }
@@ -59,7 +60,7 @@ pub trait StiffSolverClient<R: Runtime>:
 #[cfg(not(feature = "sparse"))]
 impl<R, T> StiffSolverClient<R> for T
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     T: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>,
 {
 }

@@ -2,6 +2,7 @@
 //!
 //! Computes parameter gradients via backward integration of the adjoint ODE.
 //! Uses checkpointing for memory efficiency.
+use crate::DType;
 
 use numr::autograd::{Var, backward};
 use numr::error::Result;
@@ -22,7 +23,7 @@ use crate::integrate::sensitivity::traits::{SensitivityOptions, SensitivityResul
 /// for the forward integration pass.
 struct ForwardWrapper<'a, R, C, F>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &Var<R>, &Var<R>, &C) -> Result<Var<R>>,
@@ -34,7 +35,7 @@ where
 
 impl<'a, R, C, F> ForwardWrapper<'a, R, C, F>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &Var<R>, &Var<R>, &C) -> Result<Var<R>>,
@@ -90,7 +91,7 @@ pub fn adjoint_sensitivity_impl<R, C, F, G>(
     sens_opts: &SensitivityOptions,
 ) -> IntegrateResult<SensitivityResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &Var<R>, &Var<R>, &C) -> Result<Var<R>>,
@@ -184,7 +185,7 @@ fn forward_with_checkpoints<R, C, F>(
     checkpoint_tol: f64,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &Var<R>, &Var<R>, &C) -> Result<Var<R>>,
@@ -279,7 +280,7 @@ fn compute_terminal_adjoint<R, C, G>(
     y_final: &Tensor<R>,
 ) -> IntegrateResult<(f64, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     G: Fn(&Var<R>, &C) -> Result<Var<R>>,
@@ -328,7 +329,7 @@ fn backward_adjoint_pass<R, C, F>(
     sens_opts: &SensitivityOptions,
 ) -> IntegrateResult<(Tensor<R>, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &Var<R>, &Var<R>, &C) -> Result<Var<R>>,
@@ -408,7 +409,7 @@ fn integrate_adjoint_interval<R, C, F>(
     sens_opts: &SensitivityOptions,
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     R::Client: TensorOps<R>,
     F: Fn(&Var<R>, &Var<R>, &Var<R>, &C) -> Result<Var<R>>,

@@ -1,6 +1,7 @@
 //! Fully device-resident step size control for adaptive ODE methods.
 //!
 //! All computations stay on device - no scalar transfers during stepping.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -19,7 +20,7 @@ pub fn compute_error<R, C>(
     atol: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let n = y_new.shape()[0] as f64;
@@ -58,7 +59,7 @@ pub fn compute_step_factor<R, C>(
     max_factor: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();
@@ -88,7 +89,7 @@ where
 /// Uses smooth step function for numerical stability.
 pub fn compute_acceptance<R, C>(client: &C, error: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();
@@ -118,7 +119,7 @@ pub fn conditional_update<R, C>(
     accepted: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let device = client.device();
@@ -149,7 +150,7 @@ pub fn compute_initial_step<R, C, F>(
     atol: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
 {

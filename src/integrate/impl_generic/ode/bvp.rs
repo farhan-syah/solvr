@@ -3,6 +3,7 @@
 //! Solves two-point BVPs of the form:
 //!   dy/dx = f(x, y)
 //!   bc(y(a), y(b)) = 0
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{LinalgOps, ScalarOps, TensorOps};
@@ -25,7 +26,7 @@ pub fn bvp_impl<R, C, F, BC>(
     options: &BVPOptions,
 ) -> IntegrateResult<BVPResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
     BC: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
@@ -107,7 +108,7 @@ fn solve_collocation<R, C, F, BC>(
     _options: &BVPOptions,
 ) -> IntegrateResult<(Vec<f64>, Vec<f64>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
     BC: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
@@ -162,7 +163,7 @@ fn compute_residual<R, C, F, BC>(
     n_vars: usize,
 ) -> IntegrateResult<Vec<f64>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
     BC: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
@@ -231,7 +232,7 @@ fn compute_bvp_jacobian<R, C, F, BC>(
     n_vars: usize,
 ) -> IntegrateResult<Vec<f64>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
     BC: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
@@ -270,7 +271,7 @@ fn check_mesh_refinement<R, C, F>(
     options: &BVPOptions,
 ) -> IntegrateResult<(bool, Vec<usize>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -382,7 +383,7 @@ fn build_bvp_result<R, C>(
     niter: usize,
 ) -> IntegrateResult<BVPResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let device = client.device();

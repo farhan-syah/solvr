@@ -2,6 +2,7 @@
 //!
 //! These types configure and store results from computing parameter gradients
 //! via backward integration of the adjoint ODE.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -92,7 +93,7 @@ impl SensitivityOptions {
 
 /// Result of adjoint sensitivity analysis.
 #[derive(Debug, Clone)]
-pub struct SensitivityResult<R: Runtime> {
+pub struct SensitivityResult<R: Runtime<DType = DType>> {
     /// Gradient of the cost with respect to parameters: ∂J/∂p `[n_params]`.
     pub gradient: Tensor<R>,
 
@@ -112,7 +113,7 @@ pub struct SensitivityResult<R: Runtime> {
     pub n_checkpoints: usize,
 }
 
-impl<R: Runtime> SensitivityResult<R> {
+impl<R: Runtime<DType = DType>> SensitivityResult<R> {
     /// Get the gradient as a `Vec<f64>`.
     pub fn gradient_vec(&self) -> Vec<f64> {
         self.gradient.to_vec()
@@ -126,7 +127,7 @@ impl<R: Runtime> SensitivityResult<R> {
 
 /// A checkpoint storing state at a specific time for adjoint computation.
 #[derive(Debug, Clone)]
-pub struct Checkpoint<R: Runtime> {
+pub struct Checkpoint<R: Runtime<DType = DType>> {
     /// Time at this checkpoint.
     pub t: f64,
 
@@ -134,7 +135,7 @@ pub struct Checkpoint<R: Runtime> {
     pub y: Tensor<R>,
 }
 
-impl<R: Runtime> Checkpoint<R> {
+impl<R: Runtime<DType = DType>> Checkpoint<R> {
     /// Create a new checkpoint.
     pub fn new(t: f64, y: Tensor<R>) -> Self {
         Self { t, y }

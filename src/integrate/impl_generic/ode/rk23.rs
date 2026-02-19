@@ -2,6 +2,7 @@
 //!
 //! All computation stays on device using numr's TensorOps.
 //! Step size control is fully device-resident - no scalar transfers during stepping.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::{ScalarOps, TensorOps};
@@ -51,7 +52,7 @@ fn weighted_sum<R, C>(
     h: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     debug_assert_eq!(stages.len(), coeffs.len());
@@ -82,7 +83,7 @@ pub fn rk23_impl<R, C, F>(
     options: &ODEOptions,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -259,7 +260,7 @@ fn build_result_tensors<R, C>(
     y_values: &[Tensor<R>],
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let n_steps = t_values.len();

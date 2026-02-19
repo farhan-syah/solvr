@@ -1,7 +1,7 @@
 //! Tensor-based quadrature implementations.
 //!
 //! This module provides numerical integration algorithms using tensor operations.
-//! All implementations are generic over `R: Runtime` for multi-backend support.
+//! All implementations are generic over `R: Runtime<DType = DType>` for multi-backend support.
 
 mod fixed_quad;
 mod monte_carlo;

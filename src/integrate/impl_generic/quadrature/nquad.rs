@@ -2,6 +2,7 @@
 //!
 //! Provides dblquad, tplquad, and general nquad for multi-dimensional integrals
 //! using nested adaptive quadrature.
+use crate::DType;
 
 use std::cell::Cell;
 
@@ -29,7 +30,7 @@ pub fn dblquad_impl<R, C, F, G, H>(
     options: &NQuadOptions,
 ) -> Result<QuadResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
     G: Fn(f64) -> f64,
@@ -109,7 +110,7 @@ pub fn nquad_impl<R, C, F>(
     options: &NQuadOptions,
 ) -> Result<QuadResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -222,7 +223,7 @@ pub fn tplquad_impl<R, C, F, G1, H1, G2, H2>(
     options: &NQuadOptions,
 ) -> Result<QuadResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
     G1: Fn(f64) -> f64,

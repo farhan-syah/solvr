@@ -2,6 +2,7 @@
 //!
 //! All implementations use numr's `TensorOps` and `ScalarOps` for computation,
 //! keeping data on device (GPU/CPU with SIMD) throughout the algorithm.
+use crate::DType;
 
 mod bdf;
 mod bvp;
@@ -64,7 +65,7 @@ use crate::integrate::error::{IntegrateError, IntegrateResult};
 use crate::integrate::{ODEMethod, ODEOptions};
 
 /// Parameters for building ODE results (reduces function argument count).
-pub struct ODEResultParams<'a, R: Runtime> {
+pub struct ODEResultParams<'a, R: Runtime<DType = DType>> {
     pub t_values: &'a [f64],
     pub y_values: &'a [Tensor<R>],
     pub success: bool,
@@ -81,7 +82,7 @@ pub fn build_ode_result<R, C>(
     method: ODEMethod,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
 {
     let n_steps = params.t_values.len();
@@ -110,7 +111,7 @@ where
 /// All data is stored as tensors, remaining on device until explicitly
 /// transferred to CPU via `to_vec()`.
 #[derive(Debug, Clone)]
-pub struct ODEResultTensor<R: Runtime> {
+pub struct ODEResultTensor<R: Runtime<DType = DType>> {
     /// Time points where solution was computed (1-D tensor)
     pub t: Tensor<R>,
 
@@ -136,14 +137,14 @@ pub struct ODEResultTensor<R: Runtime> {
     pub method: ODEMethod,
 }
 
-impl<R: Runtime> ODEResultTensor<R> {
+impl<R: Runtime<DType = DType>> ODEResultTensor<R> {
     /// Get the final state as a tensor (stays on device).
     ///
     /// Note: This extracts the last row and transfers to CPU to rebuild as 1-D tensor.
     /// For on-device access, index directly into `self.y`.
     pub fn y_final(&self) -> Result<Tensor<R>>
     where
-        R: Runtime,
+        R: Runtime<DType = DType>,
     {
         // Get shape info
         let shape = self.y.shape();
@@ -218,7 +219,7 @@ pub fn solve_ivp_impl<R, C, F>(
     options: &ODEOptions,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: numr::ops::TensorOps<R> + numr::ops::ScalarOps<R> + numr::runtime::RuntimeClient<R>,
     F: Fn(&Tensor<R>, &Tensor<R>) -> Result<Tensor<R>>,
 {

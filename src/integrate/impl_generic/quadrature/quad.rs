@@ -1,4 +1,5 @@
 //! Adaptive Gauss-Kronrod quadrature.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::ops::TensorOps;
@@ -19,7 +20,7 @@ pub fn quad_impl<R, C, F>(
     options: &QuadOptions,
 ) -> Result<QuadResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {
@@ -119,7 +120,7 @@ where
 /// All 15 points are evaluated in a single batch.
 fn gauss_kronrod_15<R, C, F>(client: &C, f: &F, a: f64, b: f64) -> Result<(f64, f64, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {

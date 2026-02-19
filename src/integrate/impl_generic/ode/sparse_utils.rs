@@ -21,6 +21,7 @@
 //! # let updated_jacobian_csr = jacobian_csr;
 //! let ilu = cache.get_or_compute_ilu(&client, &updated_jacobian_csr)?;
 //! ```
+use crate::DType;
 
 #[cfg(feature = "sparse")]
 use numr::algorithm::iterative::{ConvergenceReason, GmresOptions, IterativeSolvers};
@@ -91,7 +92,7 @@ impl SparseJacobianCache {
         options: IluOptions,
     ) -> Result<IluDecomposition<R>>
     where
-        R: Runtime,
+        R: Runtime<DType = DType>,
         C: SparseLinAlgAlgorithms<R>,
     {
         // Compute symbolic factorization if not cached
@@ -149,7 +150,7 @@ impl Default for SparseJacobianCache {
 #[cfg(feature = "sparse")]
 pub fn dense_to_csr_full<R, C>(client: &C, dense: &Tensor<R>) -> Result<CsrData<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: SparseOps<R>,
 {
     let shape = dense.shape();
@@ -185,7 +186,7 @@ pub fn dense_to_csr_with_pattern<R, C>(
     _pattern: &CsrData<R>,
 ) -> Result<CsrData<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: SparseOps<R>,
 {
     // For now, use full conversion which is correct but not optimized.
@@ -218,7 +219,7 @@ pub fn solve_with_gmres<R, C>(
     solver_name: &str,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: IterativeSolvers<R>,
 {
     let gmres_opts = GmresOptions {
@@ -301,7 +302,7 @@ pub fn solve_with_direct_lu<R, C>(
     b: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: SparseOps<R> + numr::ops::IndexingOps<R> + numr::ops::TensorOps<R> + numr::ops::ScalarOps<R>,
 {
     direct_solver.solve(client, m_dense, b)
@@ -337,7 +338,7 @@ pub fn solve_sparse_system<R, C>(
     solver_name: &str,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: SparseOps<R>
         + numr::ops::IndexingOps<R>
         + numr::ops::TensorOps<R>
@@ -370,7 +371,7 @@ where
 ///
 /// Some(DirectSparseSolver) if strategy is DirectLU or Auto (n < 5000), None otherwise
 #[cfg(feature = "sparse")]
-pub fn create_direct_solver<R: Runtime>(
+pub fn create_direct_solver<R: Runtime<DType = DType>>(
     sparse_config: &crate::integrate::ode::SparseJacobianConfig<R>,
     n: usize,
 ) -> Option<DirectSparseSolver<R>> {

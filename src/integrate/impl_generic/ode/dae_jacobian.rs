@@ -7,6 +7,7 @@
 //! where α = α₀/(h·β) comes from the BDF formula y'_{n+1} = (α₀·y_{n+1} + ...)/( h·β).
 //!
 //! This module provides autograd-based computation of both partial Jacobians.
+use crate::DType;
 
 use numr::autograd::DualTensor;
 use numr::error::Result;
@@ -45,7 +46,7 @@ pub fn compute_dae_jacobian<R, C, F>(
     coeff: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -78,7 +79,7 @@ pub fn eval_dae_primal<R, C, F>(
     yp: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {

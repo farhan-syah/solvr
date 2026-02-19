@@ -54,7 +54,7 @@ pub fn compute_consistent_ic<R, C, F>(
     dae_options: &DAEOptions<R>,
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + LinalgOps<R> + UtilityOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -197,7 +197,7 @@ fn compute_ic_jacobian_yp<R, C, F>(
     yp: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -218,7 +218,7 @@ fn compute_ic_jacobians<R, C, F>(
     yp: &Tensor<R>,
 ) -> Result<(Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {

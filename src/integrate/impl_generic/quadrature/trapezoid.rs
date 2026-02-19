@@ -1,6 +1,7 @@
 //! Trapezoidal rule integration using tensor operations.
 //!
 //! All implementations use numr tensor ops - no scalar loops.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::ops::{ScalarOps, TensorOps};
@@ -16,7 +17,7 @@ use numr::tensor::Tensor;
 /// Uses tensor operations throughout - works efficiently on CPU, CUDA, and WebGPU.
 pub fn trapezoid_impl<R, C>(client: &C, y: &Tensor<R>, x: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
@@ -78,7 +79,7 @@ where
 /// All operations are tensor-based.
 pub fn trapezoid_uniform_impl<R, C>(client: &C, y: &Tensor<R>, dx: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();
@@ -133,7 +134,7 @@ pub fn cumulative_trapezoid_impl<R, C>(
     dx: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R> + RuntimeClient<R>,
 {
     let y_shape = y.shape();

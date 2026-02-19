@@ -1,4 +1,5 @@
 //! Romberg integration using Richardson extrapolation.
+use crate::DType;
 
 use numr::error::{Error, Result};
 use numr::ops::TensorOps;
@@ -20,7 +21,7 @@ pub fn romberg_impl<R, C, F>(
     options: &RombergOptions,
 ) -> Result<QuadResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + RuntimeClient<R>,
     F: Fn(&Tensor<R>) -> Result<Tensor<R>>,
 {

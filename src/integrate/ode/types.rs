@@ -1,4 +1,5 @@
 //! Types for ODE solvers and DAE solvers.
+use crate::DType;
 
 use numr::runtime::Runtime;
 use numr::tensor::Tensor;
@@ -46,7 +47,7 @@ pub use crate::integrate::impl_generic::ode::direct_solver_config::{
 /// # }
 /// ```
 #[derive(Debug, Clone)]
-pub struct SparseJacobianConfig<R: Runtime> {
+pub struct SparseJacobianConfig<R: Runtime<DType = DType>> {
     /// Enable sparse Jacobian solver (default: false).
     ///
     /// When enabled, uses GMRES instead of dense LU for Newton system solves.
@@ -99,7 +100,7 @@ pub struct SparseJacobianConfig<R: Runtime> {
     _phantom: std::marker::PhantomData<R>,
 }
 
-impl<R: Runtime> Default for SparseJacobianConfig<R> {
+impl<R: Runtime<DType = DType>> Default for SparseJacobianConfig<R> {
     fn default() -> Self {
         Self {
             enabled: false,
@@ -118,7 +119,7 @@ impl<R: Runtime> Default for SparseJacobianConfig<R> {
     }
 }
 
-impl<R: Runtime> SparseJacobianConfig<R> {
+impl<R: Runtime<DType = DType>> SparseJacobianConfig<R> {
     /// Create a disabled sparse configuration.
     pub fn disabled() -> Self {
         Self {
@@ -430,7 +431,7 @@ impl ODEOptions {
 
 /// Options specific to BDF (Backward Differentiation Formula) solver.
 #[derive(Debug, Clone)]
-pub struct BDFOptions<R: Runtime> {
+pub struct BDFOptions<R: Runtime<DType = DType>> {
     /// Maximum BDF order (1-5, default: 5).
     ///
     /// Higher orders are more accurate but may be less stable for very stiff problems.
@@ -455,7 +456,7 @@ pub struct BDFOptions<R: Runtime> {
     pub sparse_jacobian: SparseJacobianConfig<R>,
 }
 
-impl<R: Runtime> Default for BDFOptions<R> {
+impl<R: Runtime<DType = DType>> Default for BDFOptions<R> {
     fn default() -> Self {
         Self {
             max_order: 5,
@@ -467,7 +468,7 @@ impl<R: Runtime> Default for BDFOptions<R> {
     }
 }
 
-impl<R: Runtime> BDFOptions<R> {
+impl<R: Runtime<DType = DType>> BDFOptions<R> {
     /// Set maximum order.
     pub fn max_order(mut self, order: usize) -> Self {
         self.max_order = order.clamp(1, 5);
@@ -490,7 +491,7 @@ impl<R: Runtime> BDFOptions<R> {
 
 /// Options specific to Radau IIA solver.
 #[derive(Debug, Clone)]
-pub struct RadauOptions<R: Runtime> {
+pub struct RadauOptions<R: Runtime<DType = DType>> {
     /// Newton iteration tolerance (default: 1e-6).
     pub newton_tol: f64,
 
@@ -508,7 +509,7 @@ pub struct RadauOptions<R: Runtime> {
     pub sparse_jacobian: SparseJacobianConfig<R>,
 }
 
-impl<R: Runtime> Default for RadauOptions<R> {
+impl<R: Runtime<DType = DType>> Default for RadauOptions<R> {
     fn default() -> Self {
         Self {
             newton_tol: 1e-6,
@@ -519,7 +520,7 @@ impl<R: Runtime> Default for RadauOptions<R> {
     }
 }
 
-impl<R: Runtime> RadauOptions<R> {
+impl<R: Runtime<DType = DType>> RadauOptions<R> {
     /// Set Newton iteration parameters.
     pub fn newton_params(mut self, tol: f64, max_iter: usize) -> Self {
         self.newton_tol = tol;
@@ -716,7 +717,7 @@ pub enum DAEVariableType {
 /// # }
 /// ```
 #[derive(Debug, Clone)]
-pub struct DAEOptions<R: Runtime> {
+pub struct DAEOptions<R: Runtime<DType = DType>> {
     /// Classification of each variable (differential vs algebraic).
     ///
     /// If `None`, all variables are treated as differential.
@@ -765,7 +766,7 @@ pub struct DAEOptions<R: Runtime> {
     pub sparse_jacobian: SparseJacobianConfig<R>,
 }
 
-impl<R: Runtime> Default for DAEOptions<R> {
+impl<R: Runtime<DType = DType>> Default for DAEOptions<R> {
     fn default() -> Self {
         Self {
             variable_types: None,
@@ -781,7 +782,7 @@ impl<R: Runtime> Default for DAEOptions<R> {
     }
 }
 
-impl<R: Runtime> DAEOptions<R> {
+impl<R: Runtime<DType = DType>> DAEOptions<R> {
     /// Set variable type classification.
     pub fn with_variable_types(mut self, types: Vec<DAEVariableType>) -> Self {
         self.variable_types = Some(types);
@@ -830,7 +831,7 @@ impl<R: Runtime> DAEOptions<R> {
 ///
 /// Contains the solution trajectory and optional derivative trajectory.
 #[derive(Debug, Clone)]
-pub struct DAEResultTensor<R: Runtime> {
+pub struct DAEResultTensor<R: Runtime<DType = DType>> {
     /// Time points where solution was computed (1-D tensor).
     pub t: Tensor<R>,
 
@@ -862,7 +863,7 @@ pub struct DAEResultTensor<R: Runtime> {
     pub nreject: usize,
 }
 
-impl<R: Runtime> DAEResultTensor<R> {
+impl<R: Runtime<DType = DType>> DAEResultTensor<R> {
     /// Get the final state as a `Vec<f64>`.
     pub fn y_final_vec(&self) -> Vec<f64> {
         let shape = self.y.shape();
@@ -959,7 +960,7 @@ impl EventSpec {
 
 /// Record of a detected event.
 #[derive(Debug, Clone)]
-pub struct EventRecord<R: Runtime> {
+pub struct EventRecord<R: Runtime<DType = DType>> {
     /// Time at which the event occurred.
     pub t: f64,
 
@@ -1008,7 +1009,7 @@ impl EventOptions {
 
 /// Result of ODE integration with event detection.
 #[derive(Debug, Clone)]
-pub struct ODEResultWithEvents<R: Runtime> {
+pub struct ODEResultWithEvents<R: Runtime<DType = DType>> {
     /// Time points where solution was computed (1-D tensor).
     pub t: Tensor<R>,
 
@@ -1043,7 +1044,7 @@ pub struct ODEResultWithEvents<R: Runtime> {
     pub terminal_event_index: Option<usize>,
 }
 
-impl<R: Runtime> ODEResultWithEvents<R> {
+impl<R: Runtime<DType = DType>> ODEResultWithEvents<R> {
     /// Get the final state as a `Vec<f64>`.
     pub fn y_final_vec(&self) -> Vec<f64> {
         let shape = self.y.shape();

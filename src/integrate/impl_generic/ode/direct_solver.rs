@@ -15,6 +15,7 @@
 //!                → numeric LU with workspace reuse → solve
 //! Invalidate:    force full re-analysis on next call
 //! ```
+use crate::DType;
 
 #[cfg(feature = "sparse")]
 use numr::algorithm::sparse_linalg::{
@@ -60,7 +61,7 @@ use super::symbolic_analysis::compute_lu_symbolic;
 /// `full_analysis()`, `build_gather_indices()`, and `permute_csc_columns()`. This
 /// is architecturally justified—no GPU transfer overhead is incurred.
 #[cfg(feature = "sparse")]
-pub struct DirectSparseSolver<R: Runtime> {
+pub struct DirectSparseSolver<R: Runtime<DType = DType>> {
     /// Cached column permutation from COLAMD
     col_perm: Option<Vec<usize>>,
     /// Cached row permutation from Hopcroft-Karp (only if diagonal has zeros) - CPU version
@@ -114,7 +115,7 @@ pub struct DirectSparseSolver<R: Runtime> {
 }
 
 #[cfg(feature = "sparse")]
-impl<R: Runtime> DirectSparseSolver<R> {
+impl<R: Runtime<DType = DType>> DirectSparseSolver<R> {
     /// Create a new direct sparse solver with the given configuration.
     pub fn new(config: &DirectSolverConfig) -> Self {
         Self {

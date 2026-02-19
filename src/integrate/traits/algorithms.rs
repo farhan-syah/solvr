@@ -1,3 +1,4 @@
+use crate::DType;
 use numr::autograd::DualTensor;
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -40,7 +41,7 @@ use super::{
 /// let result = client.trapezoid(&y, &x)?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-pub trait IntegrationAlgorithms<R: Runtime> {
+pub trait IntegrationAlgorithms<R: Runtime<DType = DType>> {
     /// Trapezoidal rule integration.
     ///
     /// Computes ∫y dx using the composite trapezoidal rule.

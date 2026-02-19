@@ -92,7 +92,7 @@ pub fn radau_impl<R, C, F>(
     radau_options: &RadauOptions<R>,
 ) -> IntegrateResult<ODEResultTensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: StiffSolverClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -274,7 +274,7 @@ fn solve_radau_stages<R, C, F>(
     #[cfg(feature = "sparse")] direct_solver: &mut Option<DirectSparseSolver<R>>,
 ) -> IntegrateResult<(Tensor<R>, Tensor<R>, Tensor<R>, bool, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: StiffSolverClient<R>,
     F: Fn(&DualTensor<R>, &DualTensor<R>, &C) -> Result<DualTensor<R>>,
 {
@@ -395,7 +395,7 @@ fn compute_stage_value<R, C>(
     a3: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     let term1 = client.mul_scalar(k1, h * a1)?;
@@ -435,7 +435,7 @@ fn solve_linear<R, C>(
     direct_solver: &mut Option<DirectSparseSolver<R>>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: StiffSolverClient<R>,
 {
     if !sparse_config.enabled {
@@ -467,7 +467,7 @@ fn solve_linear<R, C>(
     _sparse_config: &crate::integrate::ode::SparseJacobianConfig<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: numr::ops::LinalgOps<R> + RuntimeClient<R>,
 {
     let n = b.shape()[0];
@@ -485,7 +485,7 @@ fn compute_radau_error<R, C>(
     h: f64,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: TensorOps<R> + ScalarOps<R>,
 {
     // Error estimate: h * (e1*k1 + e2*k2 + e3*k3) / denom
