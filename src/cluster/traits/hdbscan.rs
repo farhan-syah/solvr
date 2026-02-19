@@ -1,4 +1,5 @@
 //! HDBSCAN clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::DistanceMetric;
@@ -44,7 +45,7 @@ impl Default for HdbscanOptions {
 
 /// Result of HDBSCAN clustering.
 #[derive(Debug, Clone)]
-pub struct HdbscanResult<R: Runtime> {
+pub struct HdbscanResult<R: Runtime<DType = DType>> {
     /// Cluster labels `[n]` I64, -1 for noise.
     pub labels: Tensor<R>,
     /// Membership strength `[n]`.
@@ -54,7 +55,7 @@ pub struct HdbscanResult<R: Runtime> {
 }
 
 /// HDBSCAN clustering algorithms.
-pub trait HdbscanAlgorithms<R: Runtime> {
+pub trait HdbscanAlgorithms<R: Runtime<DType = DType>> {
     /// Run HDBSCAN on data `[n, d]`.
     fn hdbscan(&self, data: &Tensor<R>, options: &HdbscanOptions) -> Result<HdbscanResult<R>>;
 }

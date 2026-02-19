@@ -1,4 +1,5 @@
 //! K-Means clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -6,7 +7,7 @@ use numr::tensor::Tensor;
 
 /// Initialization method for K-Means.
 #[derive(Debug, Clone, Default)]
-pub enum KMeansInit<R: Runtime> {
+pub enum KMeansInit<R: Runtime<DType = DType>> {
     /// K-Means++ initialization (default).
     #[default]
     KMeansPlusPlus,
@@ -28,7 +29,7 @@ pub enum KMeansAlgorithm {
 
 /// Options for K-Means clustering.
 #[derive(Debug, Clone)]
-pub struct KMeansOptions<R: Runtime> {
+pub struct KMeansOptions<R: Runtime<DType = DType>> {
     /// Number of clusters.
     pub n_clusters: usize,
     /// Maximum iterations per run.
@@ -43,7 +44,7 @@ pub struct KMeansOptions<R: Runtime> {
     pub algorithm: KMeansAlgorithm,
 }
 
-impl<R: Runtime> Default for KMeansOptions<R> {
+impl<R: Runtime<DType = DType>> Default for KMeansOptions<R> {
     fn default() -> Self {
         Self {
             n_clusters: 8,
@@ -58,7 +59,7 @@ impl<R: Runtime> Default for KMeansOptions<R> {
 
 /// Result of K-Means clustering.
 #[derive(Debug, Clone)]
-pub struct KMeansResult<R: Runtime> {
+pub struct KMeansResult<R: Runtime<DType = DType>> {
     /// Cluster centroids `[k, d]`.
     pub centroids: Tensor<R>,
     /// Cluster assignment for each point `[n]` I64.
@@ -70,7 +71,7 @@ pub struct KMeansResult<R: Runtime> {
 }
 
 /// K-Means clustering algorithms.
-pub trait KMeansAlgorithms<R: Runtime> {
+pub trait KMeansAlgorithms<R: Runtime<DType = DType>> {
     /// Fit K-Means clustering to data `[n, d]`.
     fn kmeans(&self, data: &Tensor<R>, options: &KMeansOptions<R>) -> Result<KMeansResult<R>>;
 

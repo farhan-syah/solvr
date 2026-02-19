@@ -1,4 +1,5 @@
 //! DBSCAN clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::DistanceMetric;
@@ -28,7 +29,7 @@ impl Default for DbscanOptions {
 
 /// Result of DBSCAN clustering.
 #[derive(Debug, Clone)]
-pub struct DbscanResult<R: Runtime> {
+pub struct DbscanResult<R: Runtime<DType = DType>> {
     /// Cluster labels `[n]` I64, -1 for noise.
     pub labels: Tensor<R>,
     /// Indices of core samples `[n_core]` I64.
@@ -38,7 +39,7 @@ pub struct DbscanResult<R: Runtime> {
 }
 
 /// DBSCAN clustering algorithms.
-pub trait DbscanAlgorithms<R: Runtime> {
+pub trait DbscanAlgorithms<R: Runtime<DType = DType>> {
     /// Run DBSCAN on data `[n, d]`.
     fn dbscan(&self, data: &Tensor<R>, options: &DbscanOptions) -> Result<DbscanResult<R>>;
 }

@@ -4,6 +4,7 @@
 //! 2. Compute graph Laplacian
 //! 3. Eigendecomposition → take k smallest eigenvectors
 //! 4. Run k-means on eigenvector embedding
+use crate::DType;
 
 use crate::cluster::traits::kmeans::{KMeansInit, KMeansOptions, KMeansResult};
 use crate::cluster::traits::spectral::{AffinityType, LaplacianType, SpectralOptions};
@@ -25,7 +26,7 @@ pub fn spectral_clustering_impl<R, C>(
     options: &SpectralOptions,
 ) -> Result<KMeansResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: LinearAlgebraAlgorithms<R>
         + DistanceOps<R>
         + ReduceOps<R>

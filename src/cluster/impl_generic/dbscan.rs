@@ -20,7 +20,7 @@ pub fn dbscan_impl<R, C>(
     options: &DbscanOptions,
 ) -> Result<DbscanResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>

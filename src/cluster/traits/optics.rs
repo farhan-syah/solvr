@@ -1,4 +1,5 @@
 //! OPTICS clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::DistanceMetric;
@@ -31,7 +32,7 @@ impl Default for OpticsOptions {
 
 /// Result of OPTICS.
 #[derive(Debug, Clone)]
-pub struct OpticsResult<R: Runtime> {
+pub struct OpticsResult<R: Runtime<DType = DType>> {
     /// Processing order `[n]` I64.
     pub ordering: Tensor<R>,
     /// Reachability distances `[n]`.
@@ -43,7 +44,7 @@ pub struct OpticsResult<R: Runtime> {
 }
 
 /// OPTICS clustering algorithms.
-pub trait OpticsAlgorithms<R: Runtime> {
+pub trait OpticsAlgorithms<R: Runtime<DType = DType>> {
     /// Run OPTICS on data `[n, d]`.
     fn optics(&self, data: &Tensor<R>, options: &OpticsOptions) -> Result<OpticsResult<R>>;
 }

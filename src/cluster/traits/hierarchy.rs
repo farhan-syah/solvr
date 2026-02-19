@@ -1,4 +1,5 @@
 //! Hierarchical clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::DistanceMetric;
@@ -36,13 +37,13 @@ pub enum FClusterCriterion {
 
 /// Linkage matrix [n-1, 4]: each row is [id1, id2, distance, count].
 #[derive(Debug, Clone)]
-pub struct LinkageMatrix<R: Runtime> {
+pub struct LinkageMatrix<R: Runtime<DType = DType>> {
     /// The linkage matrix tensor [n-1, 4].
     pub z: Tensor<R>,
 }
 
 /// Hierarchical (agglomerative) clustering algorithms.
-pub trait HierarchyAlgorithms<R: Runtime> {
+pub trait HierarchyAlgorithms<R: Runtime<DType = DType>> {
     /// Compute linkage from a condensed distance matrix.
     fn linkage(
         &self,

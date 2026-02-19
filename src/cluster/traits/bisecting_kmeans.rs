@@ -1,4 +1,5 @@
 //! Bisecting K-Means clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -44,7 +45,7 @@ impl Default for BisectingKMeansOptions {
 }
 
 /// Bisecting K-Means clustering algorithms.
-pub trait BisectingKMeansAlgorithms<R: Runtime> {
+pub trait BisectingKMeansAlgorithms<R: Runtime<DType = DType>> {
     /// Fit Bisecting K-Means to data [n, d].
     fn bisecting_kmeans(
         &self,

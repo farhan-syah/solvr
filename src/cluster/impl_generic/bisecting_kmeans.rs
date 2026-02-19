@@ -18,7 +18,7 @@ pub fn bisecting_kmeans_impl<R, C>(
     options: &BisectingKMeansOptions,
 ) -> Result<KMeansResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + ReduceOps<R>

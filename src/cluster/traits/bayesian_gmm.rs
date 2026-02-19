@@ -2,6 +2,7 @@
 //!
 //! Variational inference with Dirichlet process priors, allowing automatic
 //! determination of the number of active components.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -68,7 +69,7 @@ impl Default for BayesianGmmOptions {
 
 /// Fitted Bayesian Gaussian Mixture Model.
 #[derive(Debug, Clone)]
-pub struct BayesianGmmModel<R: Runtime> {
+pub struct BayesianGmmModel<R: Runtime<DType = DType>> {
     /// Effective mixture weights `[k]` (some may be near zero).
     pub weights: Tensor<R>,
     /// Component means `[k, d]`.
@@ -92,7 +93,7 @@ pub struct BayesianGmmModel<R: Runtime> {
 }
 
 /// Bayesian Gaussian Mixture Model algorithms.
-pub trait BayesianGmmAlgorithms<R: Runtime> {
+pub trait BayesianGmmAlgorithms<R: Runtime<DType = DType>> {
     /// Fit Bayesian GMM to data `[n, d]`.
     fn bayesian_gmm_fit(
         &self,

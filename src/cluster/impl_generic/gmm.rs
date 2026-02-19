@@ -17,7 +17,7 @@ use numr::runtime::{Runtime, RuntimeClient};
 use numr::tensor::Tensor;
 
 /// Trait bounds needed for GMM.
-pub trait GmmClient<R: Runtime>:
+pub trait GmmClient<R: Runtime<DType = DType>>:
     DistanceOps<R>
     + IndexingOps<R>
     + ReduceOps<R>
@@ -41,7 +41,7 @@ pub trait GmmClient<R: Runtime>:
 
 impl<R, C> GmmClient<R> for C
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + ReduceOps<R>
@@ -66,7 +66,7 @@ where
 /// Fit GMM to data.
 pub fn gmm_fit_impl<R, C>(client: &C, data: &Tensor<R>, options: &GmmOptions) -> Result<GmmModel<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     validate_cluster_dtype(data.dtype(), "gmm")?;
@@ -108,7 +108,7 @@ fn gmm_fit_single<R, C>(
     device: &R::Device,
 ) -> Result<GmmModel<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     // Initialize means via kmeans or random
@@ -296,7 +296,7 @@ fn compute_log_responsibilities<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     // log_resp[i, j] = log(weight[j]) + log_gaussian(x_i; mean_j, cov_j)
@@ -426,7 +426,7 @@ fn update_covariances<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let reg = options.reg_covar;
@@ -516,7 +516,7 @@ pub fn gmm_predict_impl<R, C>(
     data: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let resp = gmm_predict_proba_impl(client, model, data)?;
@@ -530,7 +530,7 @@ pub fn gmm_predict_proba_impl<R, C>(
     data: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let n = data.shape()[0];
@@ -572,7 +572,7 @@ where
 /// Compute per-sample log-likelihood.
 pub fn gmm_score_impl<R, C>(client: &C, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let n = data.shape()[0];
@@ -628,7 +628,7 @@ fn gmm_n_params(k: usize, d: usize, cov_type: CovarianceType) -> usize {
 /// BIC: n_params * ln(n) - 2 * total_log_likelihood.
 pub fn gmm_bic_impl<R, C>(client: &C, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let n = data.shape()[0];
@@ -655,7 +655,7 @@ where
 /// AIC: 2 * n_params - 2 * total_log_likelihood.
 pub fn gmm_aic_impl<R, C>(client: &C, model: &GmmModel<R>, data: &Tensor<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let d = data.shape()[1];

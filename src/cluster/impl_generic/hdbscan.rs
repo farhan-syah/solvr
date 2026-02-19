@@ -21,7 +21,7 @@ pub fn hdbscan_impl<R, C>(
     options: &HdbscanOptions,
 ) -> Result<HdbscanResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>

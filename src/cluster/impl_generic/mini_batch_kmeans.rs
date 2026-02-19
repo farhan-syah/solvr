@@ -1,4 +1,5 @@
 //! Generic Mini-Batch K-Means clustering implementation.
+use crate::DType;
 
 use crate::cluster::traits::kmeans::{KMeansOptions, KMeansResult};
 use crate::cluster::traits::mini_batch_kmeans::MiniBatchKMeansOptions;
@@ -17,7 +18,7 @@ pub fn mini_batch_kmeans_impl<R, C>(
     options: &MiniBatchKMeansOptions<R>,
 ) -> Result<KMeansResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + ReduceOps<R>

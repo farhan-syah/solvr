@@ -15,7 +15,7 @@ use numr::tensor::Tensor;
 /// K-Means++ initialization: pick centroids with probability proportional to D^2.
 fn kmeans_plusplus_init<R, C>(client: &C, data: &Tensor<R>, k: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + ReduceOps<R>
@@ -68,7 +68,7 @@ where
 /// Random initialization: pick k random data points.
 fn random_init<R, C>(client: &C, data: &Tensor<R>, k: usize) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RandomOps<R> + SortingOps<R> + IndexingOps<R> + RuntimeClient<R>,
 {
     let perm = client.randperm(data.shape()[0])?;
@@ -84,7 +84,7 @@ fn lloyd_step<R, C>(
     centroids: &Tensor<R>,
 ) -> Result<(Tensor<R>, Tensor<R>, Tensor<R>)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + LinalgOps<R>
@@ -147,7 +147,7 @@ where
 }
 
 /// Result of a single Elkan's K-Means iteration step.
-struct ElkanStepResult<R: Runtime> {
+struct ElkanStepResult<R: Runtime<DType = DType>> {
     centroids: Tensor<R>,
     labels: Tensor<R>,
     inertia: Tensor<R>,
@@ -168,7 +168,7 @@ fn elkan_step<R, C>(
     labels: &Tensor<R>,
 ) -> Result<ElkanStepResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + ReduceOps<R>
@@ -285,7 +285,7 @@ fn elkan_single<R, C>(
     tol: f64,
 ) -> Result<KMeansResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + LinalgOps<R>
@@ -355,7 +355,7 @@ fn kmeans_single<R, C>(
     tol: f64,
 ) -> Result<KMeansResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + ReduceOps<R>
@@ -405,7 +405,7 @@ pub fn kmeans_impl<R, C>(
     options: &KMeansOptions<R>,
 ) -> Result<KMeansResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + IndexingOps<R>
         + LinalgOps<R>
@@ -497,7 +497,7 @@ pub fn kmeans_predict_impl<R, C>(
     data: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R> + IndexingOps<R> + RuntimeClient<R>,
 {
     validate_cluster_dtype(data.dtype(), "kmeans_predict")?;

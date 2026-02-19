@@ -21,7 +21,7 @@ pub fn optics_impl<R, C>(
     options: &OpticsOptions,
 ) -> Result<OpticsResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -163,7 +163,7 @@ fn xi_cluster_extraction<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: CompareOps<R>
         + ConditionalOps<R>
         + ScalarOps<R>

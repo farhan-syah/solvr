@@ -21,7 +21,7 @@ pub fn mean_shift_impl<R, C>(
     options: &MeanShiftOptions,
 ) -> Result<MeanShiftResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>

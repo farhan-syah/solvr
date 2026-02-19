@@ -23,7 +23,7 @@ pub fn bayesian_gmm_fit_impl<R, C>(
     options: &BayesianGmmOptions,
 ) -> Result<BayesianGmmModel<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     validate_cluster_dtype(data.dtype(), "bayesian_gmm")?;
@@ -54,7 +54,7 @@ fn bayesian_gmm_fit_single<R, C>(
     options: &BayesianGmmOptions,
 ) -> Result<BayesianGmmModel<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let n = data.shape()[0];
@@ -292,7 +292,7 @@ fn compute_expected_log_weights<R, C>(
     _device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     match prior_type {
@@ -333,7 +333,7 @@ fn compute_expected_log_det<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     // E[log|Lambda|] ≈ -log|Sigma| + d*log(2) + sum_{i=1}^{d} digamma((nu+1-i)/2)
@@ -408,7 +408,7 @@ fn compute_bayesian_log_resp<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let log_2pi = (2.0 * std::f64::consts::PI).ln();
@@ -502,7 +502,7 @@ fn update_bayesian_covariances<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let reg = options.reg_covar;
@@ -641,7 +641,7 @@ fn update_weight_concentration<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     match options.weight_concentration_prior_type {
@@ -679,7 +679,7 @@ fn compute_effective_weights<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     match prior_type {
@@ -734,7 +734,7 @@ fn compute_precisions<R, C>(
     device: &R::Device,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     match options.covariance_type {
@@ -767,7 +767,7 @@ pub fn bayesian_gmm_predict_impl<R, C>(
     data: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     let proba = bayesian_gmm_predict_proba_impl(client, model, data)?;
@@ -781,7 +781,7 @@ pub fn bayesian_gmm_predict_proba_impl<R, C>(
     data: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     // Use the effective weights and standard Gaussian log-likelihood
@@ -808,7 +808,7 @@ pub fn bayesian_gmm_score_impl<R, C>(
     data: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: GmmClient<R>,
 {
     use crate::cluster::traits::gmm::GmmModel;

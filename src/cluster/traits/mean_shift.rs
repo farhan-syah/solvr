@@ -1,4 +1,5 @@
 //! Mean Shift clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -30,7 +31,7 @@ impl Default for MeanShiftOptions {
 
 /// Result of Mean Shift clustering.
 #[derive(Debug, Clone)]
-pub struct MeanShiftResult<R: Runtime> {
+pub struct MeanShiftResult<R: Runtime<DType = DType>> {
     /// Cluster labels `[n]` I64.
     pub labels: Tensor<R>,
     /// Cluster centers `[k, d]`.
@@ -40,7 +41,7 @@ pub struct MeanShiftResult<R: Runtime> {
 }
 
 /// Mean Shift clustering algorithms.
-pub trait MeanShiftAlgorithms<R: Runtime> {
+pub trait MeanShiftAlgorithms<R: Runtime<DType = DType>> {
     /// Run Mean Shift on data `[n, d]`.
     fn mean_shift(
         &self,

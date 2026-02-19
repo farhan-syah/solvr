@@ -23,7 +23,7 @@ pub fn affinity_propagation_impl<R, C>(
     options: &AffinityPropagationOptions,
 ) -> Result<AffinityPropagationResult<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>

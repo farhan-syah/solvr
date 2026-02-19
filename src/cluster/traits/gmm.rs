@@ -1,4 +1,5 @@
 //! Gaussian Mixture Model trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -63,7 +64,7 @@ impl Default for GmmOptions {
 
 /// Fitted Gaussian Mixture Model.
 #[derive(Debug, Clone)]
-pub struct GmmModel<R: Runtime> {
+pub struct GmmModel<R: Runtime<DType = DType>> {
     /// Mixture weights `[k]` (sum = 1).
     pub weights: Tensor<R>,
     /// Component means `[k, d]`.
@@ -81,7 +82,7 @@ pub struct GmmModel<R: Runtime> {
 }
 
 /// Gaussian Mixture Model algorithms.
-pub trait GmmAlgorithms<R: Runtime> {
+pub trait GmmAlgorithms<R: Runtime<DType = DType>> {
     /// Fit GMM to data `[n, d]`.
     fn gmm_fit(&self, data: &Tensor<R>, options: &GmmOptions) -> Result<GmmModel<R>>;
 

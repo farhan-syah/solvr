@@ -1,4 +1,5 @@
 //! Cluster evaluation metrics trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::ops::DistanceMetric;
@@ -7,14 +8,14 @@ use numr::tensor::Tensor;
 
 /// Homogeneity, Completeness, V-Measure scores.
 #[derive(Debug, Clone)]
-pub struct HCVScore<R: Runtime> {
+pub struct HCVScore<R: Runtime<DType = DType>> {
     pub homogeneity: Tensor<R>,
     pub completeness: Tensor<R>,
     pub v_measure: Tensor<R>,
 }
 
 /// Cluster evaluation metrics.
-pub trait ClusterMetricsAlgorithms<R: Runtime> {
+pub trait ClusterMetricsAlgorithms<R: Runtime<DType = DType>> {
     /// Mean silhouette coefficient (scalar).
     fn silhouette_score(
         &self,

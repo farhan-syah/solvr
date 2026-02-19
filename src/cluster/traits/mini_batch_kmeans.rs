@@ -1,4 +1,5 @@
 //! Mini-Batch K-Means clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -8,7 +9,7 @@ use super::kmeans::{KMeansInit, KMeansResult};
 
 /// Options for Mini-Batch K-Means.
 #[derive(Debug, Clone)]
-pub struct MiniBatchKMeansOptions<R: Runtime> {
+pub struct MiniBatchKMeansOptions<R: Runtime<DType = DType>> {
     /// Number of clusters.
     pub n_clusters: usize,
     /// Mini-batch size.
@@ -23,7 +24,7 @@ pub struct MiniBatchKMeansOptions<R: Runtime> {
     pub max_no_improvement: usize,
 }
 
-impl<R: Runtime> Default for MiniBatchKMeansOptions<R> {
+impl<R: Runtime<DType = DType>> Default for MiniBatchKMeansOptions<R> {
     fn default() -> Self {
         Self {
             n_clusters: 8,
@@ -37,7 +38,7 @@ impl<R: Runtime> Default for MiniBatchKMeansOptions<R> {
 }
 
 /// Mini-Batch K-Means clustering algorithms.
-pub trait MiniBatchKMeansAlgorithms<R: Runtime> {
+pub trait MiniBatchKMeansAlgorithms<R: Runtime<DType = DType>> {
     /// Fit Mini-Batch K-Means to data [n, d].
     fn mini_batch_kmeans(
         &self,

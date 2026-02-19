@@ -1,4 +1,5 @@
 //! Spectral clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -60,7 +61,7 @@ impl Default for SpectralOptions {
 }
 
 /// Spectral clustering algorithms.
-pub trait SpectralClusteringAlgorithms<R: Runtime> {
+pub trait SpectralClusteringAlgorithms<R: Runtime<DType = DType>> {
     /// Run spectral clustering on data [n, d] or precomputed affinity [n, n].
     fn spectral_clustering(
         &self,

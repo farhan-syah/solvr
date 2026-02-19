@@ -1,4 +1,5 @@
 //! Affinity Propagation clustering trait.
+use crate::DType;
 
 use numr::error::Result;
 use numr::runtime::Runtime;
@@ -30,7 +31,7 @@ impl Default for AffinityPropagationOptions {
 
 /// Result of Affinity Propagation.
 #[derive(Debug, Clone)]
-pub struct AffinityPropagationResult<R: Runtime> {
+pub struct AffinityPropagationResult<R: Runtime<DType = DType>> {
     /// Cluster labels `[n]` I64.
     pub labels: Tensor<R>,
     /// Indices of exemplars `[k]` I64.
@@ -40,7 +41,7 @@ pub struct AffinityPropagationResult<R: Runtime> {
 }
 
 /// Affinity Propagation clustering algorithms.
-pub trait AffinityPropagationAlgorithms<R: Runtime> {
+pub trait AffinityPropagationAlgorithms<R: Runtime<DType = DType>> {
     /// Run Affinity Propagation on a similarity matrix `[n, n]`.
     fn affinity_propagation(
         &self,

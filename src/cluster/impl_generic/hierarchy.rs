@@ -22,7 +22,7 @@ pub fn linkage_impl<R, C>(
     method: LinkageMethod,
 ) -> Result<LinkageMatrix<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -52,7 +52,7 @@ pub fn linkage_from_data_impl<R, C>(
     metric: DistanceMetric,
 ) -> Result<LinkageMatrix<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -86,7 +86,7 @@ fn linkage_from_square<R, C>(
     device: &R::Device,
 ) -> Result<LinkageMatrix<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>
@@ -274,7 +274,7 @@ pub fn fcluster_impl<R, C>(
     criterion: FClusterCriterion,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>
@@ -463,7 +463,7 @@ pub fn fclusterdata_impl<R, C>(
     metric: DistanceMetric,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -485,7 +485,7 @@ where
 /// Get leaves in dendrogram order.
 pub fn leaves_list_impl<R, C>(_client: &C, z: &LinkageMatrix<R>) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: RuntimeClient<R>,
 {
     let n_merges = z.z.shape()[0];
@@ -520,7 +520,7 @@ pub fn cut_tree_impl<R, C>(
     n_clusters: &[usize],
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>

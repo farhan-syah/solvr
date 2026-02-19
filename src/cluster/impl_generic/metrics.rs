@@ -19,7 +19,7 @@ pub fn silhouette_samples_impl<R, C>(
     metric: DistanceMetric,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -111,7 +111,7 @@ pub fn silhouette_score_impl<R, C>(
     metric: DistanceMetric,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -136,7 +136,7 @@ pub fn calinski_harabasz_score_impl<R, C>(
     labels: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -214,7 +214,7 @@ pub fn davies_bouldin_score_impl<R, C>(
     labels: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: DistanceOps<R>
         + ReduceOps<R>
         + ScalarOps<R>
@@ -317,7 +317,7 @@ fn contingency_matrix<R, C>(
     labels_pred: &Tensor<R>,
 ) -> Result<(Tensor<R>, usize, usize)>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>
@@ -360,7 +360,7 @@ pub fn adjusted_rand_score_impl<R, C>(
     labels_pred: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>
@@ -425,7 +425,7 @@ where
 /// Entropy of a label distribution from counts.
 fn entropy_from_counts<R, C>(client: &C, counts: &Tensor<R>, n: f64) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>
@@ -457,7 +457,7 @@ pub fn normalized_mutual_info_score_impl<R, C>(
     labels_pred: &Tensor<R>,
 ) -> Result<Tensor<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>
@@ -525,7 +525,7 @@ pub fn homogeneity_completeness_v_measure_impl<R, C>(
     labels_pred: &Tensor<R>,
 ) -> Result<HCVScore<R>>
 where
-    R: Runtime,
+    R: Runtime<DType = DType>,
     C: ReduceOps<R>
         + ScalarOps<R>
         + TensorOps<R>
