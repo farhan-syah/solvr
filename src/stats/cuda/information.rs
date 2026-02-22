@@ -1,7 +1,8 @@
 //! CUDA implementation of information theory algorithms.
 
 use crate::stats::impl_generic::{
-    differential_entropy_impl, entropy_impl, kl_divergence_impl, mutual_information_impl,
+    cross_entropy_impl, differential_entropy_impl, entropy_impl, kl_divergence_impl,
+    mutual_information_impl, nll_loss_impl,
 };
 use crate::stats::traits::InformationTheoryAlgorithms;
 use numr::error::Result;
@@ -38,6 +39,23 @@ impl InformationTheoryAlgorithms<CudaRuntime> for CudaClient {
         base: Option<f64>,
     ) -> Result<Tensor<CudaRuntime>> {
         mutual_information_impl(self, x, y, bins, base)
+    }
+
+    fn cross_entropy(
+        &self,
+        pk: &Tensor<CudaRuntime>,
+        qk: &Tensor<CudaRuntime>,
+        base: Option<f64>,
+    ) -> Result<Tensor<CudaRuntime>> {
+        cross_entropy_impl(self, pk, qk, base)
+    }
+
+    fn nll_loss(
+        &self,
+        log_probs: &Tensor<CudaRuntime>,
+        targets: &Tensor<CudaRuntime>,
+    ) -> Result<Tensor<CudaRuntime>> {
+        nll_loss_impl(self, log_probs, targets)
     }
 }
 

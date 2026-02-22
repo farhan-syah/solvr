@@ -1,7 +1,8 @@
 //! WebGPU implementation of information theory algorithms.
 
 use crate::stats::impl_generic::{
-    differential_entropy_impl, entropy_impl, kl_divergence_impl, mutual_information_impl,
+    cross_entropy_impl, differential_entropy_impl, entropy_impl, kl_divergence_impl,
+    mutual_information_impl, nll_loss_impl,
 };
 use crate::stats::traits::InformationTheoryAlgorithms;
 use numr::error::Result;
@@ -38,6 +39,23 @@ impl InformationTheoryAlgorithms<WgpuRuntime> for WgpuClient {
         base: Option<f64>,
     ) -> Result<Tensor<WgpuRuntime>> {
         mutual_information_impl(self, x, y, bins, base)
+    }
+
+    fn cross_entropy(
+        &self,
+        pk: &Tensor<WgpuRuntime>,
+        qk: &Tensor<WgpuRuntime>,
+        base: Option<f64>,
+    ) -> Result<Tensor<WgpuRuntime>> {
+        cross_entropy_impl(self, pk, qk, base)
+    }
+
+    fn nll_loss(
+        &self,
+        log_probs: &Tensor<WgpuRuntime>,
+        targets: &Tensor<WgpuRuntime>,
+    ) -> Result<Tensor<WgpuRuntime>> {
+        nll_loss_impl(self, log_probs, targets)
     }
 }
 
